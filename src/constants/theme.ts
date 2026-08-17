@@ -20,6 +20,11 @@ export const Colors = {
     backgroundSelected: '#e2e8f0',
     card: '#ffffff',
     border: '#e2e8f0',
+    // Matches web's --input token — inputs use a distinct (here: identical,
+    // but tracked separately so it can diverge like web's does) border color
+    // from generic dividers/cards.
+    inputBorder: '#e2e8f0',
+    ring: '#4f46e5',
     primary: '#4f46e5',
     primaryForeground: '#ffffff',
     destructive: '#dc2626',
@@ -33,10 +38,39 @@ export const Colors = {
     backgroundSelected: '#283549',
     card: '#111a2e',
     border: '#1e293b',
+    inputBorder: '#283549',
+    ring: '#6366f1',
     primary: '#6366f1',
     primaryForeground: '#ffffff',
     destructive: '#ef4444',
     success: '#22c55e',
+  },
+} as const;
+
+// Mirrors nicoflow-frontend's --shadow-sm/md/lg (src/index.css) — RN's shadow
+// props instead of CSS box-shadow. Android needs `elevation` too (iOS ignores
+// it, Android ignores shadowOffset/Radius/Opacity), so every level sets both.
+export const Shadows = {
+  xs: {
+    shadowColor: '#0f172a',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 1,
+    elevation: 1,
+  },
+  sm: {
+    shadowColor: '#0f172a',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  md: {
+    shadowColor: '#0f172a',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 16,
+    elevation: 6,
   },
 } as const;
 
