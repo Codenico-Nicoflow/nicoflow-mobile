@@ -7,20 +7,36 @@ import '@/global.css';
 
 import { Platform } from 'react-native';
 
+// Mirrors nicoflow-frontend's src/index.css CSS custom properties (Indigo +
+// Slate palette) so the mobile app reads as the same product, not a generic
+// Expo template. Keep these two in sync by hand — there's no shared token
+// package yet (candidate for @nicoflow/shared once mobile has more screens).
 export const Colors = {
   light: {
-    text: '#000000',
-    background: '#ffffff',
-    backgroundElement: '#F0F0F3',
-    backgroundSelected: '#E0E1E6',
-    textSecondary: '#60646C',
+    text: '#0f172a',
+    textSecondary: '#64748b',
+    background: '#f8fafc',
+    backgroundElement: '#eef2f7',
+    backgroundSelected: '#e2e8f0',
+    card: '#ffffff',
+    border: '#e2e8f0',
+    primary: '#4f46e5',
+    primaryForeground: '#ffffff',
+    destructive: '#dc2626',
+    success: '#16a34a',
   },
   dark: {
-    text: '#ffffff',
-    background: '#000000',
-    backgroundElement: '#212225',
-    backgroundSelected: '#2E3135',
-    textSecondary: '#B0B4BA',
+    text: '#e2e8f0',
+    textSecondary: '#94a3b8',
+    background: '#0b1120',
+    backgroundElement: '#1e293b',
+    backgroundSelected: '#283549',
+    card: '#111a2e',
+    border: '#1e293b',
+    primary: '#6366f1',
+    primaryForeground: '#ffffff',
+    destructive: '#ef4444',
+    success: '#22c55e',
   },
 } as const;
 
@@ -59,6 +75,15 @@ export const Spacing = {
   four: 24,
   five: 32,
   six: 64,
+} as const;
+
+// Mirrors nicoflow-frontend's --radius-sm/md/lg/xl (src/index.css).
+export const Radius = {
+  sm: 6,
+  md: 10,
+  lg: 14,
+  xl: 20,
+  full: 9999,
 } as const;
 
 export const BottomTabInset = Platform.select({ ios: 50, android: 80 }) ?? 0;
