@@ -1,7 +1,5 @@
 import type { ReactNode } from 'react';
-import { StyleSheet, Text, View, useColorScheme } from 'react-native';
-
-import { Colors, MaxContentWidth, Spacing } from '@/constants/theme';
+import { Text, View } from 'react-native';
 
 interface AuthCardProps {
   title: string;
@@ -14,23 +12,17 @@ interface AuthCardProps {
 // header, scroll, footer, safe area) lives in (auth)/_layout.tsx now — this
 // only owns the form card itself.
 export function AuthCard({ title, description, children }: AuthCardProps) {
-  const scheme = useColorScheme();
-  const colors = Colors[scheme === 'dark' ? 'dark' : 'light'];
-
   return (
-    <View style={styles.card}>
-      <View style={styles.header}>
-        <Text style={[styles.title, { color: colors.text }]}>{title}</Text>
-        <Text style={[styles.description, { color: colors.textSecondary }]}>{description}</Text>
+    <View className="w-full max-w-md">
+      <View className="items-center gap-1 mb-8">
+        <Text className="text-foreground dark:text-foreground-dark text-2xl font-bold tracking-tight">
+          {title}
+        </Text>
+        <Text className="text-muted-foreground dark:text-muted-foreground-dark text-sm text-center max-w-xs">
+          {description}
+        </Text>
       </View>
       {children}
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  card: { width: '100%', maxWidth: MaxContentWidth * 0.5 },
-  header: { alignItems: 'center', gap: Spacing.one, marginBottom: Spacing.five },
-  title: { fontSize: 26, fontWeight: '700', letterSpacing: -0.4 },
-  description: { fontSize: 14, textAlign: 'center', maxWidth: 280 },
-});

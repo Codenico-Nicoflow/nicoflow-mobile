@@ -1,0 +1,69 @@
+@import 'tailwindcss/theme.css' layer(theme);
+@import 'tailwindcss/preflight.css' layer(base);
+@import 'tailwindcss/utilities.css';
+
+@import 'nativewind/theme';
+
+/* Tokens ported from nicoflow-frontend/src/index.css's @theme block (Indigo +
+   Slate palette) — keep the two repos hand-synced until a shared token
+   package exists. Light values only; dark overrides are applied per usage
+   site via the `dark:` variant (e.g. `bg-background dark:bg-background-dark`),
+   which NativeWind resolves reactively off RN's Appearance API — no .dark
+   class-on-root plumbing needed on native (that's web's DOM-only mechanism). */
+@theme {
+  --color-background: #f8fafc;
+  --color-background-dark: #0b1120;
+  --color-foreground: #0f172a;
+  --color-foreground-dark: #e2e8f0;
+
+  --color-primary: #4f46e5;
+  --color-primary-dark: #6366f1;
+  --color-primary-foreground: #ffffff;
+
+  --color-secondary: #eef2f7;
+  --color-secondary-dark: #1e293b;
+  --color-secondary-foreground: #1e293b;
+  --color-secondary-foreground-dark: #e2e8f0;
+
+  --color-muted: #e2e8f0;
+  --color-muted-dark: #1e293b;
+  --color-muted-foreground: #64748b;
+  --color-muted-foreground-dark: #94a3b8;
+
+  --color-accent: #eef2ff;
+  --color-accent-dark: #1e293b;
+  --color-accent-foreground: #3730a3;
+  --color-accent-foreground-dark: #c7d2fe;
+
+  --color-border: #e2e8f0;
+  --color-border-dark: #1e293b;
+  --color-input: #e2e8f0;
+  --color-input-dark: #283549;
+  --color-ring: #4f46e5;
+  --color-ring-dark: #6366f1;
+
+  --color-destructive: #dc2626;
+  --color-destructive-dark: #ef4444;
+  --color-destructive-foreground: #ffffff;
+  --color-destructive-foreground-dark: #0b1120;
+
+  --color-success: #16a34a;
+  --color-success-dark: #22c55e;
+  --color-warning: #d97706;
+  --color-warning-dark: #f59e0b;
+
+  --color-card: #ffffff;
+  --color-card-dark: #111a2e;
+  --color-card-foreground: #0f172a;
+  --color-card-foreground-dark: #e2e8f0;
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+
+  --shadow-xs: 0 1px 1px 0 rgba(15, 23, 42, 0.05);
+  --shadow-sm: 0 1px 3px 0 rgba(15, 23, 42, 0.08);
+  --shadow-md: 0 4px 16px 0 rgba(15, 23, 42, 0.1);
+  --shadow-lg: 0 8px 32px 0 rgba(15, 23, 42, 0.14);
+}
