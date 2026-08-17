@@ -32,12 +32,15 @@ eas secret:create --scope project --name EXPO_PUBLIC_SENTRY_DSN --value "<dsn>"
 
 `eas.json` build profiles reference these by name (`$EXPO_PUBLIC_API_URL` etc.) — no plaintext secrets are ever committed.
 
-## EAS setup (one-time, per project)
+## EAS setup
 
-1. `npx eas login`
-2. `npx eas init` — links this repo to an EAS project, fills `extra.eas.projectId` in `app.json` and the `updates.url` (currently placeholder `REPLACE_WITH_EAS_PROJECT_ID`)
-3. Set EAS Secrets (above)
-4. `eas build --profile development` / `--profile preview` / `--profile production`
+Project is linked: `@codenico/nicoflow-mobile` (https://expo.dev/accounts/codenico/projects/nicoflow-mobile), `extra.eas.projectId` and `updates.url` in `app.json` point at it.
+
+Remaining one-time steps:
+
+1. `npx eas login` (if not already)
+2. Set EAS Secrets (above)
+3. `eas build --profile development` / `--profile preview` / `--profile production`
 
 `@nicoflow/shared` is public npm — no registry auth token needed for `npm install`/CI.
 

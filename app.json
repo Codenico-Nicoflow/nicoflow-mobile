@@ -7,7 +7,6 @@
     "icon": "./assets/images/icon.png",
     "scheme": "nicoflow",
     "userInterfaceStyle": "automatic",
-    "owner": "codenico-nicoflow",
     "ios": {
       "bundleIdentifier": "com.nicoflow.mobile",
       "icon": "./assets/expo.icon"
@@ -45,12 +44,14 @@
       "policy": "appVersion"
     },
     "updates": {
-      "url": "https://u.expo.dev/REPLACE_WITH_EAS_PROJECT_ID"
+      "url": "https://u.expo.dev/8ba7ed43-92ea-4543-9290-3b3e11c61ca1"
     },
     "extra": {
+      "router": {},
       "eas": {
-        "projectId": "REPLACE_WITH_EAS_PROJECT_ID"
+        "projectId": "8ba7ed43-92ea-4543-9290-3b3e11c61ca1"
       }
-    }
+    },
+    "owner": "codenico"
   }
 }
