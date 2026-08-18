@@ -83,12 +83,12 @@ export default function SignIn() {
       <Link href="/forgot-password" style={[styles.link, { color: colors.primary }]}>
         Forgot password?
       </Link>
-      <View style={styles.bottomRow}>
+      <Text style={styles.bottomRow}>
         <Text style={{ color: colors.textSecondary }}>Don&apos;t have an account? </Text>
-        <Link href="/sign-up" style={[styles.link, { color: colors.primary }]}>
+        <Link href="/sign-up" style={{ color: colors.primary, fontWeight: '500' }}>
           Sign up
         </Link>
-      </View>
+      </Text>
     </AuthCard>
   );
 }
@@ -97,5 +97,5 @@ const styles = StyleSheet.create({
   fields: { gap: Spacing.three },
   formError: { fontSize: 14, textAlign: 'center' },
   link: { fontSize: 14, textAlign: 'center', marginTop: Spacing.three, fontWeight: '500' },
-  bottomRow: { flexDirection: 'row', justifyContent: 'center', marginTop: Spacing.one },
+  bottomRow: { fontSize: 14, textAlign: 'center', marginTop: Spacing.one },
 });
