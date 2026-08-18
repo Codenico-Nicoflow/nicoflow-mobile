@@ -11,8 +11,14 @@ import { PersistGate } from 'redux-persist/integration/react';
 import { AnimatedSplashOverlay } from '@/components/animated-icon';
 import { RootNavigator } from '@/components/root-navigator';
 import { persistor, store } from '@/lib/store';
+import { useSessionRestore } from '@/lib/store/useSessionRestore';
 
 SplashScreen.preventAutoHideAsync();
+
+function SessionRestoringNavigator() {
+  useSessionRestore();
+  return <RootNavigator />;
+}
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
@@ -23,7 +29,7 @@ export default function RootLayout() {
           <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
             <BottomSheetModalProvider>
               <AnimatedSplashOverlay />
-              <RootNavigator />
+              <SessionRestoringNavigator />
             </BottomSheetModalProvider>
           </ThemeProvider>
         </PersistGate>

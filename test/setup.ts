@@ -1,6 +1,8 @@
 import 'react-native-url-polyfill/auto';
 import 'fast-text-encoding';
 
+process.env.EXPO_PUBLIC_API_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:8080/v1';
+
 import { afterAll, afterEach, beforeAll, jest } from '@jest/globals';
 
 import { server } from './server';
