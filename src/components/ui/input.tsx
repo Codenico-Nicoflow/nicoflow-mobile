@@ -13,8 +13,16 @@ export interface InputProps extends Omit<TextInputProps, 'placeholder'> {
   error?: string;
 }
 
+const CONTAINER_HEIGHT = 56;
+const REST_FONT_SIZE = 16;
+const RAISED_FONT_SIZE = 12;
+// Where the label's baseline sits once raised — measured up from the
+// container's vertical center, clearing the input text below it entirely
+// rather than straddling the border like a naively-scaled center label does.
+const RAISED_OFFSET = 15;
+
 // Floating label: sits at placeholder height/size when empty+unfocused,
-// animates to a shrunk raised position above the border on focus or
+// animates to a shrunk raised position above the input text on focus or
 // has-value — matches nicoflow-frontend's Input treatment plus the design
 // doc's animation spec (§6), which web's CSS-only floating label can't do
 // natively so this is genuinely mobile-native motion, not a port.
@@ -27,18 +35,17 @@ export function Input({ label, error, value, onFocus, onBlur, style, ...props }:
 
   const focusProgress = useSharedValue(raised ? 1 : 0);
   const shakeX = useSharedValue(0);
+  const labelProgress = useSharedValue(raised ? 1 : 0);
 
   const borderColor = isDark ? '#283549' : '#e2e8f0';
   const ringColor = isDark ? '#6366f1' : '#4f46e5';
   const destructiveColor = isDark ? '#ef4444' : '#dc2626';
   const mutedColor = isDark ? '#94a3b8' : '#64748b';
 
-  const labelProgress = useSharedValue(raised ? 1 : 0);
-
   const animatedLabelStyle = useAnimatedStyle(() => ({
     transform: [
-      { translateY: -labelProgress.get() * 20 },
-      { scale: 1 - labelProgress.get() * 0.15 },
+      { translateY: -labelProgress.get() * RAISED_OFFSET },
+      { scale: 1 - labelProgress.get() * (1 - RAISED_FONT_SIZE / REST_FONT_SIZE) },
     ],
   }));
 
@@ -63,20 +70,29 @@ export function Input({ label, error, value, onFocus, onBlur, style, ...props }:
   return (
     <View className="gap-1">
       <Animated.View
-        style={[borderStyle, { height: 44, borderRadius: 10, paddingHorizontal: 12, justifyContent: 'center' }]}
+        style={[
+          borderStyle,
+          { height: CONTAINER_HEIGHT, borderRadius: 12, paddingHorizontal: 14, justifyContent: 'center' },
+        ]}
         className="bg-card dark:bg-card-dark">
         <Animated.Text
           style={[
             animatedLabelStyle,
-            { position: 'absolute', left: 12, color: error ? destructiveColor : mutedColor, fontSize: 15 },
+            {
+              position: 'absolute',
+              left: 14,
+              color: error ? destructiveColor : mutedColor,
+              fontSize: REST_FONT_SIZE,
+            },
           ]}
-          pointerEvents="none">
+          pointerEvents="none"
+          numberOfLines={1}>
           {label}
         </Animated.Text>
         <TextInput
           value={value}
           accessibilityLabel={label}
-          style={[{ fontSize: 15, paddingTop: raised ? 10 : 0, color: isDark ? '#e2e8f0' : '#0f172a' }, style]}
+          style={[{ fontSize: REST_FONT_SIZE, marginTop: raised ? 9 : 0, color: isDark ? '#e2e8f0' : '#0f172a' }, style]}
           onFocus={e => {
             setFocused(true);
             focusProgress.set(withTiming(1, { duration: 150 }));
