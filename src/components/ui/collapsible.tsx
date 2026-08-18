@@ -1,65 +1,79 @@
-import { SymbolView } from 'expo-symbols';
-import { PropsWithChildren, useState } from 'react';
-import { Pressable, StyleSheet } from 'react-native';
-import Animated, { FadeIn } from 'react-native-reanimated';
+import { ChevronRight } from 'lucide-react-native';
+import { createContext, type ReactNode, useContext, useState } from 'react';
+import { Pressable, Text, useColorScheme, View } from 'react-native';
+import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Spacing } from '@/constants/theme';
-import { useTheme } from '@/hooks/use-theme';
+import { cn } from '@/lib/utils/cn';
 
-export function Collapsible({ children, title }: PropsWithChildren & { title: string }) {
-  const [isOpen, setIsOpen] = useState(false);
-  const theme = useTheme();
+interface CollapsibleContextValue {
+  open: boolean;
+  setOpen: (open: boolean) => void;
+}
+
+const CollapsibleContext = createContext<CollapsibleContextValue | null>(null);
+
+function useCollapsibleContext() {
+  const ctx = useContext(CollapsibleContext);
+  if (!ctx) throw new Error('Collapsible parts must be used within <Collapsible>');
+  return ctx;
+}
+
+export interface CollapsibleProps {
+  children: ReactNode;
+  open?: boolean;
+  defaultOpen?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  className?: string;
+}
+
+export function Collapsible({ children, open, defaultOpen = false, onOpenChange, className }: CollapsibleProps) {
+  const [uncontrolledOpen, setUncontrolledOpen] = useState(defaultOpen);
+  const isControlled = open !== undefined;
+  const resolvedOpen = isControlled ? open : uncontrolledOpen;
+
+  const setOpen = (next: boolean) => {
+    if (!isControlled) setUncontrolledOpen(next);
+    onOpenChange?.(next);
+  };
 
   return (
-    <ThemedView>
-      <Pressable
-        style={({ pressed }) => [styles.heading, pressed && styles.pressedHeading]}
-        onPress={() => setIsOpen((value) => !value)}>
-        <ThemedView type="backgroundElement" style={styles.button}>
-          <SymbolView
-            name={{ ios: 'chevron.right', android: 'chevron_right', web: 'chevron_right' }}
-            size={14}
-            weight="bold"
-            tintColor={theme.text}
-            style={{ transform: [{ rotate: isOpen ? '-90deg' : '90deg' }] }}
-          />
-        </ThemedView>
-
-        <ThemedText type="small">{title}</ThemedText>
-      </Pressable>
-      {isOpen && (
-        <Animated.View entering={FadeIn.duration(200)}>
-          <ThemedView type="backgroundElement" style={styles.content}>
-            {children}
-          </ThemedView>
-        </Animated.View>
-      )}
-    </ThemedView>
+    <CollapsibleContext.Provider value={{ open: resolvedOpen, setOpen }}>
+      <View className={className}>{children}</View>
+    </CollapsibleContext.Provider>
   );
 }
 
-const styles = StyleSheet.create({
-  heading: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.two,
-  },
-  pressedHeading: {
-    opacity: 0.7,
-  },
-  button: {
-    width: Spacing.four,
-    height: Spacing.four,
-    borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  content: {
-    marginTop: Spacing.three,
-    borderRadius: Spacing.three,
-    marginLeft: Spacing.four,
-    padding: Spacing.four,
-  },
-});
+export interface CollapsibleTriggerProps {
+  title: string;
+  className?: string;
+}
+
+export function CollapsibleTrigger({ title, className }: CollapsibleTriggerProps) {
+  const { open, setOpen } = useCollapsibleContext();
+  const scheme = useColorScheme();
+  const iconColor = scheme === 'dark' ? '#e2e8f0' : '#0f172a';
+
+  return (
+    <Pressable
+      onPress={() => setOpen(!open)}
+      accessibilityRole="button"
+      accessibilityState={{ expanded: open }}
+      className={cn('flex-row items-center gap-2', className)}>
+      <View className="h-6 w-6 items-center justify-center rounded-full bg-accent dark:bg-accent-dark">
+        <ChevronRight size={14} strokeWidth={2.5} color={iconColor} style={{ transform: [{ rotate: open ? '90deg' : '0deg' }] }} />
+      </View>
+      <Text className="text-sm text-foreground dark:text-foreground-dark">{title}</Text>
+    </Pressable>
+  );
+}
+
+export function CollapsibleContent({ children, className }: { children: ReactNode; className?: string }) {
+  const { open } = useCollapsibleContext();
+  if (!open) return null;
+
+  return (
+    <Animated.View entering={FadeIn.duration(200)} exiting={FadeOut.duration(150)}>
+      <View className={cn('mt-3 ml-6 gap-2 rounded-lg bg-accent dark:bg-accent-dark p-4', className)}>{children}</View>
+    </Animated.View>
+  );
+}
