@@ -21,5 +21,6 @@ export const {
   useLogoutMutation,
   useRefreshTokenMutation,
   useRegisterMutation,
+  useUpdateProfileMutation,
 } = authApi;
 export { clearAuth, selectUser, setToken, setUser } from './slices/auth/authSlice';
