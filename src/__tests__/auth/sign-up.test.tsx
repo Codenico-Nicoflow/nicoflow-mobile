@@ -39,9 +39,9 @@ const renderSignUp = () =>
 describe('SignUp', () => {
   it('AC3: rejects a password missing an uppercase letter (shared zod schema, no drift)', async () => {
     await renderSignUp();
-    await fireEvent.changeText(screen.getByPlaceholderText('Username'), 'nico');
-    await fireEvent.changeText(screen.getByPlaceholderText('Email'), 'nico@example.com');
-    await fireEvent.changeText(screen.getByPlaceholderText('Password'), 'lowercase1');
+    await fireEvent.changeText(screen.getByLabelText('Username'), 'nico');
+    await fireEvent.changeText(screen.getByLabelText('Email'), 'nico@example.com');
+    await fireEvent.changeText(screen.getByLabelText('Password'), 'lowercase1');
     await fireEvent.press(screen.getByText('Sign up'));
 
     await waitFor(() => {
@@ -60,9 +60,9 @@ describe('SignUp', () => {
     );
 
     await renderSignUp();
-    await fireEvent.changeText(screen.getByPlaceholderText('Username'), 'nico');
-    await fireEvent.changeText(screen.getByPlaceholderText('Email'), 'nico@example.com');
-    await fireEvent.changeText(screen.getByPlaceholderText('Password'), 'Password1');
+    await fireEvent.changeText(screen.getByLabelText('Username'), 'nico');
+    await fireEvent.changeText(screen.getByLabelText('Email'), 'nico@example.com');
+    await fireEvent.changeText(screen.getByLabelText('Password'), 'Password1');
     await fireEvent.press(screen.getByText('Sign up'));
 
     await waitFor(() => {
