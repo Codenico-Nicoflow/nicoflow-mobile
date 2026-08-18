@@ -36,7 +36,7 @@ describe('ForgotPassword', () => {
     server.use(http.post(`${API}/auth/forgot-password`, () => HttpResponse.json({ data: null, error: null })));
 
     await renderForgotPassword();
-    await fireEvent.changeText(screen.getByPlaceholderText('Email'), 'exists@example.com');
+    await fireEvent.changeText(screen.getByLabelText('Email'), 'exists@example.com');
     await fireEvent.press(screen.getByText('Send reset link'));
 
     await waitFor(() => {
@@ -48,7 +48,7 @@ describe('ForgotPassword', () => {
     server.use(http.post(`${API}/auth/forgot-password`, () => HttpResponse.json({ data: null, error: null })));
 
     await renderForgotPassword();
-    await fireEvent.changeText(screen.getByPlaceholderText('Email'), 'never-registered@example.com');
+    await fireEvent.changeText(screen.getByLabelText('Email'), 'never-registered@example.com');
     await fireEvent.press(screen.getByText('Send reset link'));
 
     await waitFor(() => {

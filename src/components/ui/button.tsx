@@ -7,8 +7,7 @@ import { cn } from '@/lib/utils/cn';
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 // Ported from nicoflow-frontend's button.tsx variants — hover states dropped
-// (no hover on touch), shadow-sm/md stays as the pressed-state swap
-// (auth-button.tsx precedent), press-scale replaces the web transition.
+// (no hover on touch), press-scale replaces the web transition.
 const buttonVariants = cva('flex-row items-center justify-center gap-2 rounded-md', {
   variants: {
     variant: {

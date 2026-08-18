@@ -75,6 +75,7 @@ export function Input({ label, error, value, onFocus, onBlur, style, ...props }:
         </Animated.Text>
         <TextInput
           value={value}
+          accessibilityLabel={label}
           style={[{ fontSize: 15, paddingTop: raised ? 10 : 0, color: isDark ? '#e2e8f0' : '#0f172a' }, style]}
           onFocus={e => {
             setFocused(true);

@@ -4,20 +4,17 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { type RegisterFormData, registerSchema } from '@nicoflow/shared/schemas';
 import { Link, router } from 'expo-router';
 import { Controller, useForm } from 'react-hook-form';
-import { StyleSheet, Text, useColorScheme, View } from 'react-native';
+import { Text, View } from 'react-native';
 
-import { AuthButton } from '@/components/auth-button';
 import { AuthCard } from '@/components/auth-card';
-import { AuthTextField } from '@/components/auth-text-field';
-import { Colors, Spacing } from '@/constants/theme';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { useRegisterMutation } from '@/lib/store';
 import { resolveApiErrorMessage } from '@/lib/utils/apiError';
 
 export default function SignUp() {
   const [register, { isLoading }] = useRegisterMutation();
   const [registeredEmail, setRegisteredEmail] = useState<string | null>(null);
-  const scheme = useColorScheme();
-  const colors = Colors[scheme === 'dark' ? 'dark' : 'light'];
 
   const {
     control,
@@ -41,20 +38,20 @@ export default function SignUp() {
   if (registeredEmail) {
     return (
       <AuthCard title="Check your email" description={`We sent a verification link to ${registeredEmail}.`}>
-        <AuthButton label="Go to sign in" onPress={() => router.replace('/sign-in')} />
+        <Button label="Go to sign in" onPress={() => router.replace('/sign-in')} />
       </AuthCard>
     );
   }
 
   return (
     <AuthCard title="Create account" description="Start capturing, planning, and getting things done.">
-      <View style={styles.fields}>
+      <View className="gap-3">
         <Controller
           control={control}
           name="username"
           render={({ field: { onChange, onBlur, value } }) => (
-            <AuthTextField
-              placeholder="Username"
+            <Input
+              label="Username"
               autoCapitalize="none"
               autoCorrect={false}
               autoComplete="username"
@@ -70,8 +67,8 @@ export default function SignUp() {
           control={control}
           name="email"
           render={({ field: { onChange, onBlur, value } }) => (
-            <AuthTextField
-              placeholder="Email"
+            <Input
+              label="Email"
               keyboardType="email-address"
               autoCapitalize="none"
               autoCorrect={false}
@@ -88,8 +85,8 @@ export default function SignUp() {
           control={control}
           name="password"
           render={({ field: { onChange, onBlur, value } }) => (
-            <AuthTextField
-              placeholder="Password"
+            <Input
+              label="Password"
               secureTextEntry
               autoComplete="new-password"
               value={value}
@@ -100,20 +97,16 @@ export default function SignUp() {
           )}
         />
 
-        {errors.root && <Text style={[styles.formError, { color: colors.destructive }]}>{errors.root.message}</Text>}
+        {errors.root && (
+          <Text className="text-sm text-center text-destructive dark:text-destructive-dark">{errors.root.message}</Text>
+        )}
 
-        <AuthButton label="Sign up" onPress={handleSubmit(onSubmit)} loading={isLoading} />
+        <Button label="Sign up" onPress={handleSubmit(onSubmit)} loading={isLoading} />
       </View>
 
-      <Link href="/sign-in" style={[styles.link, { color: colors.primary }]}>
+      <Link href="/sign-in" className="text-sm text-center mt-3 font-medium text-primary dark:text-primary-dark">
         Already have an account? Sign in
       </Link>
     </AuthCard>
   );
 }
-
-const styles = StyleSheet.create({
-  fields: { gap: Spacing.three },
-  formError: { fontSize: 14, textAlign: 'center' },
-  link: { fontSize: 14, textAlign: 'center', marginTop: Spacing.three, fontWeight: '500' },
-});
