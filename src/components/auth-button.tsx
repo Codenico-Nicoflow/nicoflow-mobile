@@ -1,8 +1,6 @@
 import { useState } from 'react';
 
-import { ActivityIndicator, Pressable, StyleSheet, Text, useColorScheme } from 'react-native';
-
-import { Colors, Radius, Shadows, Spacing } from '@/constants/theme';
+import { ActivityIndicator, Pressable, Text } from 'react-native';
 
 interface AuthButtonProps {
   label: string;
@@ -16,19 +14,12 @@ interface AuthButtonProps {
 // CSS transitions for shadow, so press state swaps the static shadow token
 // instead of animating between them — visually equivalent at this scale.
 export function AuthButton({ label, onPress, loading, disabled }: AuthButtonProps) {
-  const scheme = useColorScheme();
-  const colors = Colors[scheme === 'dark' ? 'dark' : 'light'];
   const isDisabled = Boolean(loading || disabled);
   const [pressed, setPressed] = useState(false);
 
   return (
     <Pressable
-      style={[
-        styles.button,
-        { backgroundColor: colors.primary },
-        pressed ? Shadows.md : Shadows.sm,
-        isDisabled && styles.disabled,
-      ]}
+      className={`h-11 rounded-md items-center justify-center mt-2 bg-primary dark:bg-primary-dark ${pressed ? 'shadow-md' : 'shadow-sm'} ${isDisabled ? 'opacity-50' : ''}`}
       onPress={onPress}
       onPressIn={() => setPressed(true)}
       onPressOut={() => setPressed(false)}
@@ -37,16 +28,10 @@ export function AuthButton({ label, onPress, loading, disabled }: AuthButtonProp
       accessibilityLabel={label}
       accessibilityState={{ disabled: isDisabled, busy: loading }}>
       {loading ? (
-        <ActivityIndicator color={colors.primaryForeground} />
+        <ActivityIndicator color="#ffffff" />
       ) : (
-        <Text style={[styles.label, { color: colors.primaryForeground }]}>{label}</Text>
+        <Text className="text-primary-foreground text-[15px] font-semibold">{label}</Text>
       )}
     </Pressable>
   );
 }
-
-const styles = StyleSheet.create({
-  button: { height: 44, borderRadius: Radius.md, alignItems: 'center', justifyContent: 'center', marginTop: Spacing.two },
-  disabled: { opacity: 0.5 },
-  label: { fontSize: 15, fontWeight: '600' },
-});
