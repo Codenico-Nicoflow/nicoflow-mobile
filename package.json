@@ -104,7 +104,7 @@
       ]
     },
     "transformIgnorePatterns": [
-      "node_modules/(?!((jest-)?react-native|@react-native(-community)?)|expo(nent)?|@expo(nent)?/.*|@expo-google-fonts/.*|react-navigation|@react-navigation/.*|@unimodules/.*|unimodules|sentry-expo|native-base|react-native-svg|msw|@mswjs|rettime|strict-event-emitter|is-node-process|@bundled-es-modules|@open-draft|outvariant|until-async|headers-polyfill|@nicoflow/shared|immer|react-redux|@reduxjs/toolkit|reselect|redux|standard-navigation|@testing-library/react-native)"
+      "node_modules/(?!((jest-)?react-native|@react-native(-community)?)|expo(nent)?|@expo(nent)?/.*|@expo-google-fonts/.*|react-navigation|@react-navigation/.*|@unimodules/.*|unimodules|sentry-expo|native-base|react-native-svg|lucide-react-native|msw|@mswjs|rettime|strict-event-emitter|is-node-process|@bundled-es-modules|@open-draft|outvariant|until-async|headers-polyfill|@nicoflow/shared|immer|react-redux|@reduxjs/toolkit|reselect|redux|standard-navigation|@testing-library/react-native)"
     ]
   }
 }

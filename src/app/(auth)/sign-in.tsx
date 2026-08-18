@@ -30,7 +30,7 @@ export default function SignIn() {
       dispatch(setToken(result.token));
       dispatch(setUser(result.user));
       await mobileTokenStorage.setRefreshToken(result.refreshToken);
-      router.replace('/');
+      router.replace('/today');
     } catch (error) {
       setError('root', { message: resolveApiErrorMessage(error) });
     }
