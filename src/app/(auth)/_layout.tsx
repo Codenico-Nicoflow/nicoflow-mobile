@@ -48,7 +48,8 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
+    paddingTop: Spacing.six,
     padding: Spacing.four,
   },
   footer: {

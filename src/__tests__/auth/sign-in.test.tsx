@@ -48,8 +48,8 @@ const renderSignIn = () =>
 describe('SignIn', () => {
   it('renders identifier, password, and submit', async () => {
     await renderSignIn();
-    expect(screen.getByPlaceholderText('Email or username')).toBeTruthy();
-    expect(screen.getByPlaceholderText('Password')).toBeTruthy();
+    expect(screen.getByLabelText('Email or username')).toBeTruthy();
+    expect(screen.getByLabelText('Password')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Sign in' })).toBeTruthy();
   });
 
@@ -61,8 +61,8 @@ describe('SignIn', () => {
     );
 
     await renderSignIn();
-    await fireEvent.changeText(screen.getByPlaceholderText('Email or username'), 'nico@example.com');
-    await fireEvent.changeText(screen.getByPlaceholderText('Password'), 'Password1');
+    await fireEvent.changeText(screen.getByLabelText('Email or username'), 'nico@example.com');
+    await fireEvent.changeText(screen.getByLabelText('Password'), 'Password1');
     await fireEvent.press(screen.getByRole('button', { name: 'Sign in' }));
 
     await waitFor(() => {
@@ -82,8 +82,8 @@ describe('SignIn', () => {
     );
 
     await renderSignIn();
-    await fireEvent.changeText(screen.getByPlaceholderText('Email or username'), 'nico@example.com');
-    await fireEvent.changeText(screen.getByPlaceholderText('Password'), 'wrong');
+    await fireEvent.changeText(screen.getByLabelText('Email or username'), 'nico@example.com');
+    await fireEvent.changeText(screen.getByLabelText('Password'), 'wrong');
     await fireEvent.press(screen.getByRole('button', { name: 'Sign in' }));
 
     await waitFor(() => {

@@ -8,6 +8,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import authReducer, { clearAuth, setToken, setUser } from './slices/auth/authSlice';
 import { createBaseQueryWithReauth } from './slices/baseQuery';
 import { createMobileTokenStorage } from './slices/tokenStorage';
+import { createMobileWSLifecycleAdapter } from './slices/wsLifecycle';
 
 const resolveTimeZone = (): string => Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
 
@@ -17,6 +18,11 @@ const resolveTimeZone = (): string => Intl.DateTimeFormat().resolvedOptions().ti
 const lateDispatch = (action: UnknownAction): void => void store.dispatch(action);
 
 export const mobileTokenStorage = createMobileTokenStorage(() => store.getState(), lateDispatch);
+
+// Constructed once alongside tokenStorage — no WS client consumes this yet
+// (that's a later real-time story), but the adapter itself belongs here so
+// the WS client can be wired in without touching store.ts again.
+export const mobileWSLifecycleAdapter = createMobileWSLifecycleAdapter();
 
 // On a definitive session expiry (refresh failed with no recoverable token),
 // bounce to sign-in. Only navigate if we're not already there — router.replace

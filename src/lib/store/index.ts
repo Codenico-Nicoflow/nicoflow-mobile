@@ -2,10 +2,11 @@ import { authApi } from './store';
 
 // Store exports
 export type { AppDispatch, RootState } from './store';
-export { authApi, mobileTokenStorage, persistor, store } from './store';
+export { authApi, mobileTokenStorage, mobileWSLifecycleAdapter, persistor, store } from './store';
 
 // Hooks exports
 export { useAppDispatch, useAppSelector, useAppUser } from './hooks';
+export { useSessionRestore } from './useSessionRestore';
 
 // The only sanctioned refresh entry point outside baseQuery (shares its
 // single-flight mutex). Same pattern as nicoflow-frontend.
@@ -20,5 +21,6 @@ export const {
   useLogoutMutation,
   useRefreshTokenMutation,
   useRegisterMutation,
+  useUpdateProfileMutation,
 } = authApi;
 export { clearAuth, selectUser, setToken, setUser } from './slices/auth/authSlice';

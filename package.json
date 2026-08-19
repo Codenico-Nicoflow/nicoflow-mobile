@@ -6,13 +6,15 @@
     "@expo/ui": "~57.0.11",
     "@gorhom/bottom-sheet": "^5.2.14",
     "@hookform/resolvers": "^5.9.1",
-    "@nicoflow/shared": "^0.2.0",
+    "@nicoflow/shared": "^0.4.0",
     "@react-native-async-storage/async-storage": "2.2.0",
     "@reduxjs/toolkit": "^2.12.0",
+    "@sentry/react-native": "~7.11.0",
     "async-mutex": "^0.5.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "expo": "~57.0.13",
+    "expo-application": "~57.0.2",
     "expo-constants": "~57.0.11",
     "expo-device": "~57.0.1",
     "expo-font": "~57.0.1",
@@ -29,6 +31,7 @@
     "expo-web-browser": "~57.0.2",
     "lucide-react-native": "^1.31.0",
     "nativewind": "^5.0.0-preview.4",
+    "posthog-react-native": "^4.63.2",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-hook-form": "^7.85.0",
@@ -104,7 +107,7 @@
       ]
     },
     "transformIgnorePatterns": [
-      "node_modules/(?!((jest-)?react-native|@react-native(-community)?)|expo(nent)?|@expo(nent)?/.*|@expo-google-fonts/.*|react-navigation|@react-navigation/.*|@unimodules/.*|unimodules|sentry-expo|native-base|react-native-svg|msw|@mswjs|rettime|strict-event-emitter|is-node-process|@bundled-es-modules|@open-draft|outvariant|until-async|headers-polyfill|@nicoflow/shared|immer|react-redux|@reduxjs/toolkit|reselect|redux|standard-navigation|@testing-library/react-native)"
+      "node_modules/(?!((jest-)?react-native|@react-native(-community)?)|expo(nent)?|@expo(nent)?/.*|@expo-google-fonts/.*|react-navigation|@react-navigation/.*|@unimodules/.*|unimodules|sentry-expo|native-base|react-native-svg|lucide-react-native|@sentry/.*|posthog-react-native|msw|@mswjs|rettime|strict-event-emitter|is-node-process|@bundled-es-modules|@open-draft|outvariant|until-async|headers-polyfill|@nicoflow/shared|immer|react-redux|@reduxjs/toolkit|reselect|redux|standard-navigation|@testing-library/react-native)"
     ]
   }
 }
