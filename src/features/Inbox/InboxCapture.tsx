@@ -1,7 +1,8 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { bucketSchema, type BucketFormData } from '@nicoflow/shared/schemas';
+import { Sparkles } from 'lucide-react-native';
 import { Controller, useForm, useWatch } from 'react-hook-form';
-import { Text, View } from 'react-native';
+import { Text, useColorScheme, View } from 'react-native';
 
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -12,6 +13,7 @@ const MAX_LENGTH = 500;
 
 export function InboxCapture() {
   const [createBucket, { isLoading }] = useCreateBucketMutation();
+  const isDark = useColorScheme() === 'dark';
 
   const {
     control,
@@ -39,7 +41,17 @@ export function InboxCapture() {
   };
 
   return (
-    <View className="gap-2">
+    <View className="gap-3 rounded-xl border border-border dark:border-border-dark bg-card/50 dark:bg-card-dark/50 p-4">
+      <View className="flex-row items-center gap-2">
+        <Sparkles size={16} color={isDark ? '#6366f1' : '#4f46e5'} />
+        <View>
+          <Text className="text-sm font-semibold text-foreground dark:text-foreground-dark">Quick capture</Text>
+          <Text className="text-xs text-muted-foreground dark:text-muted-foreground-dark">
+            Jot down anything — sort it out later.
+          </Text>
+        </View>
+      </View>
+
       {errors.root && (
         <Alert variant="destructive">
           <AlertDescription>{errors.root.message}</AlertDescription>
