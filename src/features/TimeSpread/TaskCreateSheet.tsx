@@ -1,5 +1,4 @@
 import { RecurrenceFreq, TaskEnergy, TaskPriority } from '@nicoflow/shared/types';
-import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { forwardRef, useEffect, useState } from 'react';
 import { Text, View } from 'react-native';
 
@@ -103,8 +102,8 @@ export const TaskCreateSheet = forwardRef<SheetRef, TaskCreateSheetProps>(functi
   };
 
   return (
-    <Sheet ref={ref} snapPoints={['85%']}>
-      <BottomSheetScrollView contentContainerClassName="gap-4 pb-8">
+    <Sheet ref={ref} snapPoints={['90%']}>
+      <View className="gap-4">
         <SheetHeader>
           <SheetTitle>New task</SheetTitle>
         </SheetHeader>
@@ -139,7 +138,7 @@ export const TaskCreateSheet = forwardRef<SheetRef, TaskCreateSheetProps>(functi
         </View>
 
         <Button label="Create task" onPress={onSubmit} loading={isCreatingTask || isCreatingRule} />
-      </BottomSheetScrollView>
+      </View>
     </Sheet>
   );
 });

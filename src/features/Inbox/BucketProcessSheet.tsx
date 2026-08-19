@@ -1,5 +1,4 @@
 import { type IBucket, ProcessingResult, TaskEnergy, TaskPriority } from '@nicoflow/shared/types';
-import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { CheckSquare } from 'lucide-react-native';
 import { forwardRef, useEffect, useState } from 'react';
 import { Text, TextInput, useColorScheme, View } from 'react-native';
@@ -132,7 +131,7 @@ export const BucketProcessSheet = forwardRef<SheetRef, BucketProcessSheetProps>(
 
   return (
     <Sheet ref={ref} snapPoints={['90%']}>
-      <BottomSheetScrollView contentContainerClassName="gap-4 pb-8">
+      <View className="gap-4">
         <SheetHeader>
           <View className="flex-row items-center gap-3">
             <View className="size-10 items-center justify-center rounded-lg bg-primary/10 dark:bg-primary-dark/10">
@@ -205,7 +204,7 @@ export const BucketProcessSheet = forwardRef<SheetRef, BucketProcessSheetProps>(
         )}
 
         <Button label="Process" onPress={onSubmit} loading={isLoading} disabled={!canSubmit} />
-      </BottomSheetScrollView>
+      </View>
     </Sheet>
   );
 });

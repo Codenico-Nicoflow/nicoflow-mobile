@@ -49,14 +49,9 @@ export function TaskFieldsForm({ value, onChange, titleError }: TaskFieldsFormPr
         placeholder="Add task details…"
       />
 
-      <View className="flex-row gap-3">
-        <View className="flex-1">
-          <PriorityField value={value.priority} onChange={v => onChange('priority', v)} />
-        </View>
-        <View className="flex-1">
-          <EnergyField value={value.energy} onChange={v => onChange('energy', v)} isDark={isDark} />
-        </View>
-      </View>
+      <PriorityField value={value.priority} onChange={v => onChange('priority', v)} />
+
+      <EnergyField value={value.energy} onChange={v => onChange('energy', v)} isDark={isDark} />
 
       <View className="gap-3 rounded-lg border border-border dark:border-border-dark p-3">
         <ScheduledForField value={value.scheduledFor} onChange={v => onChange('scheduledFor', v)} />

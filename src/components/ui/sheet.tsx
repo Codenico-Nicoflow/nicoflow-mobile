@@ -5,7 +5,7 @@ import {
   BottomSheetBackdrop,
   type BottomSheetBackdropProps,
   BottomSheetModal,
-  BottomSheetView,
+  BottomSheetScrollView,
 } from '@gorhom/bottom-sheet';
 
 export interface SheetRef {
@@ -75,7 +75,9 @@ export const Sheet = forwardRef<SheetRef, SheetProps>(function Sheet(
       backdropComponent={renderBackdrop}
       backgroundStyle={{ borderRadius: 20, backgroundColor: isDark ? '#0b1120' : '#f8fafc' }}
       handleIndicatorStyle={{ width: 40, backgroundColor: isDark ? '#283549' : '#e2e8f0' }}>
-      <BottomSheetView className="flex-1 px-4">{children}</BottomSheetView>
+      <BottomSheetScrollView className="px-4" contentContainerClassName="pb-8">
+        {children}
+      </BottomSheetScrollView>
     </BottomSheetModal>
   );
 });
