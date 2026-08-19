@@ -14,8 +14,27 @@ import { Select, SelectTrigger } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils/cn';
 
-import { DateField } from './DateField';
 import { defaultRecurrence, type RecurrenceValue } from './recurrence';
+
+// Plain YYYY-MM-DD text entry — deliberately NOT DateField (Sheet+Calendar)
+// here. DateField's own Sheet mounting in the same synchronous render as
+// the Repeats Switch's toggle-on animation is the last remaining candidate
+// for a native SIGABRT that survived removing the two Selects (Frequency,
+// End) that were also mounting alongside it. Isolating this to a plain
+// TextInput removes every native-modal-mount that happens simultaneously
+// with the toggle, to confirm or rule out the mechanism.
+function InlineDateField({ value, onChange }: { value: string; onChange: (value: string) => void }) {
+  const isDark = useColorScheme() === 'dark';
+  return (
+    <TextInput
+      value={value}
+      onChangeText={onChange}
+      placeholder="YYYY-MM-DD"
+      placeholderTextColor={isDark ? '#94a3b8' : '#64748b'}
+      className="h-10 rounded-md border border-input dark:border-input-dark px-3 text-sm text-foreground dark:text-foreground-dark bg-background dark:bg-background-dark"
+    />
+  );
+}
 
 // Segmented Pressable row for a small fixed option set — deliberately not
 // the Select primitive here. Select opens its own BottomSheetModal, and
@@ -223,7 +242,7 @@ export function RecurrenceField({ value, onChange }: RecurrenceFieldProps) {
           <View className="flex-row gap-3">
             <View className="flex-1 gap-1.5">
               <Text className="text-xs text-muted-foreground dark:text-muted-foreground-dark">Starts</Text>
-              <DateField value={rule.startDate} onChange={v => v && patch({ startDate: v })} clearable={false} />
+              <InlineDateField value={rule.startDate} onChange={v => patch({ startDate: v })} />
             </View>
             <View className="flex-1 gap-1.5">
               <Text className="text-xs text-muted-foreground dark:text-muted-foreground-dark">Ends</Text>
@@ -240,7 +259,7 @@ export function RecurrenceField({ value, onChange }: RecurrenceFieldProps) {
           {rule.endDate != null && (
             <View className="gap-1.5">
               <Text className="text-xs text-muted-foreground dark:text-muted-foreground-dark">End date</Text>
-              <DateField value={rule.endDate} onChange={v => v && patch({ endDate: v })} clearable={false} />
+              <InlineDateField value={rule.endDate ?? ""} onChange={v => patch({ endDate: v })} />
             </View>
           )}
 
