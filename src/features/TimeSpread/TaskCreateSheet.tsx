@@ -1,19 +1,16 @@
 import { TaskEnergy, TaskPriority } from '@nicoflow/shared/types';
+import { normalizeScheduleForFreq } from '@nicoflow/shared/utils';
 import { forwardRef, useImperativeHandle, useRef, useState } from 'react';
 import { Text, View } from 'react-native';
 
+import { type RecurrenceValue } from '@/components/fields/recurrence';
+import { RecurrenceField } from '@/components/fields/RecurrenceField';
 import { TaskFieldsForm, type TaskFieldsValue } from '@/components/fields/TaskFieldsForm';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Select, SelectTrigger } from '@/components/ui/select';
 import { Sheet, SheetHeader, SheetTitle, type SheetRef } from '@/components/ui/sheet';
-import { useCreateTaskMutation, useGetProjectsQuery } from '@/lib/store';
-
-// RecurrenceField (components/fields/RecurrenceField.tsx) is temporarily
-// pulled from this form — toggling its Switch reproducibly crashes the app
-// natively (SIGABRT, confirmed via device crash log, JS/Hermes threads
-// idle) even after removing every nested BottomSheetModal/Sheet it mounted.
-// The files stay on disk; re-wire once the actual mechanism is found.
+import { useCreateRecurrenceRuleMutation, useCreateTaskMutation, useGetProjectsQuery } from '@/lib/store';
 
 // present(scheduledFor) instead of a plain SheetRef — the caller hands the
 // default date directly at the moment it opens the sheet, rather than via a
@@ -44,23 +41,35 @@ const emptyFields = (scheduledFor: string): TaskFieldsValue => ({
   url: '',
 });
 
+// unwrap() rejects with the mutation's transformErrorResponse output — here
+// that's the raw envelope's error half, { data: null, error: { code, message } }.
+const isApiErrorCode = (error: unknown, code: string): boolean =>
+  typeof error === 'object' &&
+  error !== null &&
+  'error' in error &&
+  typeof (error as { error?: unknown }).error === 'object' &&
+  (error as { error?: { code?: unknown } }).error?.code === code;
+
 export const TaskCreateSheet = forwardRef<TaskCreateSheetRef, TaskCreateSheetProps>(function TaskCreateSheet(
   { onCreated },
   ref
 ) {
   const { data: projectsData } = useGetProjectsQuery();
   const [createTask, { isLoading: isCreatingTask }] = useCreateTaskMutation();
+  const [createRule, { isLoading: isCreatingRule }] = useCreateRecurrenceRuleMutation();
   const sheetRef = useRef<SheetRef>(null);
 
   const [fields, setFields] = useState<TaskFieldsValue>(() => emptyFields(''));
   const [projectId, setProjectId] = useState('');
+  const [recurrence, setRecurrence] = useState<RecurrenceValue | null>(null);
   const [titleError, setTitleError] = useState<string | undefined>();
   const [projectError, setProjectError] = useState<string | undefined>();
-  const [formError, setFormError] = useState<'generic' | null>(null);
+  const [formError, setFormError] = useState<'planLimit' | 'generic' | null>(null);
 
   const resetForm = (scheduledFor: string) => {
     setFields(emptyFields(scheduledFor));
     setProjectId('');
+    setRecurrence(null);
     setTitleError(undefined);
     setProjectError(undefined);
     setFormError(null);
@@ -88,20 +97,34 @@ export const TaskCreateSheet = forwardRef<TaskCreateSheetRef, TaskCreateSheetPro
     if (missingTitle || missingProject) return;
 
     try {
-      await createTask({
-        projectId,
-        title: fields.title,
-        notes: fields.notes || undefined,
-        priority: fields.priority,
-        energy: fields.energy,
-        rollsOver: fields.rollsOver,
-        scheduledFor: fields.scheduledFor ?? undefined,
-        estimatedMinutes: fields.estimatedMinutes ?? undefined,
-        url: fields.url || undefined,
-      }).unwrap();
+      if (!recurrence) {
+        await createTask({
+          projectId,
+          title: fields.title,
+          notes: fields.notes || undefined,
+          priority: fields.priority,
+          energy: fields.energy,
+          rollsOver: fields.rollsOver,
+          scheduledFor: fields.scheduledFor ?? undefined,
+          estimatedMinutes: fields.estimatedMinutes ?? undefined,
+          url: fields.url || undefined,
+        }).unwrap();
+      } else {
+        // A repeating task is created as a rule; the backend stamps instance
+        // #1 from this same template inside the same transaction.
+        await createRule({
+          projectId,
+          title: fields.title,
+          notes: fields.notes || undefined,
+          priority: fields.priority,
+          energy: fields.energy,
+          estimatedMinutes: fields.estimatedMinutes ?? undefined,
+          ...normalizeScheduleForFreq(recurrence),
+        }).unwrap();
+      }
       onCreated();
-    } catch {
-      setFormError('generic');
+    } catch (error) {
+      setFormError(isApiErrorCode(error, 'PLAN_LIMIT_EXCEEDED') ? 'planLimit' : 'generic');
     }
   };
 
@@ -112,9 +135,16 @@ export const TaskCreateSheet = forwardRef<TaskCreateSheetRef, TaskCreateSheetPro
           <SheetTitle>New task</SheetTitle>
         </SheetHeader>
 
+        {formError === 'planLimit' && (
+          <Alert>
+            <AlertTitle>Recurrence limit reached</AlertTitle>
+            <AlertDescription>Upgrade to Pro for unlimited recurring tasks.</AlertDescription>
+          </Alert>
+        )}
         {formError === 'generic' && (
           <Alert variant="destructive">
-            <AlertDescription>Couldn&apos;t create task. Something went wrong. Try again.</AlertDescription>
+            <AlertTitle>Couldn&apos;t create task</AlertTitle>
+            <AlertDescription>Something went wrong. Try again.</AlertDescription>
           </Alert>
         )}
 
@@ -134,7 +164,9 @@ export const TaskCreateSheet = forwardRef<TaskCreateSheetRef, TaskCreateSheetPro
 
         <TaskFieldsForm value={fields} onChange={setField} titleError={titleError} />
 
-        <Button label="Create task" onPress={onSubmit} loading={isCreatingTask} />
+        <RecurrenceField value={recurrence} onChange={setRecurrence} />
+
+        <Button label="Create task" onPress={onSubmit} loading={isCreatingTask || isCreatingRule} />
       </View>
     </Sheet>
   );

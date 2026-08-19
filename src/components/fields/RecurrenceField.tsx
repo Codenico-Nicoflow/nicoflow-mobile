@@ -8,28 +8,56 @@ import {
 } from '@nicoflow/shared/types';
 import { summarizeRecurrence } from '@nicoflow/shared/utils';
 import { Repeat } from 'lucide-react-native';
+import { useState } from 'react';
 import { Pressable, Text, TextInput, useColorScheme, View } from 'react-native';
 
 import { Select, SelectTrigger } from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils/cn';
 
 import { defaultRecurrence, type RecurrenceValue } from './recurrence';
 
-// Plain YYYY-MM-DD text entry — deliberately NOT DateField (Sheet+Calendar)
-// here. DateField's own Sheet mounting in the same synchronous render as
-// the Repeats Switch's toggle-on animation is the last remaining candidate
-// for a native SIGABRT that survived removing the two Selects (Frequency,
-// End) that were also mounting alongside it. Isolating this to a plain
-// TextInput removes every native-modal-mount that happens simultaneously
-// with the toggle, to confirm or rule out the mechanism.
+// Displays/accepts DD-MM-YYYY; the value prop/onChange still carry the wire
+// format (ISO "YYYY-MM-DD" — what CreateRecurrenceRuleRequest expects), so
+// this is purely a display-format translation, not a storage format change.
+const isoToDisplay = (iso: string): string => {
+  const [y, m, d] = iso.split('-');
+  return y && m && d ? `${d}-${m}-${y}` : '';
+};
+
+const displayToISO = (display: string): string | null => {
+  const match = /^(\d{2})-(\d{2})-(\d{4})$/.exec(display);
+  if (!match) return null;
+  const [, d, m, y] = match;
+  return `${y}-${m}-${d}`;
+};
+
+// Plain text entry — deliberately NOT DateField (Sheet+Calendar) here.
+// DateField's own Sheet mounting in the same synchronous render as the
+// Repeats toggle was a candidate for the native SIGABRT this section used
+// to trigger (root-caused to the Switch primitive instead, see the toggle
+// button below) — kept as plain text for now since a full recalendar
+// picker is a separate follow-up.
 function InlineDateField({ value, onChange }: { value: string; onChange: (value: string) => void }) {
   const isDark = useColorScheme() === 'dark';
+  // Diverges from the value-derived display only while the user is actively
+  // typing (draft !== null) — otherwise renders straight from `value`, so no
+  // effect is needed to resync when the parent changes it externally (e.g.
+  // toggling Repeats off and back on reseeds via defaultRecurrence()).
+  const [draft, setDraft] = useState<string | null>(null);
+  const text = draft ?? isoToDisplay(value);
+
   return (
     <TextInput
-      value={value}
-      onChangeText={onChange}
-      placeholder="YYYY-MM-DD"
+      value={text}
+      onChangeText={setDraft}
+      onBlur={() => {
+        const iso = draft == null ? null : displayToISO(draft);
+        if (iso) onChange(iso);
+        setDraft(null);
+      }}
+      placeholder="DD-MM-YYYY"
+      keyboardType="number-pad"
+      maxLength={10}
       placeholderTextColor={isDark ? '#94a3b8' : '#64748b'}
       className="h-10 rounded-md border border-input dark:border-input-dark px-3 text-sm text-foreground dark:text-foreground-dark bg-background dark:bg-background-dark"
     />
@@ -168,7 +196,24 @@ export function RecurrenceField({ value, onChange }: RecurrenceFieldProps) {
             Turn this into a repeating task.
           </Text>
         </View>
-        <Switch checked={enabled} onCheckedChange={on => onChange(on ? defaultRecurrence() : null)} />
+        <Pressable
+          onPress={() => onChange(enabled ? null : defaultRecurrence())}
+          accessibilityRole="button"
+          accessibilityState={{ selected: enabled }}
+          className={cn(
+            'h-8 min-w-16 items-center justify-center rounded-full border px-3',
+            enabled
+              ? 'bg-primary dark:bg-primary-dark border-primary dark:border-primary-dark'
+              : 'border-input dark:border-input-dark bg-transparent'
+          )}>
+          <Text
+            className={cn(
+              'text-xs font-semibold',
+              enabled ? 'text-primary-foreground' : 'text-muted-foreground dark:text-muted-foreground-dark'
+            )}>
+            {enabled ? 'On' : 'Off'}
+          </Text>
+        </Pressable>
       </View>
 
       {enabled && (
