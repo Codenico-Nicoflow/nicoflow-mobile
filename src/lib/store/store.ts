@@ -42,7 +42,7 @@ export const authApi = createAuthApi(baseQueryWithReauth, { clearAuth, setToken,
 export const taskApi = createTaskApi(baseQueryWithReauth);
 export const areaApi = createAreaApi(baseQueryWithReauth);
 export const projectApi = createProjectApi(baseQueryWithReauth, areaApi);
-export const recurrenceApi = createRecurrenceApi(baseQueryWithReauth);
+export const recurrenceApi = createRecurrenceApi(baseQueryWithReauth, taskApi);
 export const bucketApi = createBucketApi(baseQueryWithReauth);
 
 const apiReducerPaths = [
