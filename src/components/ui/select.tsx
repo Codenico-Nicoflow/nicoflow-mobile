@@ -69,6 +69,10 @@ export const Select = forwardRef<SelectRef, SelectProps>(function Select(
         ref={modalRef}
         snapPoints={snapPoints}
         enablePanDownToClose
+        // See Sheet.tsx's comment — 'push' so a Select opened from inside
+        // another sheet (e.g. TaskCreateSheet) stacks instead of minimizing
+        // the sheet it was opened from.
+        stackBehavior="push"
         backdropComponent={renderBackdrop}
         backgroundStyle={{ borderRadius: 20, backgroundColor: isDark ? '#0b1120' : '#f8fafc' }}
         handleIndicatorStyle={{ width: 40, backgroundColor: isDark ? '#283549' : '#e2e8f0' }}>
