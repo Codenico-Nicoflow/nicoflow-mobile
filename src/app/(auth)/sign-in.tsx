@@ -37,7 +37,7 @@ export default function SignIn() {
   };
 
   return (
-    <AuthCard title="Sign in" description="Welcome back — enter your details to continue.">
+    <AuthCard title="Welcome back" description="Sign in to your Nicoflow account">
       <View className="gap-3">
         <Controller
           control={control}

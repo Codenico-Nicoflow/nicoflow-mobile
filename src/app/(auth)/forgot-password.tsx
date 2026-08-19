@@ -49,7 +49,9 @@ export default function ForgotPassword() {
   }
 
   return (
-    <AuthCard title="Forgot password" description="Enter your email and we'll send you a reset link.">
+    <AuthCard
+      title="Forgot password?"
+      description="Enter the email associated with your account and we'll send you a reset link.">
       <View className="gap-3">
         <Controller
           control={control}

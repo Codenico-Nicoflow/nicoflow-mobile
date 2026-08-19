@@ -37,14 +37,14 @@ export default function SignUp() {
 
   if (registeredEmail) {
     return (
-      <AuthCard title="Check your email" description={`We sent a verification link to ${registeredEmail}.`}>
+      <AuthCard title="Check your email" description="We've sent a verification link to your inbox. Verify your email, then sign in.">
         <Button label="Go to sign in" onPress={() => router.replace('/sign-in')} />
       </AuthCard>
     );
   }
 
   return (
-    <AuthCard title="Create account" description="Start capturing, planning, and getting things done.">
+    <AuthCard title="Create your account" description="Join Nicoflow and get organized">
       <View className="gap-3">
         <Controller
           control={control}
@@ -101,7 +101,7 @@ export default function SignUp() {
           <Text className="text-sm text-center text-destructive dark:text-destructive-dark">{errors.root.message}</Text>
         )}
 
-        <Button label="Sign up" onPress={handleSubmit(onSubmit)} loading={isLoading} />
+        <Button label="Create account" onPress={handleSubmit(onSubmit)} loading={isLoading} />
       </View>
 
       <Link href="/sign-in" className="text-sm text-center mt-3 font-medium text-primary dark:text-primary-dark">
