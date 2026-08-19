@@ -30,6 +30,10 @@ jest.mock('expo-secure-store', () => {
   };
 });
 
+jest.mock('expo-localization', () => ({
+  getLocales: jest.fn(() => [{ languageCode: 'en', languageTag: 'en-US', textDirection: 'ltr' }]),
+}));
+
 jest.mock('expo-router', () => {
   const actual = jest.requireActual('expo-router') as object;
   return {

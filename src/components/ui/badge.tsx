@@ -4,7 +4,7 @@ import { Text, View } from 'react-native';
 
 import { cn } from '@/lib/utils/cn';
 
-const badgeVariants = cva('rounded-md border px-2 py-0.5 self-start', {
+const badgeVariants = cva('flex-row items-center gap-1 rounded-md border px-2 py-0.5 self-start', {
   variants: {
     variant: {
       default: 'border-transparent bg-primary dark:bg-primary-dark',
@@ -30,13 +30,16 @@ const badgeTextVariants = cva('text-xs font-medium', {
 
 export interface BadgeProps extends VariantProps<typeof badgeVariants> {
   children: ReactNode;
+  icon?: ReactNode;
   className?: string;
+  textClassName?: string;
 }
 
-export function Badge({ children, variant, className }: BadgeProps) {
+export function Badge({ children, icon, variant, className, textClassName }: BadgeProps) {
   return (
     <View className={cn(badgeVariants({ variant }), className)}>
-      <Text className={badgeTextVariants({ variant })}>{children}</Text>
+      {icon}
+      <Text className={cn(badgeTextVariants({ variant }), textClassName)}>{children}</Text>
     </View>
   );
 }

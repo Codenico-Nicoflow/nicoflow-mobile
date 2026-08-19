@@ -41,6 +41,9 @@ function DeleteAction(_progress: SharedValue<number>, drag: SharedValue<number>)
 interface SwipeableTaskRowProps {
   task: ITask;
   onToggleStatus: (task: ITask) => void;
+  onEdit: (task: ITask) => void;
+  onCancel: (task: ITask) => void;
+  onMarkMissed: (task: ITask) => void;
   onDelete: (task: ITask) => void;
 }
 
@@ -49,7 +52,7 @@ interface SwipeableTaskRowProps {
 // destructive action must never fire straight off the gesture. Both paths
 // close() the row back to rest so a cancelled delete or a completed task
 // doesn't sit half-open.
-export function SwipeableTaskRow({ task, onToggleStatus, onDelete }: SwipeableTaskRowProps) {
+export function SwipeableTaskRow({ task, onToggleStatus, onEdit, onCancel, onMarkMissed, onDelete }: SwipeableTaskRowProps) {
   const swipeableRef = useRef<SwipeableMethods>(null);
   const alertRef = useRef<AlertDialogRef>(null);
   const [pendingDelete, setPendingDelete] = useState(false);
@@ -71,7 +74,17 @@ export function SwipeableTaskRow({ task, onToggleStatus, onDelete }: SwipeableTa
             alertRef.current?.present();
           }
         }}>
-        <TaskRow task={task} onToggleStatus={onToggleStatus} />
+        <TaskRow
+          task={task}
+          onToggleStatus={onToggleStatus}
+          onEdit={onEdit}
+          onCancel={onCancel}
+          onMarkMissed={onMarkMissed}
+          onDelete={() => {
+            setPendingDelete(true);
+            alertRef.current?.present();
+          }}
+        />
       </ReanimatedSwipeable>
 
       <AlertDialog

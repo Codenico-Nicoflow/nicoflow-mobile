@@ -1,22 +1,30 @@
-import type { ITask } from '@nicoflow/shared/types';
+import { type ITask, TaskStatus } from '@nicoflow/shared/types';
 import { Plus } from 'lucide-react-native';
 import { useRef, useState } from 'react';
 import { FlatList, Text, View } from 'react-native';
 
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useDeleteTaskMutation, useGetTimeSpreadQuery, useUpdateTaskStatusMutation } from '@/lib/store';
+import {
+  useDeleteTaskMutation,
+  useGetTimeSpreadQuery,
+  useMarkTaskMissedMutation,
+  useUpdateTaskStatusMutation,
+} from '@/lib/store';
 
 import { EMPTY_COPY, nextStatus, type Segment, SEGMENTS, segmentToScheduledFor, selectSegmentTasks } from './segments';
 import { SwipeableTaskRow } from './SwipeableTaskRow';
 import { TaskCreateSheet, type TaskCreateSheetRef } from './TaskCreateSheet';
+import { TaskEditSheet, type TaskEditSheetRef } from './TaskEditSheet';
 
 export function TimeSpreadView() {
   const [segment, setSegment] = useState<Segment>('today');
   const { data, isLoading, isFetching, refetch } = useGetTimeSpreadQuery();
   const [updateStatus] = useUpdateTaskStatusMutation();
   const [deleteTask] = useDeleteTaskMutation();
+  const [markTaskMissed] = useMarkTaskMissedMutation();
   const createSheetRef = useRef<TaskCreateSheetRef>(null);
+  const editSheetRef = useRef<TaskEditSheetRef>(null);
 
   const tasks = selectSegmentTasks(segment, data);
   // isLoading only covers the very first request; a segment switch after that
@@ -26,6 +34,18 @@ export function TimeSpreadView() {
 
   const handleToggleStatus = (task: ITask) => {
     void updateStatus({ id: task.id, status: nextStatus(task.status) });
+  };
+
+  const handleEdit = (task: ITask) => {
+    editSheetRef.current?.present(task);
+  };
+
+  const handleCancel = (task: ITask) => {
+    void updateStatus({ id: task.id, status: TaskStatus.CANCELLED });
+  };
+
+  const handleMarkMissed = (task: ITask) => {
+    void markTaskMissed({ id: task.id });
   };
 
   const handleDelete = (task: ITask) => {
@@ -56,7 +76,14 @@ export function TimeSpreadView() {
           keyExtractor={item => item.id}
           contentContainerClassName="gap-2 pb-4"
           renderItem={({ item }) => (
-            <SwipeableTaskRow task={item} onToggleStatus={handleToggleStatus} onDelete={handleDelete} />
+            <SwipeableTaskRow
+              task={item}
+              onToggleStatus={handleToggleStatus}
+              onEdit={handleEdit}
+              onCancel={handleCancel}
+              onMarkMissed={handleMarkMissed}
+              onDelete={handleDelete}
+            />
           )}
           onRefresh={refetch}
           refreshing={isFetching && !isLoading}
@@ -80,6 +107,7 @@ export function TimeSpreadView() {
       </Button>
 
       <TaskCreateSheet ref={createSheetRef} onCreated={() => createSheetRef.current?.dismiss()} />
+      <TaskEditSheet ref={editSheetRef} onUpdated={() => editSheetRef.current?.dismiss()} />
     </View>
   );
 }
