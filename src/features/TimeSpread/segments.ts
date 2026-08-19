@@ -1,4 +1,4 @@
-import type { ITask } from '@nicoflow/shared/types';
+import { type ITask, TaskStatus } from '@nicoflow/shared/types';
 
 export type Segment = 'today' | 'tomorrow' | 'week';
 
@@ -25,3 +25,10 @@ export const selectSegmentTasks = (
   if (segment === 'tomorrow') return data.tomorrow;
   return data.thisWeek;
 };
+
+// The real ITask.status enum is active|done|cancelled — no in-progress state
+// exists on the backend (NIC-1954's AC3 named a TODO/IN_PROGRESS/DONE cycle
+// that doesn't match the actual contract; the checkbox toggles active<->done,
+// same as web's TaskCompleteCheckbox).
+export const nextStatus = (current: ITask['status']): ITask['status'] =>
+  current === TaskStatus.DONE ? TaskStatus.ACTIVE : TaskStatus.DONE;

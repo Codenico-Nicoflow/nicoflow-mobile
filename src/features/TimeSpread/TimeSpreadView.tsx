@@ -1,17 +1,18 @@
-import { type ITask, TaskStatus } from '@nicoflow/shared/types';
+import type { ITask } from '@nicoflow/shared/types';
 import { useState } from 'react';
 import { FlatList, Text, View } from 'react-native';
 
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useGetTimeSpreadQuery, useUpdateTaskStatusMutation } from '@/lib/store';
+import { useDeleteTaskMutation, useGetTimeSpreadQuery, useUpdateTaskStatusMutation } from '@/lib/store';
 
-import { EMPTY_COPY, type Segment, SEGMENTS, selectSegmentTasks } from './segments';
-import { TaskRow } from './TaskRow';
+import { EMPTY_COPY, nextStatus, type Segment, SEGMENTS, selectSegmentTasks } from './segments';
+import { SwipeableTaskRow } from './SwipeableTaskRow';
 
 export function TimeSpreadView() {
   const [segment, setSegment] = useState<Segment>('today');
   const { data, isLoading, isFetching, refetch } = useGetTimeSpreadQuery();
   const [updateStatus] = useUpdateTaskStatusMutation();
+  const [deleteTask] = useDeleteTaskMutation();
 
   const tasks = selectSegmentTasks(segment, data);
   // isLoading only covers the very first request; a segment switch after that
@@ -20,8 +21,11 @@ export function TimeSpreadView() {
   const showLoading = isLoading || isFetching;
 
   const handleToggleStatus = (task: ITask) => {
-    const next = task.status === TaskStatus.DONE ? TaskStatus.ACTIVE : TaskStatus.DONE;
-    void updateStatus({ id: task.id, status: next });
+    void updateStatus({ id: task.id, status: nextStatus(task.status) });
+  };
+
+  const handleDelete = (task: ITask) => {
+    void deleteTask(task.id);
   };
 
   return (
@@ -46,7 +50,9 @@ export function TimeSpreadView() {
         data={showLoading ? [] : tasks}
         keyExtractor={item => item.id}
         contentContainerClassName="gap-2 pb-4"
-        renderItem={({ item }) => <TaskRow task={item} onToggleStatus={handleToggleStatus} />}
+        renderItem={({ item }) => (
+          <SwipeableTaskRow task={item} onToggleStatus={handleToggleStatus} onDelete={handleDelete} />
+        )}
         onRefresh={refetch}
         refreshing={isFetching && !isLoading}
         ListEmptyComponent={

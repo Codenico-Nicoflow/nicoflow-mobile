@@ -26,4 +26,4 @@ export const {
 export { clearAuth, selectUser, setToken, setUser } from './slices/auth/authSlice';
 
 // Task exports — hooks are generated on the instance constructed in store.ts
-export const { useGetTimeSpreadQuery, useUpdateTaskStatusMutation } = taskApi;
+export const { useDeleteTaskMutation, useGetTimeSpreadQuery, useUpdateTaskStatusMutation } = taskApi;

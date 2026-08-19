@@ -1,9 +1,11 @@
 import { createTaskApi } from '@nicoflow/shared/api';
+import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { configureStore } from '@reduxjs/toolkit';
 import { fetchBaseQuery } from '@reduxjs/toolkit/query';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import { http, HttpResponse } from 'msw';
 import { Provider } from 'react-redux';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { server } from '../../../test/server';
 
@@ -17,6 +19,7 @@ const mockTaskApi = createTaskApi(baseQuery);
 jest.mock('@/lib/store', () => ({
   useGetTimeSpreadQuery: () => mockTaskApi.useGetTimeSpreadQuery(),
   useUpdateTaskStatusMutation: () => mockTaskApi.useUpdateTaskStatusMutation(),
+  useDeleteTaskMutation: () => mockTaskApi.useDeleteTaskMutation(),
 }));
 
 const makeStore = () =>
@@ -47,9 +50,13 @@ const task = (overrides: Partial<Record<string, unknown>> = {}) => ({
 
 const renderView = () =>
   render(
-    <Provider store={makeStore()}>
-      <TimeSpreadView />
-    </Provider>
+    <GestureHandlerRootView>
+      <BottomSheetModalProvider>
+        <Provider store={makeStore()}>
+          <TimeSpreadView />
+        </Provider>
+      </BottomSheetModalProvider>
+    </GestureHandlerRootView>
   );
 
 describe('TimeSpreadView', () => {

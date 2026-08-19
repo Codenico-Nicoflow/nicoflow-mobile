@@ -1,6 +1,6 @@
 import type { ITask } from '@nicoflow/shared/types';
 
-import { EMPTY_COPY, selectSegmentTasks } from './segments';
+import { EMPTY_COPY, nextStatus, selectSegmentTasks } from './segments';
 
 const task = (id: string): ITask =>
   ({
@@ -43,5 +43,19 @@ describe('EMPTY_COPY', () => {
   it('has segment-specific copy for every segment', () => {
     expect(EMPTY_COPY.today).not.toBe(EMPTY_COPY.tomorrow);
     expect(EMPTY_COPY.tomorrow).not.toBe(EMPTY_COPY.week);
+  });
+});
+
+describe('nextStatus', () => {
+  it('toggles active to done', () => {
+    expect(nextStatus('active')).toBe('done');
+  });
+
+  it('toggles done back to active', () => {
+    expect(nextStatus('done')).toBe('active');
+  });
+
+  it('treats cancelled as not-done, toggling to done', () => {
+    expect(nextStatus('cancelled')).toBe('done');
   });
 });
