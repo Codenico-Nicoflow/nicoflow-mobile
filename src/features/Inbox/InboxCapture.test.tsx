@@ -43,10 +43,10 @@ describe('InboxCapture', () => {
     );
     await renderCapture();
 
-    await fireEvent.changeText(screen.getByPlaceholderText('Capture a thought…'), 'Buy milk');
-    await fireEvent.press(screen.getByRole('button', { name: 'Capture' }));
+    await fireEvent.changeText(screen.getByPlaceholderText('Capture anything on your mind...'), 'Buy milk');
+    await fireEvent.press(screen.getByRole('button', { name: 'Add to Bucket' }));
 
-    await waitFor(() => expect(screen.getByPlaceholderText('Capture a thought…').props.value).toBe(''));
+    await waitFor(() => expect(screen.getByPlaceholderText('Capture anything on your mind...').props.value).toBe(''));
   });
 
   it('AC4: preserves the typed text and shows an error when capture fails', async () => {
@@ -57,15 +57,15 @@ describe('InboxCapture', () => {
     );
     await renderCapture();
 
-    await fireEvent.changeText(screen.getByPlaceholderText('Capture a thought…'), 'Buy milk');
-    await fireEvent.press(screen.getByRole('button', { name: 'Capture' }));
+    await fireEvent.changeText(screen.getByPlaceholderText('Capture anything on your mind...'), 'Buy milk');
+    await fireEvent.press(screen.getByRole('button', { name: 'Add to Bucket' }));
 
     await waitFor(() => expect(screen.getByText(/Couldn’t save/)).toBeTruthy());
-    expect(screen.getByPlaceholderText('Capture a thought…').props.value).toBe('Buy milk');
+    expect(screen.getByPlaceholderText('Capture anything on your mind...').props.value).toBe('Buy milk');
   });
 
   it('AC2: enforces the max length at the input level', async () => {
     await renderCapture();
-    expect(screen.getByPlaceholderText('Capture a thought…').props.maxLength).toBe(500);
+    expect(screen.getByPlaceholderText('Capture anything on your mind...').props.maxLength).toBe(500);
   });
 });

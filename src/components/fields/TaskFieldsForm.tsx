@@ -1,4 +1,5 @@
 import { type TaskEnergy, type TaskPriority } from '@nicoflow/shared/types';
+import { useTranslation } from 'react-i18next';
 import { useColorScheme, View } from 'react-native';
 
 import { DescriptionField } from './DescriptionField';
@@ -32,6 +33,7 @@ interface TaskFieldsFormProps {
 // scratch and need identical fields, matching web's TaskDialog/
 // BucketProcessDialog task path field-for-field.
 export function TaskFieldsForm({ value, onChange, titleError }: TaskFieldsFormProps) {
+  const { t } = useTranslation('task');
   const isDark = useColorScheme() === 'dark';
 
   return (
@@ -39,14 +41,16 @@ export function TaskFieldsForm({ value, onChange, titleError }: TaskFieldsFormPr
       <NameField
         value={value.title}
         onChange={v => onChange('title', v)}
-        placeholder="What needs to be done?"
+        label={t('dialog.taskNameLabel')}
+        placeholder={t('dialog.taskNamePlaceholder')}
         error={titleError}
       />
 
       <DescriptionField
         value={value.notes}
         onChange={v => onChange('notes', v)}
-        placeholder="Add task details…"
+        label={t('dialog.descriptionLabel')}
+        placeholder={t('dialog.descriptionPlaceholder')}
       />
 
       <PriorityField value={value.priority} onChange={v => onChange('priority', v)} />

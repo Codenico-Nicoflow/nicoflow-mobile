@@ -1,6 +1,7 @@
 import { type IBucket, ProcessingResult, TaskEnergy, TaskPriority } from '@nicoflow/shared/types';
 import { CheckSquare } from 'lucide-react-native';
 import { forwardRef, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Text, TextInput, useColorScheme, View } from 'react-native';
 
 import { TaskFieldsForm, type TaskFieldsValue } from '@/components/fields/TaskFieldsForm';
@@ -18,12 +19,6 @@ interface BucketProcessSheetProps {
   onProcessed: () => void;
 }
 
-const TYPE_OPTIONS: { value: ProcessingResult; label: string }[] = [
-  { value: ProcessingResult.TASK, label: 'Task' },
-  { value: ProcessingResult.NOTE, label: 'Note' },
-  { value: ProcessingResult.TRASH, label: 'Trash' },
-];
-
 const emptyFields = (content: string): TaskFieldsValue => ({
   title: content.split('\n')[0]?.trim().slice(0, 255) || '',
   notes: content.split('\n').slice(1).join('\n').trim(),
@@ -39,6 +34,7 @@ export const BucketProcessSheet = forwardRef<SheetRef, BucketProcessSheetProps>(
   { bucket, onProcessed },
   ref
 ) {
+  const { t } = useTranslation(['bucket', 'task']);
   const isDark = useColorScheme() === 'dark';
   const { data: projectsData } = useGetProjectsQuery();
   const [processBucket, { isLoading }] = useProcessBucketMutation();
@@ -49,6 +45,12 @@ export const BucketProcessSheet = forwardRef<SheetRef, BucketProcessSheetProps>(
   const [noteTitle, setNoteTitle] = useState('');
   const [noteBody, setNoteBody] = useState('');
   const [error, setError] = useState<string | null>(null);
+
+  const TYPE_OPTIONS: { value: ProcessingResult; label: string }[] = [
+    { value: ProcessingResult.TASK, label: t('process.asTask') },
+    { value: ProcessingResult.NOTE, label: t('process.asNote') },
+    { value: ProcessingResult.TRASH, label: t('process.asTrash') },
+  ];
 
   // Reseeds from the tapped bucket's content whenever a different item is
   // targeted (bucket.id changes) AND on every close (see Sheet's onDismiss
@@ -149,8 +151,8 @@ export const BucketProcessSheet = forwardRef<SheetRef, BucketProcessSheetProps>(
               <CheckSquare size={20} color={isDark ? '#6366f1' : '#4f46e5'} />
             </View>
             <View className="flex-1">
-              <SheetTitle>Process Bucket Item</SheetTitle>
-              <SheetDescription>Transform this item into a task, note, or idea for later.</SheetDescription>
+              <SheetTitle>{t('processDialog.title')}</SheetTitle>
+              <SheetDescription>{t('processDialog.description')}</SheetDescription>
             </View>
           </View>
         </SheetHeader>
@@ -158,7 +160,7 @@ export const BucketProcessSheet = forwardRef<SheetRef, BucketProcessSheetProps>(
         {bucket && (
           <View className="gap-1 rounded-lg bg-muted dark:bg-muted-dark p-3">
             <Text className="text-xs font-medium text-muted-foreground dark:text-muted-foreground-dark">
-              Original content
+              {t('processDialog.originalContent')}
             </Text>
             <Text className="text-sm text-foreground dark:text-foreground-dark">{bucket.content}</Text>
           </View>
@@ -171,7 +173,9 @@ export const BucketProcessSheet = forwardRef<SheetRef, BucketProcessSheetProps>(
         )}
 
         <View className="gap-1.5">
-          <Text className="text-sm font-semibold text-foreground dark:text-foreground-dark">Turn into</Text>
+          <Text className="text-sm font-semibold text-foreground dark:text-foreground-dark">
+            {t('processDialog.processAs')}
+          </Text>
           <Select value={type} onValueChange={v => setType(v as ProcessingResult)} options={TYPE_OPTIONS}>
             <SelectTrigger />
           </Select>
@@ -179,9 +183,11 @@ export const BucketProcessSheet = forwardRef<SheetRef, BucketProcessSheetProps>(
 
         {type !== ProcessingResult.TRASH && (
           <View className="gap-1.5">
-            <Text className="text-sm font-semibold text-foreground dark:text-foreground-dark">Project</Text>
+            <Text className="text-sm font-semibold text-foreground dark:text-foreground-dark">
+              {t('projectSelector.label')}
+            </Text>
             <Select value={projectId} onValueChange={setProjectId} options={projectOptions}>
-              <SelectTrigger placeholder="Choose a project" />
+              <SelectTrigger placeholder={t('projectSelector.placeholder')} />
             </Select>
           </View>
         )}
@@ -193,28 +199,38 @@ export const BucketProcessSheet = forwardRef<SheetRef, BucketProcessSheetProps>(
         {type === ProcessingResult.NOTE && (
           <>
             <View className="gap-1.5">
-              <Text className="text-sm font-semibold text-foreground dark:text-foreground-dark">Note title</Text>
+              <Text className="text-sm font-semibold text-foreground dark:text-foreground-dark">
+                {t('processDialog.noteTitleLabel')}
+              </Text>
               <TextInput
                 value={noteTitle}
                 onChangeText={setNoteTitle}
                 maxLength={NOTE_TITLE_MAX}
+                placeholder={t('processDialog.noteTitlePlaceholder')}
                 className="h-12 rounded-md border border-input dark:border-input-dark px-3 text-base bg-background dark:bg-background-dark text-foreground dark:text-foreground-dark"
               />
             </View>
             <View className="gap-1.5">
-              <Text className="text-sm font-semibold text-foreground dark:text-foreground-dark">Note body</Text>
-              <Textarea value={noteBody} onChangeText={setNoteBody} placeholder="Note body" className="min-h-24" />
+              <Text className="text-sm font-semibold text-foreground dark:text-foreground-dark">
+                {t('processDialog.noteBodyLabel')}
+              </Text>
+              <Textarea
+                value={noteBody}
+                onChangeText={setNoteBody}
+                placeholder={t('processDialog.noteBodyPlaceholder')}
+                className="min-h-24"
+              />
             </View>
           </>
         )}
 
         {type === ProcessingResult.TRASH && (
           <Alert>
-            <AlertDescription>This item will be discarded and moved to Archived.</AlertDescription>
+            <AlertDescription>{t('processDialog.trashAlert')}</AlertDescription>
           </Alert>
         )}
 
-        <Button label="Process" onPress={onSubmit} loading={isLoading} disabled={!canSubmit} />
+        <Button label={t('actions.process')} onPress={onSubmit} loading={isLoading} disabled={!canSubmit} />
       </View>
     </Sheet>
   );

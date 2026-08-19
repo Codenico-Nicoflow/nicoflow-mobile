@@ -2,17 +2,7 @@ import { type ITask, TaskStatus } from '@nicoflow/shared/types';
 
 export type Segment = 'today' | 'tomorrow' | 'week';
 
-export const SEGMENTS: { key: Segment; label: string }[] = [
-  { key: 'today', label: 'Today' },
-  { key: 'tomorrow', label: 'Tomorrow' },
-  { key: 'week', label: 'Next 7 Days' },
-];
-
-export const EMPTY_COPY: Record<Segment, string> = {
-  today: 'Nothing scheduled for today',
-  tomorrow: 'Nothing scheduled for tomorrow',
-  week: 'Nothing scheduled in the next 7 days',
-};
+export const SEGMENT_KEYS: Segment[] = ['today', 'tomorrow', 'week'];
 
 // Maps the active segment to its slice of GetTimeSpreadResponse — the same
 // today/tomorrow/thisWeek buckets web's TimeSpreadView reads.
@@ -40,7 +30,7 @@ export const segmentToScheduledFor = (segment: Segment, today: Date = new Date()
 export interface DayGroup {
   /** ISO day key "yyyy-MM-dd" — stable for keys/testids. */
   key: string;
-  label: string;
+  date: Date;
   tasks: ITask[];
 }
 
@@ -49,12 +39,11 @@ const toISODate = (date: Date): string => {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
 };
 
-const dayLabel = (date: Date): string =>
-  date.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
-
 // Mirrors web's groupByDay (nicoflow-frontend/src/features/TimeSpread/utils.ts):
 // the "this week" bucket grouped by calendar day across the next 7 days,
 // empty days dropped. `today` is injectable so tests aren't clock-dependent.
+// Returns the raw `date` (not a pre-formatted label) so the caller can format
+// it through i18n's date-fns locale, same as web's `format(group.date, 'EEEE, MMM d')`.
 export const groupByDay = (tasks: ITask[], today: Date = new Date()): DayGroup[] => {
   const groups: DayGroup[] = [];
   for (let offset = 0; offset < 7; offset += 1) {
@@ -63,7 +52,7 @@ export const groupByDay = (tasks: ITask[], today: Date = new Date()): DayGroup[]
     const key = toISODate(date);
     const dayTasks = tasks.filter(task => task.scheduledFor === key);
     if (dayTasks.length > 0) {
-      groups.push({ key, label: dayLabel(date), tasks: dayTasks });
+      groups.push({ key, date, tasks: dayTasks });
     }
   }
   return groups;

@@ -1,12 +1,9 @@
 import { type IBucket, ProcessingResult } from '@nicoflow/shared/types';
 import { Archive, CheckSquare, FileText, Trash2 } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 import { FlatList, Text, useColorScheme, View } from 'react-native';
 
-const RESULT_META: Record<ProcessingResult, { Icon: typeof CheckSquare; label: string }> = {
-  [ProcessingResult.TASK]: { Icon: CheckSquare, label: 'Task' },
-  [ProcessingResult.NOTE]: { Icon: FileText, label: 'Note' },
-  [ProcessingResult.TRASH]: { Icon: Trash2, label: 'Trash' },
-};
+import { EmptyState } from '@/components/ui/empty-state';
 
 interface ArchivedListProps {
   items: IBucket[];
@@ -14,7 +11,14 @@ interface ArchivedListProps {
 }
 
 export function ArchivedList({ items, isLoading }: ArchivedListProps) {
+  const { t } = useTranslation('bucket');
   const mutedColor = useColorScheme() === 'dark' ? '#94a3b8' : '#64748b';
+
+  const RESULT_META: Record<ProcessingResult, { Icon: typeof CheckSquare; label: string }> = {
+    [ProcessingResult.TASK]: { Icon: CheckSquare, label: t('page.result.task') },
+    [ProcessingResult.NOTE]: { Icon: FileText, label: t('page.result.note') },
+    [ProcessingResult.TRASH]: { Icon: Trash2, label: t('page.result.trash') },
+  };
 
   return (
     <FlatList
@@ -39,12 +43,12 @@ export function ArchivedList({ items, isLoading }: ArchivedListProps) {
       }}
       ListEmptyComponent={
         isLoading ? null : (
-          <View className="items-center justify-center py-12 gap-2" testID="archived-empty">
-            <Archive size={24} color={mutedColor} />
-            <Text className="text-sm text-center text-muted-foreground dark:text-muted-foreground-dark">
-              Nothing archived yet
-            </Text>
-          </View>
+          <EmptyState
+            icon={Archive}
+            title={t('page.archived.emptyTitle')}
+            description={t('page.archived.emptyDescription')}
+            testID="archived-empty"
+          />
         )
       }
     />

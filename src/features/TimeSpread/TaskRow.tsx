@@ -1,6 +1,7 @@
 import { type ITask, TaskStatus } from '@nicoflow/shared/types';
 import { CalendarClock, CalendarX, MoreVertical } from 'lucide-react-native';
 import { useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Pressable, Text, useColorScheme, View } from 'react-native';
 
 import { Checkbox } from '@/components/ui/checkbox';
@@ -34,6 +35,7 @@ export function TaskRow({
   onScheduleTomorrow,
   onUnschedule,
 }: TaskRowProps) {
+  const { t } = useTranslation('task');
   const isDone = task.status === TaskStatus.DONE;
   const isDark = useColorScheme() === 'dark';
   const mutedColor = isDark ? '#94a3b8' : '#64748b';
@@ -43,7 +45,7 @@ export function TaskRow({
     <Pressable
       onPress={() => onEdit(task)}
       accessibilityRole="button"
-      accessibilityLabel="Edit task"
+      accessibilityLabel={t('actions.edit')}
       testID={`task-row-${task.id}`}
       className={cn(
         'flex-row items-start gap-3 rounded-xl border-s-4 border border-border dark:border-border-dark bg-card dark:bg-card-dark p-3 shadow-sm',
@@ -83,7 +85,7 @@ export function TaskRow({
                 menuRef.current?.dismiss();
                 onScheduleToday(task);
               }}>
-              Schedule for today
+              {t('timeSpread.actions.today')}
             </DropdownMenuItem>
           )}
           {segment !== 'tomorrow' && (
@@ -93,7 +95,7 @@ export function TaskRow({
                 menuRef.current?.dismiss();
                 onScheduleTomorrow(task);
               }}>
-              Move to tomorrow
+              {t('timeSpread.actions.tomorrow')}
             </DropdownMenuItem>
           )}
           <DropdownMenuItem
@@ -102,7 +104,7 @@ export function TaskRow({
               menuRef.current?.dismiss();
               onUnschedule(task);
             }}>
-            Remove from schedule
+            {t('timeSpread.actions.remove')}
           </DropdownMenuItem>
         </DropdownMenu>
 

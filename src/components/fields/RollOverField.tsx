@@ -1,4 +1,5 @@
 import { Repeat } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 import { Pressable, Text, useColorScheme, View } from 'react-native';
 
 import { Checkbox } from '@/components/ui/checkbox';
@@ -9,6 +10,7 @@ interface RollOverFieldProps {
 }
 
 export function RollOverField({ value, onChange }: RollOverFieldProps) {
+  const { t } = useTranslation('task');
   const isDark = useColorScheme() === 'dark';
 
   return (
@@ -20,9 +22,9 @@ export function RollOverField({ value, onChange }: RollOverFieldProps) {
       <Checkbox checked={value} onCheckedChange={onChange} />
       <Repeat size={16} color={isDark ? '#6366f1' : '#4f46e5'} />
       <View className="flex-1 gap-0.5">
-        <Text className="text-sm text-foreground dark:text-foreground-dark">Roll over</Text>
+        <Text className="text-sm text-foreground dark:text-foreground-dark">{t('dialog.rollsOverLabel')}</Text>
         <Text className="text-xs text-muted-foreground dark:text-muted-foreground-dark">
-          If the scheduled day passes, the task moves to Today. When off, it drops off your lists.
+          {t('dialog.rollsOverDescription')}
         </Text>
       </View>
     </Pressable>

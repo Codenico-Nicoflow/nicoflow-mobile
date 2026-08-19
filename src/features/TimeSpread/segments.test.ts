@@ -1,6 +1,6 @@
 import type { ITask } from '@nicoflow/shared/types';
 
-import { EMPTY_COPY, groupByDay, nextStatus, segmentToScheduledFor, selectSegmentTasks } from './segments';
+import { groupByDay, nextStatus, segmentToScheduledFor, selectSegmentTasks } from './segments';
 
 const task = (id: string, overrides: Partial<ITask> = {}): ITask =>
   ({
@@ -37,13 +37,6 @@ describe('selectSegmentTasks', () => {
 
   it('returns an empty array when data has not loaded yet', () => {
     expect(selectSegmentTasks('today', undefined)).toEqual([]);
-  });
-});
-
-describe('EMPTY_COPY', () => {
-  it('has segment-specific copy for every segment', () => {
-    expect(EMPTY_COPY.today).not.toBe(EMPTY_COPY.tomorrow);
-    expect(EMPTY_COPY.tomorrow).not.toBe(EMPTY_COPY.week);
   });
 });
 
@@ -98,6 +91,13 @@ describe('groupByDay', () => {
 
     expect(groups).toHaveLength(1);
     expect(groups[0]?.tasks).toHaveLength(2);
+  });
+
+  it('returns a real Date for the day, not a pre-formatted label', () => {
+    const tasks = [task('1', { scheduledFor: '2026-08-21' })];
+    const groups = groupByDay(tasks, today);
+    expect(groups[0]?.date).toBeInstanceOf(Date);
+    expect(groups[0]?.date.getDate()).toBe(21);
   });
 });
 

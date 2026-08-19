@@ -8,16 +8,17 @@ import { FieldLabel } from './FieldLabel';
 interface NameFieldProps {
   value: string;
   onChange: (value: string) => void;
+  label: string;
   placeholder: string;
   error?: string;
 }
 
-export function NameField({ value, onChange, placeholder, error }: NameFieldProps) {
+export function NameField({ value, onChange, label, placeholder, error }: NameFieldProps) {
   const isDark = useColorScheme() === 'dark';
 
   return (
     <View className="gap-1.5">
-      <FieldLabel icon={CheckSquare} label="Task Name" />
+      <FieldLabel icon={CheckSquare} label={label} />
       <TextInput
         value={value}
         onChangeText={onChange}

@@ -1,4 +1,5 @@
 import { Link, X } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 import { Pressable, TextInput, useColorScheme, View } from 'react-native';
 
 import { FieldLabel } from './FieldLabel';
@@ -9,11 +10,12 @@ interface UrlFieldProps {
 }
 
 export function UrlField({ value, onChange }: UrlFieldProps) {
+  const { t } = useTranslation('common');
   const isDark = useColorScheme() === 'dark';
 
   return (
     <View className="gap-1.5">
-      <FieldLabel icon={Link} label="URL" optional />
+      <FieldLabel icon={Link} label={t('fields.urlLabel')} optional />
       <View className="flex-row gap-2">
         <TextInput
           value={value}

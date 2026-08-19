@@ -1,21 +1,15 @@
 import { type ITask } from '@nicoflow/shared/types';
-import { Plus } from 'lucide-react-native';
+import { CalendarDays, Plus } from 'lucide-react-native';
 import { useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { FlatList, SectionList, Text, View } from 'react-native';
 
+import { EmptyState } from '@/components/ui/empty-state';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useDeleteTaskMutation, useGetTimeSpreadQuery, useScheduleTaskMutation, useUpdateTaskStatusMutation } from '@/lib/store';
 
-import {
-  EMPTY_COPY,
-  groupByDay,
-  nextStatus,
-  type Segment,
-  SEGMENTS,
-  segmentToScheduledFor,
-  selectSegmentTasks,
-} from './segments';
+import { groupByDay, nextStatus, type Segment, SEGMENT_KEYS, segmentToScheduledFor, selectSegmentTasks } from './segments';
 import { SwipeableTaskRow } from './SwipeableTaskRow';
 import { TaskCreateSheet, type TaskCreateSheetRef } from './TaskCreateSheet';
 import { TaskEditSheet, type TaskEditSheetRef } from './TaskEditSheet';
@@ -32,6 +26,7 @@ const tomorrowISO = (): string => {
 };
 
 export function TimeSpreadView() {
+  const { t, i18n } = useTranslation('task');
   const [segment, setSegment] = useState<Segment>('today');
   const { data, isLoading, isFetching, refetch } = useGetTimeSpreadQuery();
   const [updateStatus] = useUpdateTaskStatusMutation();
@@ -47,6 +42,11 @@ export function TimeSpreadView() {
   const showLoading = isLoading || isFetching;
 
   const weekGroups = useMemo(() => (segment === 'week' ? groupByDay(tasks) : []), [segment, tasks]);
+
+  const dayHeaderFormatter = useMemo(
+    () => new Intl.DateTimeFormat(i18n.resolvedLanguage, { weekday: 'long', month: 'short', day: 'numeric' }),
+    [i18n.resolvedLanguage]
+  );
 
   const handleToggleStatus = (task: ITask) => {
     void updateStatus({ id: task.id, status: nextStatus(task.status) });
@@ -86,11 +86,12 @@ export function TimeSpreadView() {
   );
 
   const emptyState = (
-    <View className="items-center justify-center py-12" testID="timespread-empty">
-      <Text className="text-sm text-center text-muted-foreground dark:text-muted-foreground-dark">
-        {EMPTY_COPY[segment]}
-      </Text>
-    </View>
+    <EmptyState
+      icon={CalendarDays}
+      title={t(`timeSpread.${segment}.emptyTitle`)}
+      description={t(`timeSpread.${segment}.emptyDescription`)}
+      testID="timespread-empty"
+    />
   );
 
   return (
@@ -98,15 +99,15 @@ export function TimeSpreadView() {
       <View className="flex-1 gap-4 px-4 pt-4">
         <View>
           <Text className="text-2xl font-bold text-foreground dark:text-foreground-dark">
-            {SEGMENTS.find(s => s.key === segment)?.label}
+            {t(`timeSpread.${segment}.title`)}
           </Text>
         </View>
 
         <Tabs value={segment} onValueChange={value => setSegment(value as Segment)}>
           <TabsList>
-            {SEGMENTS.map(s => (
-              <TabsTrigger key={s.key} value={s.key}>
-                {s.label}
+            {SEGMENT_KEYS.map(key => (
+              <TabsTrigger key={key} value={key}>
+                {t(`timeSpread.${key}.title`)}
               </TabsTrigger>
             ))}
           </TabsList>
@@ -114,7 +115,11 @@ export function TimeSpreadView() {
 
         {segment === 'week' ? (
           <SectionList
-            sections={showLoading ? [] : weekGroups.map(g => ({ title: g.label, key: g.key, data: g.tasks }))}
+            sections={
+              showLoading
+                ? []
+                : weekGroups.map(g => ({ title: dayHeaderFormatter.format(g.date), key: g.key, data: g.tasks }))
+            }
             keyExtractor={item => item.id}
             contentContainerClassName="gap-2 pb-4"
             renderSectionHeader={({ section }) => (

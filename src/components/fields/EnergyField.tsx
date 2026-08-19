@@ -1,5 +1,6 @@
 import { TaskEnergy } from '@nicoflow/shared/types';
 import { Zap } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 import { Pressable, Text, View } from 'react-native';
 
 import { ENERGY_OPTIONS } from '@/lib/constants/energy';
@@ -14,9 +15,11 @@ interface EnergyFieldProps {
 }
 
 export function EnergyField({ value, onChange, isDark }: EnergyFieldProps) {
+  const { t } = useTranslation(['common', 'task']);
+
   return (
     <View className="gap-1.5">
-      <FieldLabel icon={Zap} label="Energy" />
+      <FieldLabel icon={Zap} label={t('common:fields.energyLabel')} />
       <View
         className="flex-row rounded-lg bg-muted dark:bg-muted-dark p-1"
         role="radiogroup"
@@ -42,7 +45,7 @@ export function EnergyField({ value, onChange, isDark }: EnergyFieldProps) {
                     ? 'text-foreground dark:text-foreground-dark'
                     : 'text-muted-foreground dark:text-muted-foreground-dark'
                 )}>
-                {option.label}
+                {t(`task:energy.${option.value}`)}
               </Text>
             </Pressable>
           );

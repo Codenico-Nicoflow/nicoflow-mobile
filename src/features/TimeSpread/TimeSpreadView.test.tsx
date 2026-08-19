@@ -122,6 +122,6 @@ describe('TimeSpreadView', () => {
     );
     await renderView();
     await waitFor(() => expect(screen.getByTestId('timespread-empty')).toBeTruthy());
-    expect(screen.getByText('Nothing scheduled for today')).toBeTruthy();
+    expect(screen.getByText('Nothing scheduled for today.')).toBeTruthy();
   });
 });

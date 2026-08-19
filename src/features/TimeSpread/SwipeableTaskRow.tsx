@@ -1,6 +1,7 @@
 import { type ITask } from '@nicoflow/shared/types';
 import { Check, Trash2 } from 'lucide-react-native';
 import { useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { type SwipeableMethods } from 'react-native-gesture-handler/ReanimatedSwipeable';
 import ReanimatedSwipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
 import Reanimated, { type SharedValue, useAnimatedStyle } from 'react-native-reanimated';
@@ -67,6 +68,7 @@ export function SwipeableTaskRow({
   onUnschedule,
   onDelete,
 }: SwipeableTaskRowProps) {
+  const { t } = useTranslation(['task', 'common']);
   const swipeableRef = useRef<SwipeableMethods>(null);
   const alertRef = useRef<AlertDialogRef>(null);
   const [pendingDelete, setPendingDelete] = useState(false);
@@ -106,8 +108,8 @@ export function SwipeableTaskRow({
           swipeableRef.current?.close();
         }}>
         <AlertDialogHeader>
-          <AlertDialogTitle>Delete task?</AlertDialogTitle>
-          <AlertDialogDescription>This can&apos;t be undone.</AlertDialogDescription>
+          <AlertDialogTitle>{t('task:deleteDialog.title')}</AlertDialogTitle>
+          <AlertDialogDescription>{t('task:deleteDialog.description', { name: task.title })}</AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogAction
@@ -115,9 +117,9 @@ export function SwipeableTaskRow({
               if (pendingDelete) onDelete(task);
               alertRef.current?.dismiss();
             }}>
-            Delete
+            {t('common:actions.delete')}
           </AlertDialogAction>
-          <AlertDialogCancel onPress={() => alertRef.current?.dismiss()}>Cancel</AlertDialogCancel>
+          <AlertDialogCancel onPress={() => alertRef.current?.dismiss()}>{t('common:actions.cancel')}</AlertDialogCancel>
         </AlertDialogFooter>
       </AlertDialog>
     </>
