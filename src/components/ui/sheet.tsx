@@ -65,6 +65,13 @@ export const Sheet = forwardRef<SheetRef, SheetProps>(function Sheet(
       enablePanDownToClose={enablePanDownToClose}
       onDismiss={onDismiss}
       onChange={index => setIsOpen(index >= 0)}
+      // 'switch' (the gorhom default) minimizes whatever sheet is already
+      // open when a new one presents — fine for two independent sheets, but
+      // when a Select opens from inside this Sheet (BucketProcessSheet's
+      // project/type pickers) it minimizes THIS sheet instead of stacking on
+      // top, which reads as the outer sheet auto-closing mid-pick. 'push'
+      // keeps every sheet independent so nesting works.
+      stackBehavior="push"
       backdropComponent={renderBackdrop}
       backgroundStyle={{ borderRadius: 20, backgroundColor: isDark ? '#0b1120' : '#f8fafc' }}
       handleIndicatorStyle={{ width: 40, backgroundColor: isDark ? '#283549' : '#e2e8f0' }}>
