@@ -1,4 +1,11 @@
-import { createAreaApi, createAuthApi, createProjectApi, createRecurrenceApi, createTaskApi } from '@nicoflow/shared/api';
+import {
+  createAreaApi,
+  createAuthApi,
+  createBucketApi,
+  createProjectApi,
+  createRecurrenceApi,
+  createTaskApi,
+} from '@nicoflow/shared/api';
 import { router } from 'expo-router';
 import { combineReducers, configureStore, type UnknownAction } from '@reduxjs/toolkit';
 import { setupListeners } from '@reduxjs/toolkit/query';
@@ -36,6 +43,7 @@ export const taskApi = createTaskApi(baseQueryWithReauth);
 export const areaApi = createAreaApi(baseQueryWithReauth);
 export const projectApi = createProjectApi(baseQueryWithReauth, areaApi);
 export const recurrenceApi = createRecurrenceApi(baseQueryWithReauth);
+export const bucketApi = createBucketApi(baseQueryWithReauth);
 
 const apiReducerPaths = [
   authApi.reducerPath,
@@ -43,6 +51,7 @@ const apiReducerPaths = [
   areaApi.reducerPath,
   projectApi.reducerPath,
   recurrenceApi.reducerPath,
+  bucketApi.reducerPath,
 ] as const;
 
 const combinedReducer = combineReducers({
@@ -52,6 +61,7 @@ const combinedReducer = combineReducers({
   [areaApi.reducerPath]: areaApi.reducer,
   [projectApi.reducerPath]: projectApi.reducer,
   [recurrenceApi.reducerPath]: recurrenceApi.reducer,
+  [bucketApi.reducerPath]: bucketApi.reducer,
 });
 
 type CombinedState = ReturnType<typeof combinedReducer>;
@@ -83,7 +93,14 @@ export const store = configureStore({
       serializableCheck: {
         ignoredActions: [FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, REGISTER],
       },
-    }).concat(authApi.middleware, taskApi.middleware, areaApi.middleware, projectApi.middleware, recurrenceApi.middleware),
+    }).concat(
+      authApi.middleware,
+      taskApi.middleware,
+      areaApi.middleware,
+      projectApi.middleware,
+      recurrenceApi.middleware,
+      bucketApi.middleware
+    ),
 });
 
 export const persistor = persistStore(store);

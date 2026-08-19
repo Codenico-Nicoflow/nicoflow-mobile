@@ -1,10 +1,11 @@
-import { authApi, projectApi, recurrenceApi, taskApi } from './store';
+import { authApi, bucketApi, projectApi, recurrenceApi, taskApi } from './store';
 
 // Store exports
 export type { AppDispatch, RootState } from './store';
 export {
   areaApi,
   authApi,
+  bucketApi,
   mobileTokenStorage,
   mobileWSLifecycleAdapter,
   persistor,
@@ -44,3 +45,7 @@ export const { useGetProjectsQuery } = projectApi;
 
 // Recurrence exports — a repeating task is created as a rule, not a task field
 export const { useCreateRecurrenceRuleMutation } = recurrenceApi;
+
+// Bucket exports — hooks are generated on the instance constructed in store.ts
+export const { useCreateBucketMutation, useDeleteBucketMutation, useGetBucketsQuery, useProcessBucketMutation } =
+  bucketApi;
