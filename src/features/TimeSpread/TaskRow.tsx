@@ -1,6 +1,6 @@
 import { type ITask, TaskStatus } from '@nicoflow/shared/types';
 import { Repeat } from 'lucide-react-native';
-import { Text, View } from 'react-native';
+import { Text, useColorScheme, View } from 'react-native';
 
 import { Checkbox } from '@/components/ui/checkbox';
 import { cn } from '@/lib/utils/cn';
@@ -19,6 +19,7 @@ interface TaskRowProps {
 export function TaskRow({ task, onToggleStatus }: TaskRowProps) {
   const isDone = task.status === TaskStatus.DONE;
   const hasRecurrence = !!task.recurrenceRuleId;
+  const mutedColor = useColorScheme() === 'dark' ? '#94a3b8' : '#64748b';
 
   return (
     <View
@@ -40,7 +41,7 @@ export function TaskRow({ task, onToggleStatus }: TaskRowProps) {
             {task.scheduledTime && (
               <Text className="text-xs text-muted-foreground dark:text-muted-foreground-dark">{task.scheduledTime}</Text>
             )}
-            {hasRecurrence && <Repeat size={12} className="text-muted-foreground dark:text-muted-foreground-dark" />}
+            {hasRecurrence && <Repeat size={12} color={mutedColor} />}
           </View>
         )}
       </View>
