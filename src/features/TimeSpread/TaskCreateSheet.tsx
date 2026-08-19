@@ -1,15 +1,16 @@
-import { RecurrenceFreq, TaskEnergy, TaskPriority } from '@nicoflow/shared/types';
+import { TaskEnergy, TaskPriority } from '@nicoflow/shared/types';
+import { normalizeScheduleForFreq } from '@nicoflow/shared/utils';
 import { forwardRef, useImperativeHandle, useRef, useState } from 'react';
 import { Text, View } from 'react-native';
 
+import { type RecurrenceValue } from '@/components/fields/recurrence';
+import { RecurrenceField } from '@/components/fields/RecurrenceField';
 import { TaskFieldsForm, type TaskFieldsValue } from '@/components/fields/TaskFieldsForm';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Select, SelectTrigger } from '@/components/ui/select';
 import { Sheet, SheetHeader, SheetTitle, type SheetRef } from '@/components/ui/sheet';
 import { useCreateRecurrenceRuleMutation, useCreateTaskMutation, useGetProjectsQuery } from '@/lib/store';
-
-import { buildRecurrenceSchedule, RECURRENCE_OPTIONS } from './recurrence';
 
 // present(scheduledFor) instead of a plain SheetRef — the caller hands the
 // default date directly at the moment it opens the sheet, rather than via a
@@ -60,7 +61,7 @@ export const TaskCreateSheet = forwardRef<TaskCreateSheetRef, TaskCreateSheetPro
 
   const [fields, setFields] = useState<TaskFieldsValue>(() => emptyFields(''));
   const [projectId, setProjectId] = useState('');
-  const [recurrence, setRecurrence] = useState('none');
+  const [recurrence, setRecurrence] = useState<RecurrenceValue | null>(null);
   const [titleError, setTitleError] = useState<string | undefined>();
   const [projectError, setProjectError] = useState<string | undefined>();
   const [formError, setFormError] = useState<'planLimit' | 'generic' | null>(null);
@@ -68,7 +69,7 @@ export const TaskCreateSheet = forwardRef<TaskCreateSheetRef, TaskCreateSheetPro
   const resetForm = (scheduledFor: string) => {
     setFields(emptyFields(scheduledFor));
     setProjectId('');
-    setRecurrence('none');
+    setRecurrence(null);
     setTitleError(undefined);
     setProjectError(undefined);
     setFormError(null);
@@ -96,7 +97,7 @@ export const TaskCreateSheet = forwardRef<TaskCreateSheetRef, TaskCreateSheetPro
     if (missingTitle || missingProject) return;
 
     try {
-      if (recurrence === 'none') {
+      if (!recurrence) {
         await createTask({
           projectId,
           title: fields.title,
@@ -109,6 +110,8 @@ export const TaskCreateSheet = forwardRef<TaskCreateSheetRef, TaskCreateSheetPro
           url: fields.url || undefined,
         }).unwrap();
       } else {
+        // A repeating task is created as a rule; the backend stamps instance
+        // #1 from this same template inside the same transaction.
         await createRule({
           projectId,
           title: fields.title,
@@ -116,7 +119,7 @@ export const TaskCreateSheet = forwardRef<TaskCreateSheetRef, TaskCreateSheetPro
           priority: fields.priority,
           energy: fields.energy,
           estimatedMinutes: fields.estimatedMinutes ?? undefined,
-          ...buildRecurrenceSchedule(recurrence as (typeof RecurrenceFreq)['DAILY' | 'WEEKLY' | 'MONTHLY']),
+          ...normalizeScheduleForFreq(recurrence),
         }).unwrap();
       }
       onCreated();
@@ -161,12 +164,7 @@ export const TaskCreateSheet = forwardRef<TaskCreateSheetRef, TaskCreateSheetPro
 
         <TaskFieldsForm value={fields} onChange={setField} titleError={titleError} />
 
-        <View className="gap-1.5">
-          <Text className="text-sm font-semibold text-foreground dark:text-foreground-dark">Repeat</Text>
-          <Select value={recurrence} onValueChange={setRecurrence} options={RECURRENCE_OPTIONS}>
-            <SelectTrigger placeholder="None" />
-          </Select>
-        </View>
+        <RecurrenceField value={recurrence} onChange={setRecurrence} />
 
         <Button label="Create task" onPress={onSubmit} loading={isCreatingTask || isCreatingRule} />
       </View>
