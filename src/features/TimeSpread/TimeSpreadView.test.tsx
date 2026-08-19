@@ -24,6 +24,7 @@ jest.mock('@/lib/store', () => ({
   useUpdateTaskStatusMutation: () => mockTaskApi.useUpdateTaskStatusMutation(),
   useUpdateTaskMutation: () => mockTaskApi.useUpdateTaskMutation(),
   useMarkTaskMissedMutation: () => mockTaskApi.useMarkTaskMissedMutation(),
+  useScheduleTaskMutation: () => mockTaskApi.useScheduleTaskMutation(),
   useDeleteTaskMutation: () => mockTaskApi.useDeleteTaskMutation(),
   useCreateTaskMutation: () => mockTaskApi.useCreateTaskMutation(),
   useGetProjectsQuery: () => mockProjectApi.useGetProjectsQuery(),

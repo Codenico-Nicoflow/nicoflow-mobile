@@ -1,5 +1,5 @@
 import { type ITask, TaskStatus } from '@nicoflow/shared/types';
-import { Ban, CalendarX, Edit, MoreVertical, Trash2 } from 'lucide-react-native';
+import { CalendarClock, CalendarX, MoreVertical } from 'lucide-react-native';
 import { useRef } from 'react';
 import { Pressable, Text, useColorScheme, View } from 'react-native';
 
@@ -8,28 +8,32 @@ import { DropdownMenu, DropdownMenuItem, type DropdownMenuRef } from '@/componen
 import { PRIORITY_BORDER_COLOR } from '@/lib/constants/priority';
 import { cn } from '@/lib/utils/cn';
 
+import type { Segment } from './segments';
 import { TaskChips } from './TaskChips';
-
-// Mirrors the backend's own mark-missed guard (today-or-past, active,
-// recurring, unreaped) — same rule as web's TaskItem.canMarkMissed — so the
-// menu doesn't offer an action the server would reject.
-const canMarkMissed = (task: ITask): boolean =>
-  task.status === TaskStatus.ACTIVE &&
-  !!task.recurrenceRuleId &&
-  !task.occurrenceStatus &&
-  !!task.occurrenceDate &&
-  task.occurrenceDate <= new Date().toISOString().slice(0, 10);
 
 interface TaskRowProps {
   task: ITask;
+  segment: Segment;
   onToggleStatus: (task: ITask) => void;
   onEdit: (task: ITask) => void;
-  onCancel: (task: ITask) => void;
-  onMarkMissed: (task: ITask) => void;
-  onDelete: (task: ITask) => void;
+  onScheduleToday: (task: ITask) => void;
+  onScheduleTomorrow: (task: ITask) => void;
+  onUnschedule: (task: ITask) => void;
 }
 
-export function TaskRow({ task, onToggleStatus, onEdit, onCancel, onMarkMissed, onDelete }: TaskRowProps) {
+// Mirrors web's TimeSpreadRow (nicoflow-frontend/src/features/TimeSpread/components/TimeSpreadRow.tsx):
+// the actions menu here is reschedule shortcuts, not the project-view
+// Edit/Cancel/Mark-missed/Delete set — this is a scheduling surface, not the
+// task's home. Editing other fields happens by tapping the card.
+export function TaskRow({
+  task,
+  segment,
+  onToggleStatus,
+  onEdit,
+  onScheduleToday,
+  onScheduleTomorrow,
+  onUnschedule,
+}: TaskRowProps) {
   const isDone = task.status === TaskStatus.DONE;
   const isDark = useColorScheme() === 'dark';
   const mutedColor = isDark ? '#94a3b8' : '#64748b';
@@ -65,10 +69,6 @@ export function TaskRow({ task, onToggleStatus, onEdit, onCancel, onMarkMissed, 
       </View>
 
       <View className="flex-row items-center gap-1">
-        <Pressable onPress={() => onEdit(task)} accessibilityRole="button" accessibilityLabel="Edit task" className="p-1">
-          <Edit size={16} color={mutedColor} />
-        </Pressable>
-
         <DropdownMenu
           ref={menuRef}
           trigger={
@@ -76,40 +76,33 @@ export function TaskRow({ task, onToggleStatus, onEdit, onCancel, onMarkMissed, 
               <MoreVertical size={16} color={mutedColor} />
             </View>
           }>
-          <DropdownMenuItem
-            icon={<Edit size={16} color={mutedColor} />}
-            onPress={() => {
-              menuRef.current?.dismiss();
-              onEdit(task);
-            }}>
-            Edit
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            icon={<Ban size={16} color={mutedColor} />}
-            onPress={() => {
-              menuRef.current?.dismiss();
-              onCancel(task);
-            }}>
-            Cancel
-          </DropdownMenuItem>
-          {canMarkMissed(task) && (
+          {segment !== 'today' && (
             <DropdownMenuItem
-              icon={<CalendarX size={16} color={mutedColor} />}
+              icon={<CalendarClock size={16} color={mutedColor} />}
               onPress={() => {
                 menuRef.current?.dismiss();
-                onMarkMissed(task);
+                onScheduleToday(task);
               }}>
-              Mark missed
+              Schedule for today
+            </DropdownMenuItem>
+          )}
+          {segment !== 'tomorrow' && (
+            <DropdownMenuItem
+              icon={<CalendarClock size={16} color={mutedColor} />}
+              onPress={() => {
+                menuRef.current?.dismiss();
+                onScheduleTomorrow(task);
+              }}>
+              Move to tomorrow
             </DropdownMenuItem>
           )}
           <DropdownMenuItem
-            variant="destructive"
-            icon={<Trash2 size={16} color={isDark ? '#ef4444' : '#dc2626'} />}
+            icon={<CalendarX size={16} color={mutedColor} />}
             onPress={() => {
               menuRef.current?.dismiss();
-              onDelete(task);
+              onUnschedule(task);
             }}>
-            Delete
+            Remove from schedule
           </DropdownMenuItem>
         </DropdownMenu>
 

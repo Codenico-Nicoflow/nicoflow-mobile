@@ -1,28 +1,42 @@
-import { type ITask, TaskStatus } from '@nicoflow/shared/types';
+import { type ITask } from '@nicoflow/shared/types';
 import { Plus } from 'lucide-react-native';
-import { useRef, useState } from 'react';
-import { FlatList, Text, View } from 'react-native';
+import { useMemo, useRef, useState } from 'react';
+import { FlatList, SectionList, Text, View } from 'react-native';
 
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import {
-  useDeleteTaskMutation,
-  useGetTimeSpreadQuery,
-  useMarkTaskMissedMutation,
-  useUpdateTaskStatusMutation,
-} from '@/lib/store';
+import { useDeleteTaskMutation, useGetTimeSpreadQuery, useScheduleTaskMutation, useUpdateTaskStatusMutation } from '@/lib/store';
 
-import { EMPTY_COPY, nextStatus, type Segment, SEGMENTS, segmentToScheduledFor, selectSegmentTasks } from './segments';
+import {
+  EMPTY_COPY,
+  groupByDay,
+  nextStatus,
+  type Segment,
+  SEGMENTS,
+  segmentToScheduledFor,
+  selectSegmentTasks,
+} from './segments';
 import { SwipeableTaskRow } from './SwipeableTaskRow';
 import { TaskCreateSheet, type TaskCreateSheetRef } from './TaskCreateSheet';
 import { TaskEditSheet, type TaskEditSheetRef } from './TaskEditSheet';
+
+const todayISO = (date: Date = new Date()): string => {
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+};
+
+const tomorrowISO = (): string => {
+  const d = new Date();
+  d.setDate(d.getDate() + 1);
+  return todayISO(d);
+};
 
 export function TimeSpreadView() {
   const [segment, setSegment] = useState<Segment>('today');
   const { data, isLoading, isFetching, refetch } = useGetTimeSpreadQuery();
   const [updateStatus] = useUpdateTaskStatusMutation();
+  const [scheduleTask] = useScheduleTaskMutation();
   const [deleteTask] = useDeleteTaskMutation();
-  const [markTaskMissed] = useMarkTaskMissedMutation();
   const createSheetRef = useRef<TaskCreateSheetRef>(null);
   const editSheetRef = useRef<TaskEditSheetRef>(null);
 
@@ -32,6 +46,8 @@ export function TimeSpreadView() {
   // the previous segment's stale list while the new one loads (AC1).
   const showLoading = isLoading || isFetching;
 
+  const weekGroups = useMemo(() => (segment === 'week' ? groupByDay(tasks) : []), [segment, tasks]);
+
   const handleToggleStatus = (task: ITask) => {
     void updateStatus({ id: task.id, status: nextStatus(task.status) });
   };
@@ -40,17 +56,42 @@ export function TimeSpreadView() {
     editSheetRef.current?.present(task);
   };
 
-  const handleCancel = (task: ITask) => {
-    void updateStatus({ id: task.id, status: TaskStatus.CANCELLED });
+  const handleScheduleToday = (task: ITask) => {
+    void scheduleTask({ id: task.id, scheduledFor: todayISO() });
   };
 
-  const handleMarkMissed = (task: ITask) => {
-    void markTaskMissed({ id: task.id });
+  const handleScheduleTomorrow = (task: ITask) => {
+    void scheduleTask({ id: task.id, scheduledFor: tomorrowISO() });
+  };
+
+  const handleUnschedule = (task: ITask) => {
+    void scheduleTask({ id: task.id, scheduledFor: null });
   };
 
   const handleDelete = (task: ITask) => {
     void deleteTask(task.id);
   };
+
+  const renderRow = (item: ITask) => (
+    <SwipeableTaskRow
+      task={item}
+      segment={segment}
+      onToggleStatus={handleToggleStatus}
+      onEdit={handleEdit}
+      onScheduleToday={handleScheduleToday}
+      onScheduleTomorrow={handleScheduleTomorrow}
+      onUnschedule={handleUnschedule}
+      onDelete={handleDelete}
+    />
+  );
+
+  const emptyState = (
+    <View className="items-center justify-center py-12" testID="timespread-empty">
+      <Text className="text-sm text-center text-muted-foreground dark:text-muted-foreground-dark">
+        {EMPTY_COPY[segment]}
+      </Text>
+    </View>
+  );
 
   return (
     <View className="flex-1">
@@ -71,32 +112,32 @@ export function TimeSpreadView() {
           </TabsList>
         </Tabs>
 
-        <FlatList
-          data={showLoading ? [] : tasks}
-          keyExtractor={item => item.id}
-          contentContainerClassName="gap-2 pb-4"
-          renderItem={({ item }) => (
-            <SwipeableTaskRow
-              task={item}
-              onToggleStatus={handleToggleStatus}
-              onEdit={handleEdit}
-              onCancel={handleCancel}
-              onMarkMissed={handleMarkMissed}
-              onDelete={handleDelete}
-            />
-          )}
-          onRefresh={refetch}
-          refreshing={isFetching && !isLoading}
-          ListEmptyComponent={
-            showLoading ? null : (
-              <View className="items-center justify-center py-12" testID="timespread-empty">
-                <Text className="text-sm text-center text-muted-foreground dark:text-muted-foreground-dark">
-                  {EMPTY_COPY[segment]}
-                </Text>
-              </View>
-            )
-          }
-        />
+        {segment === 'week' ? (
+          <SectionList
+            sections={showLoading ? [] : weekGroups.map(g => ({ title: g.label, key: g.key, data: g.tasks }))}
+            keyExtractor={item => item.id}
+            contentContainerClassName="gap-2 pb-4"
+            renderSectionHeader={({ section }) => (
+              <Text className="pb-2 pt-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground dark:text-muted-foreground-dark">
+                {section.title}
+              </Text>
+            )}
+            renderItem={({ item }) => <View className="pb-2">{renderRow(item)}</View>}
+            onRefresh={refetch}
+            refreshing={isFetching && !isLoading}
+            ListEmptyComponent={showLoading ? null : emptyState}
+          />
+        ) : (
+          <FlatList
+            data={showLoading ? [] : tasks}
+            keyExtractor={item => item.id}
+            contentContainerClassName="gap-2 pb-4"
+            renderItem={({ item }) => renderRow(item)}
+            onRefresh={refetch}
+            refreshing={isFetching && !isLoading}
+            ListEmptyComponent={showLoading ? null : emptyState}
+          />
+        )}
       </View>
 
       <Button

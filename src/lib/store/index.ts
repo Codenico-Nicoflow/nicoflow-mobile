@@ -42,6 +42,7 @@ export const {
   useDeleteTaskMutation,
   useGetTimeSpreadQuery,
   useMarkTaskMissedMutation,
+  useScheduleTaskMutation,
   useUpdateTaskMutation,
   useUpdateTaskStatusMutation,
 } = taskApi;

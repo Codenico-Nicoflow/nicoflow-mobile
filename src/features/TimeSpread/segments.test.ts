@@ -1,8 +1,8 @@
 import type { ITask } from '@nicoflow/shared/types';
 
-import { EMPTY_COPY, nextStatus, segmentToScheduledFor, selectSegmentTasks } from './segments';
+import { EMPTY_COPY, groupByDay, nextStatus, segmentToScheduledFor, selectSegmentTasks } from './segments';
 
-const task = (id: string): ITask =>
+const task = (id: string, overrides: Partial<ITask> = {}): ITask =>
   ({
     id,
     projectId: 'p1',
@@ -17,6 +17,7 @@ const task = (id: string): ITask =>
     totalFocusSeconds: 0,
     subtaskCount: 0,
     openSubtaskCount: 0,
+    ...overrides,
   }) as ITask;
 
 describe('selectSegmentTasks', () => {
@@ -63,6 +64,40 @@ describe('segmentToScheduledFor', () => {
 
   it('rolls the month/year over correctly at a month boundary', () => {
     expect(segmentToScheduledFor('week', new Date(2026, 7, 30))).toBe('2026-09-01');
+  });
+});
+
+describe('groupByDay', () => {
+  const today = new Date(2026, 7, 19); // 2026-08-19, a Wednesday
+
+  it('groups tasks under their scheduledFor day', () => {
+    const tasks = [task('1', { scheduledFor: '2026-08-19' }), task('2', { scheduledFor: '2026-08-21' })];
+    const groups = groupByDay(tasks, today);
+
+    expect(groups).toHaveLength(2);
+    expect(groups[0]).toMatchObject({ key: '2026-08-19', tasks: [tasks[0]] });
+    expect(groups[1]).toMatchObject({ key: '2026-08-21', tasks: [tasks[1]] });
+  });
+
+  it('drops days with nothing scheduled', () => {
+    const tasks = [task('1', { scheduledFor: '2026-08-25' })];
+    const groups = groupByDay(tasks, today);
+
+    expect(groups).toHaveLength(1);
+    expect(groups[0]?.key).toBe('2026-08-25');
+  });
+
+  it('only looks at the next 7 days from today', () => {
+    const tasks = [task('1', { scheduledFor: '2026-08-30' })]; // 11 days out
+    expect(groupByDay(tasks, today)).toHaveLength(0);
+  });
+
+  it('keeps multiple tasks on the same day together', () => {
+    const tasks = [task('1', { scheduledFor: '2026-08-20' }), task('2', { scheduledFor: '2026-08-20' })];
+    const groups = groupByDay(tasks, today);
+
+    expect(groups).toHaveLength(1);
+    expect(groups[0]?.tasks).toHaveLength(2);
   });
 });
 

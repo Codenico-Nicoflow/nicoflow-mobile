@@ -16,6 +16,7 @@ import {
   type AlertDialogRef,
 } from '@/components/ui/alert-dialog';
 
+import type { Segment } from './segments';
 import { TaskRow } from './TaskRow';
 
 const SWIPE_THRESHOLD = 64;
@@ -40,10 +41,12 @@ function DeleteAction(_progress: SharedValue<number>, drag: SharedValue<number>)
 
 interface SwipeableTaskRowProps {
   task: ITask;
+  segment: Segment;
   onToggleStatus: (task: ITask) => void;
   onEdit: (task: ITask) => void;
-  onCancel: (task: ITask) => void;
-  onMarkMissed: (task: ITask) => void;
+  onScheduleToday: (task: ITask) => void;
+  onScheduleTomorrow: (task: ITask) => void;
+  onUnschedule: (task: ITask) => void;
   onDelete: (task: ITask) => void;
 }
 
@@ -51,8 +54,19 @@ interface SwipeableTaskRowProps {
 // asks for delete confirmation via AlertDialog before firing onDelete — a
 // destructive action must never fire straight off the gesture. Both paths
 // close() the row back to rest so a cancelled delete or a completed task
-// doesn't sit half-open.
-export function SwipeableTaskRow({ task, onToggleStatus, onEdit, onCancel, onMarkMissed, onDelete }: SwipeableTaskRowProps) {
+// doesn't sit half-open. Delete-via-swipe is a mobile-only convenience — web's
+// TimeSpread has no delete action at all (that lives in Project view); this
+// diverges from web deliberately.
+export function SwipeableTaskRow({
+  task,
+  segment,
+  onToggleStatus,
+  onEdit,
+  onScheduleToday,
+  onScheduleTomorrow,
+  onUnschedule,
+  onDelete,
+}: SwipeableTaskRowProps) {
   const swipeableRef = useRef<SwipeableMethods>(null);
   const alertRef = useRef<AlertDialogRef>(null);
   const [pendingDelete, setPendingDelete] = useState(false);
@@ -76,14 +90,12 @@ export function SwipeableTaskRow({ task, onToggleStatus, onEdit, onCancel, onMar
         }}>
         <TaskRow
           task={task}
+          segment={segment}
           onToggleStatus={onToggleStatus}
           onEdit={onEdit}
-          onCancel={onCancel}
-          onMarkMissed={onMarkMissed}
-          onDelete={() => {
-            setPendingDelete(true);
-            alertRef.current?.present();
-          }}
+          onScheduleToday={onScheduleToday}
+          onScheduleTomorrow={onScheduleTomorrow}
+          onUnschedule={onUnschedule}
         />
       </ReanimatedSwipeable>
 
