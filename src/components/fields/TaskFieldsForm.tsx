@@ -1,0 +1,71 @@
+import { type TaskEnergy, type TaskPriority } from '@nicoflow/shared/types';
+import { useColorScheme, View } from 'react-native';
+
+import { DescriptionField } from './DescriptionField';
+import { EnergyField } from './EnergyField';
+import { EstimatedTimeField } from './EstimatedTimeField';
+import { NameField } from './NameField';
+import { PriorityField } from './PriorityField';
+import { RollOverField } from './RollOverField';
+import { ScheduledForField } from './ScheduledForField';
+import { UrlField } from './UrlField';
+
+export interface TaskFieldsValue {
+  title: string;
+  notes: string;
+  priority: TaskPriority;
+  energy: TaskEnergy;
+  scheduledFor: string | null;
+  rollsOver: boolean;
+  estimatedMinutes: number | null;
+  url: string;
+}
+
+interface TaskFieldsFormProps {
+  value: TaskFieldsValue;
+  onChange: <K extends keyof TaskFieldsValue>(key: K, value: TaskFieldsValue[K]) => void;
+  titleError?: string;
+}
+
+// The full task field set, shared by TaskCreateSheet (Today tab FAB) and
+// BucketProcessSheet (Inbox process-to-task) — both create a task from
+// scratch and need identical fields, matching web's TaskDialog/
+// BucketProcessDialog task path field-for-field.
+export function TaskFieldsForm({ value, onChange, titleError }: TaskFieldsFormProps) {
+  const isDark = useColorScheme() === 'dark';
+
+  return (
+    <View className="gap-4">
+      <NameField
+        value={value.title}
+        onChange={v => onChange('title', v)}
+        placeholder="What needs to be done?"
+        error={titleError}
+      />
+
+      <DescriptionField
+        value={value.notes}
+        onChange={v => onChange('notes', v)}
+        placeholder="Add task details…"
+      />
+
+      <View className="flex-row gap-3">
+        <View className="flex-1">
+          <PriorityField value={value.priority} onChange={v => onChange('priority', v)} />
+        </View>
+        <View className="flex-1">
+          <EnergyField value={value.energy} onChange={v => onChange('energy', v)} isDark={isDark} />
+        </View>
+      </View>
+
+      <View className="gap-3 rounded-lg border border-border dark:border-border-dark p-3">
+        <ScheduledForField value={value.scheduledFor} onChange={v => onChange('scheduledFor', v)} />
+        <RollOverField value={value.rollsOver} onChange={v => onChange('rollsOver', v)} />
+      </View>
+
+      <EstimatedTimeField value={value.estimatedMinutes} onChange={v => onChange('estimatedMinutes', v)} />
+
+      <UrlField value={value.url} onChange={v => onChange('url', v)} />
+    </View>
+  );
+}
