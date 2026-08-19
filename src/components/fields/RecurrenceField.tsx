@@ -17,6 +17,52 @@ import { cn } from '@/lib/utils/cn';
 import { DateField } from './DateField';
 import { defaultRecurrence, type RecurrenceValue } from './recurrence';
 
+// Segmented Pressable row for a small fixed option set — deliberately not
+// the Select primitive here. Select opens its own BottomSheetModal, and
+// toggling "Repeats" on mounts Frequency + End (both were Selects) + Start's
+// DateField (its own Sheet) all in the same synchronous render, inside the
+// TaskCreateSheet Sheet that's already open. Registering that many native
+// modals into gorhom's stackBehavior="push" queue in one commit crashed the
+// app natively (SIGABRT, confirmed via device crash log — not a JS error,
+// so neither tsc nor jest caught it). A plain Pressable row has no native
+// modal to register, so it doesn't add to that count.
+function SegmentedField<T extends string>({
+  value,
+  onChange,
+  options,
+}: {
+  value: T;
+  onChange: (value: T) => void;
+  options: { label: string; value: T }[];
+}) {
+  return (
+    <View className="flex-row rounded-md bg-muted dark:bg-muted-dark p-1">
+      {options.map(option => {
+        const active = value === option.value;
+        return (
+          <Pressable
+            key={option.value}
+            onPress={() => onChange(option.value)}
+            accessibilityRole="button"
+            accessibilityState={{ selected: active }}
+            className={cn(
+              'flex-1 items-center justify-center rounded px-2 py-1.5',
+              active && 'bg-background dark:bg-background-dark shadow-sm'
+            )}>
+            <Text
+              className={cn(
+                'text-xs font-medium',
+                active ? 'text-foreground dark:text-foreground-dark' : 'text-muted-foreground dark:text-muted-foreground-dark'
+              )}>
+              {option.label}
+            </Text>
+          </Pressable>
+        );
+      })}
+    </View>
+  );
+}
+
 const WEEKDAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 const FREQ_OPTIONS = [
@@ -108,35 +154,32 @@ export function RecurrenceField({ value, onChange }: RecurrenceFieldProps) {
 
       {enabled && (
         <View className="gap-3 rounded-md border border-border dark:border-border-dark p-3">
-          <View className="flex-row gap-3">
-            <View className="flex-1 gap-1.5">
-              <Text className="text-xs text-muted-foreground dark:text-muted-foreground-dark">Frequency</Text>
-              <Select value={rule.freq} onValueChange={v => patch({ freq: v as RecurrenceFreq })} options={FREQ_OPTIONS}>
-                <SelectTrigger />
-              </Select>
-            </View>
-            <View className="flex-1 gap-1.5">
-              <Text className="text-xs text-muted-foreground dark:text-muted-foreground-dark">Every</Text>
-              <TextInput
-                keyboardType="number-pad"
-                value={String(rule.interval)}
-                onChangeText={text => {
-                  const n = Number(text);
-                  patch({
-                    interval: Number.isFinite(n)
-                      ? Math.min(RECURRENCE_MAX_INTERVAL, Math.max(RECURRENCE_MIN_INTERVAL, n))
-                      : RECURRENCE_MIN_INTERVAL,
-                  });
-                }}
-                className="h-10 rounded-md border border-input dark:border-input-dark px-3 text-sm text-foreground dark:text-foreground-dark bg-background dark:bg-background-dark"
-              />
-            </View>
+          <View className="gap-1.5">
+            <Text className="text-xs text-muted-foreground dark:text-muted-foreground-dark">Frequency</Text>
+            <SegmentedField value={rule.freq} onChange={freq => patch({ freq })} options={FREQ_OPTIONS} />
+          </View>
+
+          <View className="gap-1.5">
+            <Text className="text-xs text-muted-foreground dark:text-muted-foreground-dark">Every</Text>
+            <TextInput
+              keyboardType="number-pad"
+              value={String(rule.interval)}
+              onChangeText={text => {
+                const n = Number(text);
+                patch({
+                  interval: Number.isFinite(n)
+                    ? Math.min(RECURRENCE_MAX_INTERVAL, Math.max(RECURRENCE_MIN_INTERVAL, n))
+                    : RECURRENCE_MIN_INTERVAL,
+                });
+              }}
+              className="h-10 w-24 rounded-md border border-input dark:border-input-dark px-3 text-sm text-foreground dark:text-foreground-dark bg-background dark:bg-background-dark"
+            />
           </View>
 
           {rule.freq === RecurrenceFreq.WEEKLY && (
             <View className="gap-1.5">
               <Text className="text-xs text-muted-foreground dark:text-muted-foreground-dark">On days</Text>
-              <View className="flex-row flex-wrap gap-1.5" role="group" accessibilityRole="none">
+              <View className="flex-row flex-wrap gap-1.5">
                 {RECURRENCE_WEEKDAYS.map(day => {
                   const active = rule.byWeekday.includes(day);
                   return (
@@ -184,14 +227,13 @@ export function RecurrenceField({ value, onChange }: RecurrenceFieldProps) {
             </View>
             <View className="flex-1 gap-1.5">
               <Text className="text-xs text-muted-foreground dark:text-muted-foreground-dark">Ends</Text>
-              <Select
+              <SegmentedField
                 value={rule.endDate ? RecurrenceEnd.ON_DATE : RecurrenceEnd.NEVER}
-                onValueChange={mode =>
+                onChange={mode =>
                   patch({ endDate: mode === RecurrenceEnd.ON_DATE ? (rule.endDate ?? rule.startDate) : null })
                 }
-                options={END_OPTIONS}>
-                <SelectTrigger />
-              </Select>
+                options={END_OPTIONS}
+              />
             </View>
           </View>
 
