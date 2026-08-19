@@ -50,16 +50,27 @@ export const BucketProcessSheet = forwardRef<SheetRef, BucketProcessSheetProps>(
   const [noteBody, setNoteBody] = useState('');
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!bucket) return;
+  // Reseeds from the tapped bucket's content whenever a different item is
+  // targeted (bucket.id changes) AND on every close (see Sheet's onDismiss
+  // below) — the latter covers Cancel/backdrop/swipe-down, none of which
+  // change bucket.id, so without it a dismissed-and-reopened sheet on the
+  // same item would keep showing whatever the user last typed.
+  const resetForm = () => {
     setType(ProcessingResult.TASK);
     setProjectId('');
     setError(null);
     setTitleError(undefined);
-    setNoteTitle(truncateNoteTitle(bucket.content));
-    setNoteBody(bucket.content);
-    setFields(emptyFields(bucket.content));
-  }, [bucket]);
+    const content = bucket?.content ?? '';
+    setNoteTitle(truncateNoteTitle(content));
+    setNoteBody(content);
+    setFields(emptyFields(content));
+  };
+
+  useEffect(() => {
+    if (!bucket) return;
+    resetForm();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bucket?.id]);
 
   const setField = <K extends keyof TaskFieldsValue>(key: K, value: TaskFieldsValue[K]) =>
     setFields(prev => ({ ...prev, [key]: value }));
@@ -130,7 +141,7 @@ export const BucketProcessSheet = forwardRef<SheetRef, BucketProcessSheetProps>(
   const canSubmit = type === ProcessingResult.TRASH || !!projectId;
 
   return (
-    <Sheet ref={ref} snapPoints={['90%']}>
+    <Sheet ref={ref} snapPoints={['75%']} onDismiss={resetForm}>
       <View className="gap-4">
         <SheetHeader>
           <View className="flex-row items-center gap-3">

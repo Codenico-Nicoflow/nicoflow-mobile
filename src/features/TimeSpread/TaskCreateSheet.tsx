@@ -1,5 +1,5 @@
 import { RecurrenceFreq, TaskEnergy, TaskPriority } from '@nicoflow/shared/types';
-import { forwardRef, useEffect, useState } from 'react';
+import { forwardRef, useState } from 'react';
 import { Text, View } from 'react-native';
 
 import { TaskFieldsForm, type TaskFieldsValue } from '@/components/fields/TaskFieldsForm';
@@ -50,13 +50,19 @@ export const TaskCreateSheet = forwardRef<SheetRef, TaskCreateSheetProps>(functi
   const [titleError, setTitleError] = useState<string | undefined>();
   const [formError, setFormError] = useState<'planLimit' | 'generic' | null>(null);
 
-  useEffect(() => {
+  // Resets on every close, however it happens — Cancel, backdrop tap, swipe-
+  // down, or a successful create's own dismiss() — so the next present()
+  // never shows a stale draft from the last session. A prop-keyed effect
+  // (e.g. re-running when scheduledFor changes) only fires when that prop
+  // actually changes, which it usually doesn't between two opens on the
+  // same segment.
+  const resetForm = () => {
     setFields(emptyFields(scheduledFor));
     setProjectId('');
     setRecurrence('none');
     setTitleError(undefined);
     setFormError(null);
-  }, [scheduledFor]);
+  };
 
   const setField = <K extends keyof TaskFieldsValue>(key: K, value: TaskFieldsValue[K]) =>
     setFields(prev => ({ ...prev, [key]: value }));
@@ -102,7 +108,7 @@ export const TaskCreateSheet = forwardRef<SheetRef, TaskCreateSheetProps>(functi
   };
 
   return (
-    <Sheet ref={ref} snapPoints={['90%']}>
+    <Sheet ref={ref} snapPoints={['75%']} onDismiss={resetForm}>
       <View className="gap-4">
         <SheetHeader>
           <SheetTitle>New task</SheetTitle>
