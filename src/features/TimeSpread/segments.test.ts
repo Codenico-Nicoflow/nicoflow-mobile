@@ -1,6 +1,6 @@
 import type { ITask } from '@nicoflow/shared/types';
 
-import { EMPTY_COPY, nextStatus, selectSegmentTasks } from './segments';
+import { EMPTY_COPY, nextStatus, segmentToScheduledFor, selectSegmentTasks } from './segments';
 
 const task = (id: string): ITask =>
   ({
@@ -43,6 +43,26 @@ describe('EMPTY_COPY', () => {
   it('has segment-specific copy for every segment', () => {
     expect(EMPTY_COPY.today).not.toBe(EMPTY_COPY.tomorrow);
     expect(EMPTY_COPY.tomorrow).not.toBe(EMPTY_COPY.week);
+  });
+});
+
+describe('segmentToScheduledFor', () => {
+  const today = new Date(2026, 7, 19); // 2026-08-19, a Wednesday
+
+  it('today segment defaults to today', () => {
+    expect(segmentToScheduledFor('today', today)).toBe('2026-08-19');
+  });
+
+  it('tomorrow segment defaults to +1 day', () => {
+    expect(segmentToScheduledFor('tomorrow', today)).toBe('2026-08-20');
+  });
+
+  it('week segment defaults to +2 days — inside the 7-day window, past tomorrow', () => {
+    expect(segmentToScheduledFor('week', today)).toBe('2026-08-21');
+  });
+
+  it('rolls the month/year over correctly at a month boundary', () => {
+    expect(segmentToScheduledFor('week', new Date(2026, 7, 30))).toBe('2026-09-01');
   });
 });
 

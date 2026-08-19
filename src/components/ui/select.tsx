@@ -102,10 +102,23 @@ export const Select = forwardRef<SelectRef, SelectProps>(function Select(
   );
 });
 
-export function SelectTrigger({ placeholder, className, disabled }: { placeholder?: string; className?: string; disabled?: boolean }) {
+export function SelectTrigger({
+  placeholder,
+  className,
+  disabled,
+  renderValue,
+}: {
+  placeholder?: string;
+  className?: string;
+  disabled?: boolean;
+  // Overrides the default plain-text value display — e.g. a priority dot next
+  // to the label. Receives the selected option (undefined when nothing is
+  // picked yet) so the caller can fall back to the placeholder itself.
+  renderValue?: (selected: SelectOption | undefined) => ReactNode;
+}) {
   const { value, options, present } = useSelectContext();
   const scheme = useColorScheme();
-  const selectedLabel = options.find(o => o.value === value)?.label;
+  const selected = options.find(o => o.value === value);
 
   return (
     <Pressable
@@ -118,13 +131,17 @@ export function SelectTrigger({ placeholder, className, disabled }: { placeholde
         disabled && 'opacity-50',
         className
       )}>
-      <Text
-        className={cn(
-          'text-sm',
-          selectedLabel ? 'text-foreground dark:text-foreground-dark' : 'text-muted-foreground dark:text-muted-foreground-dark'
-        )}>
-        {selectedLabel ?? placeholder ?? ''}
-      </Text>
+      {renderValue ? (
+        renderValue(selected)
+      ) : (
+        <Text
+          className={cn(
+            'text-sm',
+            selected ? 'text-foreground dark:text-foreground-dark' : 'text-muted-foreground dark:text-muted-foreground-dark'
+          )}>
+          {selected?.label ?? placeholder ?? ''}
+        </Text>
+      )}
       <ChevronDown size={16} color={scheme === 'dark' ? '#94a3b8' : '#64748b'} />
     </Pressable>
   );

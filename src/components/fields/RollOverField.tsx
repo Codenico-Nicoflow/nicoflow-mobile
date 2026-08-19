@@ -1,0 +1,30 @@
+import { Repeat } from 'lucide-react-native';
+import { Pressable, Text, useColorScheme, View } from 'react-native';
+
+import { Checkbox } from '@/components/ui/checkbox';
+
+interface RollOverFieldProps {
+  value: boolean;
+  onChange: (value: boolean) => void;
+}
+
+export function RollOverField({ value, onChange }: RollOverFieldProps) {
+  const isDark = useColorScheme() === 'dark';
+
+  return (
+    <Pressable
+      onPress={() => onChange(!value)}
+      accessibilityRole="checkbox"
+      accessibilityState={{ checked: value }}
+      className="flex-row items-center gap-3 rounded-lg border border-border dark:border-border-dark bg-muted/40 dark:bg-muted-dark/40 p-3">
+      <Checkbox checked={value} onCheckedChange={onChange} />
+      <Repeat size={16} color={isDark ? '#6366f1' : '#4f46e5'} />
+      <View className="flex-1 gap-0.5">
+        <Text className="text-sm text-foreground dark:text-foreground-dark">Roll over</Text>
+        <Text className="text-xs text-muted-foreground dark:text-muted-foreground-dark">
+          If the scheduled day passes, the task moves to Today. When off, it drops off your lists.
+        </Text>
+      </View>
+    </Pressable>
+  );
+}

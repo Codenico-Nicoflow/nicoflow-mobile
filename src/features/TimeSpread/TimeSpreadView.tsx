@@ -4,27 +4,19 @@ import { useRef, useState } from 'react';
 import { FlatList, Text, View } from 'react-native';
 
 import { Button } from '@/components/ui/button';
-import { type SheetRef } from '@/components/ui/sheet';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useDeleteTaskMutation, useGetTimeSpreadQuery, useUpdateTaskStatusMutation } from '@/lib/store';
 
-import {
-  EMPTY_COPY,
-  nextStatus,
-  type Segment,
-  SEGMENTS,
-  segmentToScheduledFor,
-  selectSegmentTasks,
-} from './segments';
+import { EMPTY_COPY, nextStatus, type Segment, SEGMENTS, segmentToScheduledFor, selectSegmentTasks } from './segments';
 import { SwipeableTaskRow } from './SwipeableTaskRow';
-import { TaskCreateSheet } from './TaskCreateSheet';
+import { TaskCreateSheet, type TaskCreateSheetRef } from './TaskCreateSheet';
 
 export function TimeSpreadView() {
   const [segment, setSegment] = useState<Segment>('today');
   const { data, isLoading, isFetching, refetch } = useGetTimeSpreadQuery();
   const [updateStatus] = useUpdateTaskStatusMutation();
   const [deleteTask] = useDeleteTaskMutation();
-  const createSheetRef = useRef<SheetRef>(null);
+  const createSheetRef = useRef<TaskCreateSheetRef>(null);
 
   const tasks = selectSegmentTasks(segment, data);
   // isLoading only covers the very first request; a segment switch after that
@@ -81,17 +73,13 @@ export function TimeSpreadView() {
       </View>
 
       <Button
-        onPress={() => createSheetRef.current?.present()}
+        onPress={() => createSheetRef.current?.present(segmentToScheduledFor(segment))}
         className="absolute bottom-6 right-6 size-14 rounded-full"
         accessibilityLabel="New task">
         <Plus size={24} color="#ffffff" />
       </Button>
 
-      <TaskCreateSheet
-        ref={createSheetRef}
-        scheduledFor={segmentToScheduledFor(segment)}
-        onCreated={() => createSheetRef.current?.dismiss()}
-      />
+      <TaskCreateSheet ref={createSheetRef} onCreated={() => createSheetRef.current?.dismiss()} />
     </View>
   );
 }

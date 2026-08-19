@@ -17,7 +17,7 @@ const baseQuery = fetchBaseQuery({ baseUrl: API });
 const mockTaskApi = createTaskApi(baseQuery);
 const mockAreaApi = createAreaApi(baseQuery);
 const mockProjectApi = createProjectApi(baseQuery, mockAreaApi);
-const mockRecurrenceApi = createRecurrenceApi(baseQuery);
+const mockRecurrenceApi = createRecurrenceApi(baseQuery, mockTaskApi);
 
 jest.mock('@/lib/store', () => ({
   useGetTimeSpreadQuery: () => mockTaskApi.useGetTimeSpreadQuery(),

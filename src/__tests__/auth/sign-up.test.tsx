@@ -42,7 +42,7 @@ describe('SignUp', () => {
     await fireEvent.changeText(screen.getByLabelText('Username'), 'nico');
     await fireEvent.changeText(screen.getByLabelText('Email'), 'nico@example.com');
     await fireEvent.changeText(screen.getByLabelText('Password'), 'lowercase1');
-    await fireEvent.press(screen.getByText('Sign up'));
+    await fireEvent.press(screen.getByText('Create account'));
 
     await waitFor(() => {
       expect(screen.getByText('validation.passwordUppercase')).toBeTruthy();
@@ -63,7 +63,7 @@ describe('SignUp', () => {
     await fireEvent.changeText(screen.getByLabelText('Username'), 'nico');
     await fireEvent.changeText(screen.getByLabelText('Email'), 'nico@example.com');
     await fireEvent.changeText(screen.getByLabelText('Password'), 'Password1');
-    await fireEvent.press(screen.getByText('Sign up'));
+    await fireEvent.press(screen.getByText('Create account'));
 
     await waitFor(() => {
       expect(screen.getByText('Check your email')).toBeTruthy();

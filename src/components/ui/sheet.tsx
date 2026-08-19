@@ -5,7 +5,7 @@ import {
   BottomSheetBackdrop,
   type BottomSheetBackdropProps,
   BottomSheetModal,
-  BottomSheetView,
+  BottomSheetScrollView,
 } from '@gorhom/bottom-sheet';
 
 export interface SheetRef {
@@ -72,10 +72,17 @@ export const Sheet = forwardRef<SheetRef, SheetProps>(function Sheet(
       // top, which reads as the outer sheet auto-closing mid-pick. 'push'
       // keeps every sheet independent so nesting works.
       stackBehavior="push"
+      // v5 defaults this to true, which adds a snap point matching the
+      // content's measured height and can win over the explicit snapPoints
+      // below — a tall form (TaskCreateSheet/BucketProcessSheet's full field
+      // set) grows the sheet to near-fullscreen regardless of what
+      // snapPoints says. False makes snapPoints the sole authority, per
+      // gorhom's own migration guidance.
+      enableDynamicSizing={false}
       backdropComponent={renderBackdrop}
       backgroundStyle={{ borderRadius: 20, backgroundColor: isDark ? '#0b1120' : '#f8fafc' }}
       handleIndicatorStyle={{ width: 40, backgroundColor: isDark ? '#283549' : '#e2e8f0' }}>
-      <BottomSheetView className="flex-1 px-4">{children}</BottomSheetView>
+      <BottomSheetScrollView contentContainerClassName="px-5 pt-2 pb-8">{children}</BottomSheetScrollView>
     </BottomSheetModal>
   );
 });
