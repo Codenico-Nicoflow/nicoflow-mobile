@@ -4,36 +4,19 @@ import { useRef, useState } from 'react';
 import { FlatList, Text, View } from 'react-native';
 
 import { Button } from '@/components/ui/button';
-import { type SheetRef } from '@/components/ui/sheet';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useDeleteTaskMutation, useGetTimeSpreadQuery, useUpdateTaskStatusMutation } from '@/lib/store';
 
-import {
-  EMPTY_COPY,
-  nextStatus,
-  type Segment,
-  SEGMENTS,
-  segmentToScheduledFor,
-  selectSegmentTasks,
-} from './segments';
+import { EMPTY_COPY, nextStatus, type Segment, SEGMENTS, segmentToScheduledFor, selectSegmentTasks } from './segments';
 import { SwipeableTaskRow } from './SwipeableTaskRow';
-import { TaskCreateSheet } from './TaskCreateSheet';
+import { TaskCreateSheet, type TaskCreateSheetRef } from './TaskCreateSheet';
 
 export function TimeSpreadView() {
   const [segment, setSegment] = useState<Segment>('today');
   const { data, isLoading, isFetching, refetch } = useGetTimeSpreadQuery();
   const [updateStatus] = useUpdateTaskStatusMutation();
   const [deleteTask] = useDeleteTaskMutation();
-  const createSheetRef = useRef<SheetRef>(null);
-  // Frozen at the moment the FAB is pressed, not derived live from `segment`
-  // on every render. TaskCreateSheet resets its form from Sheet's onDismiss,
-  // which fires asynchronously after the close animation — if scheduledFor
-  // were still tied to the live `segment` state, switching segments while
-  // the sheet is mid-close (or reopening on a different segment before the
-  // previous dismiss settles) could hand the reset a scheduledFor from
-  // whichever segment happens to be active at that later moment, not the
-  // one the user actually opened the sheet from.
-  const [createScheduledFor, setCreateScheduledFor] = useState(() => segmentToScheduledFor(segment));
+  const createSheetRef = useRef<TaskCreateSheetRef>(null);
 
   const tasks = selectSegmentTasks(segment, data);
   // isLoading only covers the very first request; a segment switch after that
@@ -90,20 +73,13 @@ export function TimeSpreadView() {
       </View>
 
       <Button
-        onPress={() => {
-          setCreateScheduledFor(segmentToScheduledFor(segment));
-          createSheetRef.current?.present();
-        }}
+        onPress={() => createSheetRef.current?.present(segmentToScheduledFor(segment))}
         className="absolute bottom-6 right-6 size-14 rounded-full"
         accessibilityLabel="New task">
         <Plus size={24} color="#ffffff" />
       </Button>
 
-      <TaskCreateSheet
-        ref={createSheetRef}
-        scheduledFor={createScheduledFor}
-        onCreated={() => createSheetRef.current?.dismiss()}
-      />
+      <TaskCreateSheet ref={createSheetRef} onCreated={() => createSheetRef.current?.dismiss()} />
     </View>
   );
 }

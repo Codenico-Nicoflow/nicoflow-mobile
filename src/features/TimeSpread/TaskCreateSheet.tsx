@@ -1,5 +1,5 @@
 import { RecurrenceFreq, TaskEnergy, TaskPriority } from '@nicoflow/shared/types';
-import { forwardRef, useState } from 'react';
+import { forwardRef, useImperativeHandle, useRef, useState } from 'react';
 import { Text, View } from 'react-native';
 
 import { TaskFieldsForm, type TaskFieldsValue } from '@/components/fields/TaskFieldsForm';
@@ -11,8 +11,21 @@ import { useCreateRecurrenceRuleMutation, useCreateTaskMutation, useGetProjectsQ
 
 import { buildRecurrenceSchedule, RECURRENCE_OPTIONS } from './recurrence';
 
+// present(scheduledFor) instead of a plain SheetRef — the caller hands the
+// default date directly at the moment it opens the sheet, rather than via a
+// prop the component re-derives on its own render cycle. That prop-based
+// approach raced: present() was called synchronously right after the
+// caller's setState, before React had re-rendered this component with the
+// new prop value, so the sheet opened (and later reset) using whichever
+// scheduledFor was current on the PREVIOUS render — a stale, one-segment-
+// behind default. Passing it straight into present() sidesteps the render
+// cycle entirely.
+export interface TaskCreateSheetRef {
+  present: (scheduledFor: string) => void;
+  dismiss: () => void;
+}
+
 interface TaskCreateSheetProps {
-  scheduledFor: string;
   onCreated: () => void;
 }
 
@@ -36,28 +49,23 @@ const isApiErrorCode = (error: unknown, code: string): boolean =>
   typeof (error as { error?: unknown }).error === 'object' &&
   (error as { error?: { code?: unknown } }).error?.code === code;
 
-export const TaskCreateSheet = forwardRef<SheetRef, TaskCreateSheetProps>(function TaskCreateSheet(
-  { scheduledFor, onCreated },
+export const TaskCreateSheet = forwardRef<TaskCreateSheetRef, TaskCreateSheetProps>(function TaskCreateSheet(
+  { onCreated },
   ref
 ) {
   const { data: projectsData } = useGetProjectsQuery();
   const [createTask, { isLoading: isCreatingTask }] = useCreateTaskMutation();
   const [createRule, { isLoading: isCreatingRule }] = useCreateRecurrenceRuleMutation();
+  const sheetRef = useRef<SheetRef>(null);
 
-  const [fields, setFields] = useState<TaskFieldsValue>(() => emptyFields(scheduledFor));
+  const [fields, setFields] = useState<TaskFieldsValue>(() => emptyFields(''));
   const [projectId, setProjectId] = useState('');
   const [recurrence, setRecurrence] = useState('none');
   const [titleError, setTitleError] = useState<string | undefined>();
   const [projectError, setProjectError] = useState<string | undefined>();
   const [formError, setFormError] = useState<'planLimit' | 'generic' | null>(null);
 
-  // Resets on every close, however it happens — Cancel, backdrop tap, swipe-
-  // down, or a successful create's own dismiss() — so the next present()
-  // never shows a stale draft from the last session. A prop-keyed effect
-  // (e.g. re-running when scheduledFor changes) only fires when that prop
-  // actually changes, which it usually doesn't between two opens on the
-  // same segment.
-  const resetForm = () => {
+  const resetForm = (scheduledFor: string) => {
     setFields(emptyFields(scheduledFor));
     setProjectId('');
     setRecurrence('none');
@@ -65,6 +73,14 @@ export const TaskCreateSheet = forwardRef<SheetRef, TaskCreateSheetProps>(functi
     setProjectError(undefined);
     setFormError(null);
   };
+
+  useImperativeHandle(ref, () => ({
+    present: scheduledFor => {
+      resetForm(scheduledFor);
+      sheetRef.current?.present();
+    },
+    dismiss: () => sheetRef.current?.dismiss(),
+  }));
 
   const setField = <K extends keyof TaskFieldsValue>(key: K, value: TaskFieldsValue[K]) =>
     setFields(prev => ({ ...prev, [key]: value }));
@@ -110,7 +126,7 @@ export const TaskCreateSheet = forwardRef<SheetRef, TaskCreateSheetProps>(functi
   };
 
   return (
-    <Sheet ref={ref} snapPoints={['75%']} onDismiss={resetForm}>
+    <Sheet ref={sheetRef} snapPoints={['75%']}>
       <View className="gap-4">
         <SheetHeader>
           <SheetTitle>New task</SheetTitle>
