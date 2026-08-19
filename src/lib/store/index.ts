@@ -47,4 +47,5 @@ export const { useGetProjectsQuery } = projectApi;
 export const { useCreateRecurrenceRuleMutation } = recurrenceApi;
 
 // Bucket exports — hooks are generated on the instance constructed in store.ts
-export const { useCreateBucketMutation, useDeleteBucketMutation, useGetBucketsQuery } = bucketApi;
+export const { useCreateBucketMutation, useDeleteBucketMutation, useGetBucketsQuery, useProcessBucketMutation } =
+  bucketApi;
