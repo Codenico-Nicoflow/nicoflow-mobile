@@ -68,9 +68,10 @@ export const Sheet = forwardRef<SheetRef, SheetProps>(function Sheet(
       // 'switch' (the gorhom default) minimizes whatever sheet is already
       // open when a new one presents — fine for two independent sheets, but
       // when a Select opens from inside this Sheet (TaskCreateSheet's
-      // project/priority/repeat pickers) it minimizes THIS sheet instead of
-      // stacking on top, which reads as the outer sheet auto-closing mid-pick.
-      // 'push' keeps every sheet independent so nesting works.
+      // project/priority/repeat pickers, BucketProcessSheet's project/type
+      // pickers) it minimizes THIS sheet instead of stacking on top, which
+      // reads as the outer sheet auto-closing mid-pick. 'push' keeps every
+      // sheet independent so nesting works.
       stackBehavior="push"
       backdropComponent={renderBackdrop}
       backgroundStyle={{ borderRadius: 20, backgroundColor: isDark ? '#0b1120' : '#f8fafc' }}

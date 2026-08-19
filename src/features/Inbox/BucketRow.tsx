@@ -35,7 +35,7 @@ export function BucketRow({ bucket, onPress, onDelete }: BucketRowProps) {
       <Pressable
         onPress={() => onPress(bucket)}
         accessibilityRole="button"
-        className="gap-1 rounded-xl border border-border dark:border-border-dark bg-card dark:bg-card-dark p-3"
+        className="gap-1 rounded-lg border border-border dark:border-border-dark border-l-4 border-l-primary/50 dark:border-l-primary-dark/50 bg-background/80 dark:bg-background-dark/80 px-3 py-2.5"
         testID={`bucket-row-${bucket.id}`}>
         <Text className="text-sm text-foreground dark:text-foreground-dark" numberOfLines={2}>
           {bucket.content}
