@@ -1,8 +1,8 @@
-import { authApi } from './store';
+import { authApi, taskApi } from './store';
 
 // Store exports
 export type { AppDispatch, RootState } from './store';
-export { authApi, mobileTokenStorage, mobileWSLifecycleAdapter, persistor, store } from './store';
+export { authApi, mobileTokenStorage, mobileWSLifecycleAdapter, persistor, store, taskApi } from './store';
 
 // Hooks exports
 export { useAppDispatch, useAppSelector, useAppUser } from './hooks';
@@ -24,3 +24,6 @@ export const {
   useUpdateProfileMutation,
 } = authApi;
 export { clearAuth, selectUser, setToken, setUser } from './slices/auth/authSlice';
+
+// Task exports — hooks are generated on the instance constructed in store.ts
+export const { useGetTimeSpreadQuery, useUpdateTaskStatusMutation } = taskApi;

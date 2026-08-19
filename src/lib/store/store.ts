@@ -1,4 +1,4 @@
-import { createAuthApi } from '@nicoflow/shared/api';
+import { createAuthApi, createTaskApi } from '@nicoflow/shared/api';
 import { router } from 'expo-router';
 import { combineReducers, configureStore, type UnknownAction } from '@reduxjs/toolkit';
 import { setupListeners } from '@reduxjs/toolkit/query';
@@ -32,12 +32,14 @@ const baseQueryWithReauth = createBaseQueryWithReauth(mobileTokenStorage, () => 
 });
 
 export const authApi = createAuthApi(baseQueryWithReauth, { clearAuth, setToken, setUser }, resolveTimeZone);
+export const taskApi = createTaskApi(baseQueryWithReauth);
 
-const apiReducerPaths = [authApi.reducerPath] as const;
+const apiReducerPaths = [authApi.reducerPath, taskApi.reducerPath] as const;
 
 const combinedReducer = combineReducers({
   auth: authReducer,
   [authApi.reducerPath]: authApi.reducer,
+  [taskApi.reducerPath]: taskApi.reducer,
 });
 
 type CombinedState = ReturnType<typeof combinedReducer>;
@@ -69,7 +71,7 @@ export const store = configureStore({
       serializableCheck: {
         ignoredActions: [FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, REGISTER],
       },
-    }).concat(authApi.middleware),
+    }).concat(authApi.middleware, taskApi.middleware),
 });
 
 export const persistor = persistStore(store);
