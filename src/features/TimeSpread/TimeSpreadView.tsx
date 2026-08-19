@@ -25,6 +25,15 @@ export function TimeSpreadView() {
   const [updateStatus] = useUpdateTaskStatusMutation();
   const [deleteTask] = useDeleteTaskMutation();
   const createSheetRef = useRef<SheetRef>(null);
+  // Frozen at the moment the FAB is pressed, not derived live from `segment`
+  // on every render. TaskCreateSheet resets its form from Sheet's onDismiss,
+  // which fires asynchronously after the close animation — if scheduledFor
+  // were still tied to the live `segment` state, switching segments while
+  // the sheet is mid-close (or reopening on a different segment before the
+  // previous dismiss settles) could hand the reset a scheduledFor from
+  // whichever segment happens to be active at that later moment, not the
+  // one the user actually opened the sheet from.
+  const [createScheduledFor, setCreateScheduledFor] = useState(() => segmentToScheduledFor(segment));
 
   const tasks = selectSegmentTasks(segment, data);
   // isLoading only covers the very first request; a segment switch after that
@@ -81,7 +90,10 @@ export function TimeSpreadView() {
       </View>
 
       <Button
-        onPress={() => createSheetRef.current?.present()}
+        onPress={() => {
+          setCreateScheduledFor(segmentToScheduledFor(segment));
+          createSheetRef.current?.present();
+        }}
         className="absolute bottom-6 right-6 size-14 rounded-full"
         accessibilityLabel="New task">
         <Plus size={24} color="#ffffff" />
@@ -89,7 +101,7 @@ export function TimeSpreadView() {
 
       <TaskCreateSheet
         ref={createSheetRef}
-        scheduledFor={segmentToScheduledFor(segment)}
+        scheduledFor={createScheduledFor}
         onCreated={() => createSheetRef.current?.dismiss()}
       />
     </View>
