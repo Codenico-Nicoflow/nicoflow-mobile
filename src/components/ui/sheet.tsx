@@ -1,5 +1,5 @@
-import { forwardRef, type ReactNode, useCallback, useImperativeHandle, useMemo, useRef } from 'react';
-import { Pressable, Text, useColorScheme, View } from 'react-native';
+import { forwardRef, type ReactNode, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
+import { BackHandler, Platform, Pressable, Text, useColorScheme, View } from 'react-native';
 
 import {
   BottomSheetBackdrop,
@@ -31,11 +31,25 @@ export const Sheet = forwardRef<SheetRef, SheetProps>(function Sheet(
   const points = useMemo(() => snapPoints ?? ['50%'], [snapPoints]);
   const scheme = useColorScheme();
   const isDark = scheme === 'dark';
+  const [isOpen, setIsOpen] = useState(false);
 
   useImperativeHandle(ref, () => ({
     present: () => modalRef.current?.present(),
     dismiss: () => modalRef.current?.dismiss(),
   }));
+
+  // BottomSheetModal has no built-in Android hardware-back handling — a
+  // dismissed sheet's index goes to -1 via onChange, so track that and, while
+  // open, intercept the back press to close the sheet instead of the screen
+  // beneath it.
+  useEffect(() => {
+    if (Platform.OS !== 'android' || !isOpen) return;
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+      modalRef.current?.dismiss();
+      return true;
+    });
+    return () => sub.remove();
+  }, [isOpen]);
 
   const renderBackdrop = useCallback(
     (props: BottomSheetBackdropProps) => (
@@ -50,6 +64,7 @@ export const Sheet = forwardRef<SheetRef, SheetProps>(function Sheet(
       snapPoints={points}
       enablePanDownToClose={enablePanDownToClose}
       onDismiss={onDismiss}
+      onChange={index => setIsOpen(index >= 0)}
       backdropComponent={renderBackdrop}
       backgroundStyle={{ borderRadius: 20, backgroundColor: isDark ? '#0b1120' : '#f8fafc' }}
       handleIndicatorStyle={{ width: 40, backgroundColor: isDark ? '#283549' : '#e2e8f0' }}>
