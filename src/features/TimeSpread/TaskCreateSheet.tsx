@@ -48,6 +48,7 @@ export const TaskCreateSheet = forwardRef<SheetRef, TaskCreateSheetProps>(functi
   const [projectId, setProjectId] = useState('');
   const [recurrence, setRecurrence] = useState('none');
   const [titleError, setTitleError] = useState<string | undefined>();
+  const [projectError, setProjectError] = useState<string | undefined>();
   const [formError, setFormError] = useState<'planLimit' | 'generic' | null>(null);
 
   // Resets on every close, however it happens — Cancel, backdrop tap, swipe-
@@ -61,6 +62,7 @@ export const TaskCreateSheet = forwardRef<SheetRef, TaskCreateSheetProps>(functi
     setProjectId('');
     setRecurrence('none');
     setTitleError(undefined);
+    setProjectError(undefined);
     setFormError(null);
   };
 
@@ -71,11 +73,11 @@ export const TaskCreateSheet = forwardRef<SheetRef, TaskCreateSheetProps>(functi
 
   const onSubmit = async () => {
     setFormError(null);
-    if (!fields.title.trim()) {
-      setTitleError('Name is required');
-      return;
-    }
-    setTitleError(undefined);
+    const missingTitle = !fields.title.trim();
+    const missingProject = !projectId;
+    setTitleError(missingTitle ? 'Name is required' : undefined);
+    setProjectError(missingProject ? 'Pick a project' : undefined);
+    if (missingTitle || missingProject) return;
 
     try {
       if (recurrence === 'none') {
@@ -129,9 +131,16 @@ export const TaskCreateSheet = forwardRef<SheetRef, TaskCreateSheetProps>(functi
 
         <View className="gap-1.5">
           <Text className="text-sm font-semibold text-foreground dark:text-foreground-dark">Project</Text>
-          <Select value={projectId} onValueChange={setProjectId} options={projectOptions}>
+          <Select
+            value={projectId}
+            onValueChange={v => {
+              setProjectId(v);
+              setProjectError(undefined);
+            }}
+            options={projectOptions}>
             <SelectTrigger placeholder="Choose a project" />
           </Select>
+          {projectError && <Text className="text-xs text-destructive dark:text-destructive-dark">{projectError}</Text>}
         </View>
 
         <TaskFieldsForm value={fields} onChange={setField} titleError={titleError} />

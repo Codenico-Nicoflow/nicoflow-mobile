@@ -1,5 +1,5 @@
 import { CheckSquare } from 'lucide-react-native';
-import { TextInput, useColorScheme, View } from 'react-native';
+import { Text, TextInput, useColorScheme, View } from 'react-native';
 
 import { cn } from '@/lib/utils/cn';
 
@@ -28,6 +28,7 @@ export function NameField({ value, onChange, placeholder, error }: NameFieldProp
           error ? 'border-destructive dark:border-destructive-dark' : 'border-input dark:border-input-dark'
         )}
       />
+      {error && <Text className="text-xs text-destructive dark:text-destructive-dark">{error}</Text>}
     </View>
   );
 }
