@@ -1,9 +1,11 @@
-import { createTaskApi } from '@nicoflow/shared/api';
+import { createProjectApi, createRecurrenceApi, createTaskApi, createAreaApi } from '@nicoflow/shared/api';
+import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { configureStore } from '@reduxjs/toolkit';
 import { fetchBaseQuery } from '@reduxjs/toolkit/query';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import { http, HttpResponse } from 'msw';
 import { Provider } from 'react-redux';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { server } from '../../../test/server';
 
@@ -13,16 +15,40 @@ const API = 'http://localhost:8080/v1';
 
 const baseQuery = fetchBaseQuery({ baseUrl: API });
 const mockTaskApi = createTaskApi(baseQuery);
+const mockAreaApi = createAreaApi(baseQuery);
+const mockProjectApi = createProjectApi(baseQuery, mockAreaApi);
+const mockRecurrenceApi = createRecurrenceApi(baseQuery);
 
 jest.mock('@/lib/store', () => ({
   useGetTimeSpreadQuery: () => mockTaskApi.useGetTimeSpreadQuery(),
   useUpdateTaskStatusMutation: () => mockTaskApi.useUpdateTaskStatusMutation(),
+  useDeleteTaskMutation: () => mockTaskApi.useDeleteTaskMutation(),
+  useCreateTaskMutation: () => mockTaskApi.useCreateTaskMutation(),
+  useGetProjectsQuery: () => mockProjectApi.useGetProjectsQuery(),
+  useCreateRecurrenceRuleMutation: () => mockRecurrenceApi.useCreateRecurrenceRuleMutation(),
 }));
+
+beforeEach(() => {
+  server.use(
+    http.get(`${API}/projects`, () => HttpResponse.json({ data: { items: [], nextCursor: '' }, error: null }))
+  );
+});
 
 const makeStore = () =>
   configureStore({
-    reducer: { [mockTaskApi.reducerPath]: mockTaskApi.reducer },
-    middleware: gDM => gDM().concat(mockTaskApi.middleware),
+    reducer: {
+      [mockTaskApi.reducerPath]: mockTaskApi.reducer,
+      [mockProjectApi.reducerPath]: mockProjectApi.reducer,
+      [mockAreaApi.reducerPath]: mockAreaApi.reducer,
+      [mockRecurrenceApi.reducerPath]: mockRecurrenceApi.reducer,
+    },
+    middleware: gDM =>
+      gDM().concat(
+        mockTaskApi.middleware,
+        mockProjectApi.middleware,
+        mockAreaApi.middleware,
+        mockRecurrenceApi.middleware
+      ),
   });
 
 const task = (overrides: Partial<Record<string, unknown>> = {}) => ({
@@ -47,9 +73,13 @@ const task = (overrides: Partial<Record<string, unknown>> = {}) => ({
 
 const renderView = () =>
   render(
-    <Provider store={makeStore()}>
-      <TimeSpreadView />
-    </Provider>
+    <GestureHandlerRootView>
+      <BottomSheetModalProvider>
+        <Provider store={makeStore()}>
+          <TimeSpreadView />
+        </Provider>
+      </BottomSheetModalProvider>
+    </GestureHandlerRootView>
   );
 
 describe('TimeSpreadView', () => {
