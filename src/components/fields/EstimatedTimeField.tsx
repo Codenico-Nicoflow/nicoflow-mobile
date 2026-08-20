@@ -10,12 +10,12 @@ import { FieldLabel } from './FieldLabel';
 
 const PRESETS = [15, 30, 60, 120, 240, 480];
 const PRESET_KEYS: Record<number, string> = {
-  15: 'estChips.15m',
-  30: 'estChips.30m',
-  60: 'estChips.1h',
-  120: 'estChips.2h',
-  240: 'estChips.4h',
-  480: 'estChips.8h',
+  15: 'fields.estChips.15m',
+  30: 'fields.estChips.30m',
+  60: 'fields.estChips.1h',
+  120: 'fields.estChips.2h',
+  240: 'fields.estChips.4h',
+  480: 'fields.estChips.8h',
 };
 const PRESET_VALUES = new Set(PRESETS);
 const MIN_MINUTES = 1;
@@ -59,7 +59,7 @@ export function EstimatedTimeField({ value, onChange }: EstimatedTimeFieldProps)
                   'text-sm font-medium',
                   active ? 'text-primary-foreground' : 'text-foreground dark:text-foreground-dark'
                 )}>
-                {t(PRESET_KEYS[minutes] as 'estChips.15m')}
+                {t(PRESET_KEYS[minutes] as 'fields.estChips.15m')}
               </Text>
             </Pressable>
           );
@@ -86,8 +86,8 @@ export function EstimatedTimeField({ value, onChange }: EstimatedTimeFieldProps)
               isCustomActive ? 'text-primary-foreground' : 'text-foreground dark:text-foreground-dark'
             )}>
             {isCustomActive && value != null
-              ? formatDuration(value, t('estChips.minSuffix'), t('estChips.hourSuffix'))
-              : t('estChips.custom')}
+              ? formatDuration(value, t('fields.estChips.minSuffix'), t('fields.estChips.hourSuffix'))
+              : t('fields.estChips.custom')}
           </Text>
         </Pressable>
 
@@ -98,7 +98,7 @@ export function EstimatedTimeField({ value, onChange }: EstimatedTimeFieldProps)
               onChange(null);
             }}
             accessibilityRole="button"
-            accessibilityLabel={t('estChips.clear')}
+            accessibilityLabel={t('fields.estChips.clear')}
             className="h-8 w-8 items-center justify-center rounded-md border border-input dark:border-input-dark">
             <X size={14} color={isDark ? '#94a3b8' : '#64748b'} />
           </Pressable>
