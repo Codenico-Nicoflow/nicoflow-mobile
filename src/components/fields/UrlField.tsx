@@ -30,7 +30,7 @@ export function UrlField({ value, onChange }: UrlFieldProps) {
           <Pressable
             onPress={() => onChange('')}
             accessibilityRole="button"
-            accessibilityLabel="Clear URL"
+            accessibilityLabel={t('fields.clearUrl')}
             className="h-12 w-12 items-center justify-center rounded-md border border-input dark:border-input-dark">
             <X size={16} color={isDark ? '#94a3b8' : '#64748b'} />
           </Pressable>

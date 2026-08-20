@@ -155,13 +155,15 @@ export const TaskCreateSheet = forwardRef<TaskCreateSheetRef, TaskCreateSheetPro
         )}
         {formError === 'generic' && (
           <Alert variant="destructive">
-            <AlertTitle>Couldn&apos;t create task</AlertTitle>
-            <AlertDescription>Something went wrong. Try again.</AlertDescription>
+            <AlertTitle>{t('task:dialog.createErrorTitle')}</AlertTitle>
+            <AlertDescription>{t('task:dialog.genericErrorDescription')}</AlertDescription>
           </Alert>
         )}
 
         <View className="gap-1.5">
-          <Text className="text-sm font-semibold text-foreground dark:text-foreground-dark">Project</Text>
+          <Text className="text-sm font-semibold text-foreground dark:text-foreground-dark">
+            {t('task:dialog.projectLabel')}
+          </Text>
           <Select
             value={projectId}
             onValueChange={v => {
@@ -169,7 +171,7 @@ export const TaskCreateSheet = forwardRef<TaskCreateSheetRef, TaskCreateSheetPro
               setProjectError(undefined);
             }}
             options={projectOptions}>
-            <SelectTrigger placeholder="Choose a project" />
+            <SelectTrigger placeholder={t('task:dialog.projectPlaceholder')} />
           </Select>
           {projectError && <Text className="text-xs text-destructive dark:text-destructive-dark">{projectError}</Text>}
         </View>

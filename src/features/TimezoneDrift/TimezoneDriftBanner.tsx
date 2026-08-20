@@ -1,6 +1,7 @@
 import { detectTimezoneDrift, formatZoneOffset } from '@nicoflow/shared/utils';
 import { Globe } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Pressable, Text, useColorScheme, View } from 'react-native';
 
 import { Button } from '@/components/ui/button';
@@ -24,6 +25,7 @@ const zoneLabel = (timezone: string, now: Date): string => {
 // just on a calendar grid. Never auto-applies the device zone — that stays
 // an explicit choice, same reasoning as web.
 export function TimezoneDriftBanner() {
+  const { t } = useTranslation('task');
   const user = useAppUser();
   const [updateProfile, { isLoading }] = useUpdateProfileMutation();
   const [now] = useState(() => new Date());
@@ -70,21 +72,31 @@ export function TimezoneDriftBanner() {
       </View>
 
       <View className="flex-1 gap-1">
-        <Text className="text-sm font-semibold text-foreground dark:text-foreground-dark">Timezone mismatch</Text>
+        <Text className="text-sm font-semibold text-foreground dark:text-foreground-dark">
+          {t('calendar.timezoneDrift.title')}
+        </Text>
         <Text className="text-sm text-muted-foreground dark:text-muted-foreground-dark">
-          Your account is set to {zoneLabel(drift.accountZone, now)}, but this device is on{' '}
-          {zoneLabel(drift.browserZone, now)}.
+          {t('calendar.timezoneDrift.description', {
+            accountZone: zoneLabel(drift.accountZone, now),
+            browserZone: zoneLabel(drift.browserZone, now),
+          })}
         </Text>
         <View className="flex-row gap-2 mt-2">
           <Button
-            label={isLoading ? undefined : 'Update to device timezone'}
+            label={isLoading ? undefined : t('calendar.timezoneDrift.update')}
             size="sm"
             disabled={isBusy}
             onPress={handleUpdate}>
             {isLoading && <ActivityIndicator size="small" />}
           </Button>
-          <Pressable onPress={handleDismiss} disabled={isBusy} accessibilityRole="button" accessibilityLabel="Dismiss">
-            <Text className="text-sm text-muted-foreground dark:text-muted-foreground-dark px-2 py-2">Dismiss</Text>
+          <Pressable
+            onPress={handleDismiss}
+            disabled={isBusy}
+            accessibilityRole="button"
+            accessibilityLabel={t('calendar.timezoneDrift.dismiss')}>
+            <Text className="text-sm text-muted-foreground dark:text-muted-foreground-dark px-2 py-2">
+              {t('calendar.timezoneDrift.dismiss')}
+            </Text>
           </Pressable>
         </View>
       </View>

@@ -119,8 +119,8 @@ export const TaskEditSheet = forwardRef<TaskEditSheetRef, { onUpdated: () => voi
 
         {formError && (
           <Alert variant="destructive">
-            <AlertTitle>Couldn&apos;t save changes</AlertTitle>
-            <AlertDescription>Something went wrong. Try again.</AlertDescription>
+            <AlertTitle>{t('dialog.saveErrorTitle')}</AlertTitle>
+            <AlertDescription>{t('dialog.genericErrorDescription')}</AlertDescription>
           </Alert>
         )}
 

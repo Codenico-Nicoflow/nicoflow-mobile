@@ -148,7 +148,7 @@ export function TimeSpreadView() {
       <Button
         onPress={() => createSheetRef.current?.present(segmentToScheduledFor(segment))}
         className="absolute bottom-6 right-6 size-14 rounded-full"
-        accessibilityLabel="New task">
+        accessibilityLabel={t('quickAdd.fabLabel')}>
         <Plus size={24} color="#ffffff" />
       </Button>
 

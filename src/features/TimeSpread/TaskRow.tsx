@@ -74,7 +74,7 @@ export function TaskRow({
         <DropdownMenu
           ref={menuRef}
           trigger={
-            <View accessibilityLabel="Task actions" className="p-1">
+            <View accessibilityLabel={t('actions.menuLabel')} className="p-1">
               <MoreVertical size={16} color={mutedColor} />
             </View>
           }>

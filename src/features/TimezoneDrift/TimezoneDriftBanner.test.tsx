@@ -41,7 +41,7 @@ describe('TimezoneDriftBanner', () => {
     mockDeviceTimeZone('Asia/Jerusalem');
 
     await render(<TimezoneDriftBanner />);
-    expect(screen.queryByText('Timezone mismatch')).toBeNull();
+    expect(screen.queryByText('Your calendar is showing a different timezone')).toBeNull();
   });
 
   it('renders nothing when the user has no stored timezone', async () => {
@@ -49,24 +49,24 @@ describe('TimezoneDriftBanner', () => {
     mockDeviceTimeZone('America/New_York');
 
     await render(<TimezoneDriftBanner />);
-    expect(screen.queryByText('Timezone mismatch')).toBeNull();
+    expect(screen.queryByText('Your calendar is showing a different timezone')).toBeNull();
   });
 
   it('renders the mismatch when the device zone differs', async () => {
     mockDeviceTimeZone('America/New_York');
 
     await render(<TimezoneDriftBanner />);
-    await waitFor(() => expect(screen.getByText('Timezone mismatch')).toBeTruthy());
+    await waitFor(() => expect(screen.getByText('Your calendar is showing a different timezone')).toBeTruthy());
   });
 
   it('dismiss button hides the banner and persists the dismissal', async () => {
     mockDeviceTimeZone('America/New_York');
 
     await render(<TimezoneDriftBanner />);
-    await waitFor(() => expect(screen.getByText('Timezone mismatch')).toBeTruthy());
+    await waitFor(() => expect(screen.getByText('Your calendar is showing a different timezone')).toBeTruthy());
 
-    fireEvent.press(screen.getByLabelText('Dismiss'));
+    fireEvent.press(screen.getByLabelText('Keep account timezone'));
 
-    await waitFor(() => expect(screen.queryByText('Timezone mismatch')).toBeNull());
+    await waitFor(() => expect(screen.queryByText('Your calendar is showing a different timezone')).toBeNull());
   });
 });
