@@ -1,7 +1,10 @@
 import type { IBucket } from '@nicoflow/shared/types';
+import { Inbox } from 'lucide-react-native';
 import { useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { FlatList, Text, View } from 'react-native';
 
+import { EmptyState } from '@/components/ui/empty-state';
 import { type SheetRef } from '@/components/ui/sheet';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useDeleteBucketMutation, useGetBucketsQuery } from '@/lib/store';
@@ -12,6 +15,7 @@ import { BucketRow } from './BucketRow';
 import { InboxCapture } from './InboxCapture';
 
 export function InboxView() {
+  const { t } = useTranslation('bucket');
   const { data, isLoading, isFetching, refetch } = useGetBucketsQuery();
   const [deleteBucket] = useDeleteBucketMutation();
   const [processingBucket, setProcessingBucket] = useState<IBucket | null>(null);
@@ -30,19 +34,27 @@ export function InboxView() {
     processSheetRef.current?.present();
   };
 
+  const subtitle = isLoading
+    ? ''
+    : unprocessed.length === 0
+      ? t('page.subtitleClear')
+      : t('page.subtitle', { count: unprocessed.length });
+
   return (
     <View className="flex-1 gap-4 px-4 pt-4">
       <View>
-        <Text className="text-2xl font-bold text-foreground dark:text-foreground-dark">Inbox</Text>
-        <Text className="text-sm text-muted-foreground dark:text-muted-foreground-dark">
-          {isLoading ? '' : unprocessed.length === 0 ? 'All clear' : `${unprocessed.length} to process`}
-        </Text>
+        <Text className="text-2xl font-bold text-foreground dark:text-foreground-dark">{t('page.heading')}</Text>
+        <Text className="text-sm text-muted-foreground dark:text-muted-foreground-dark">{subtitle}</Text>
       </View>
 
       <Tabs defaultValue="inbox" className="flex-1">
         <TabsList>
-          <TabsTrigger value="inbox">{isLoading ? 'Inbox' : `Inbox ${unprocessed.length}`}</TabsTrigger>
-          <TabsTrigger value="archived">{isLoading ? 'Archived' : `Archived ${archived.length}`}</TabsTrigger>
+          <TabsTrigger value="inbox">
+            {isLoading ? t('page.tabs.inbox') : `${t('page.tabs.inbox')} ${unprocessed.length}`}
+          </TabsTrigger>
+          <TabsTrigger value="archived">
+            {isLoading ? t('page.tabs.archived') : `${t('page.tabs.archived')} ${archived.length}`}
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="inbox" className="flex-1 gap-4">
@@ -57,11 +69,12 @@ export function InboxView() {
             refreshing={isFetching && !isLoading}
             ListEmptyComponent={
               isLoading ? null : (
-                <View className="items-center justify-center py-12" testID="inbox-empty">
-                  <Text className="text-sm text-center text-muted-foreground dark:text-muted-foreground-dark">
-                    Inbox zero — nothing to process
-                  </Text>
-                </View>
+                <EmptyState
+                  icon={Inbox}
+                  title={t('list.emptyTitle')}
+                  description={t('list.emptyDescription')}
+                  testID="inbox-empty"
+                />
               )
             }
           />

@@ -6,15 +6,16 @@ import {
   RecurrenceEnd,
   RecurrenceFreq,
 } from '@nicoflow/shared/types';
-import { summarizeRecurrence } from '@nicoflow/shared/utils';
 import { Repeat } from 'lucide-react-native';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Pressable, Text, TextInput, useColorScheme, View } from 'react-native';
 
 import { Select, SelectTrigger } from '@/components/ui/select';
 import { cn } from '@/lib/utils/cn';
 
 import { defaultRecurrence, type RecurrenceValue } from './recurrence';
+import { useRecurrenceSummary } from './useRecurrenceSummary';
 
 // Displays/accepts DD-MM-YYYY; the value prop/onChange still carry the wire
 // format (ISO "YYYY-MM-DD" — what CreateRecurrenceRuleRequest expects), so
@@ -110,59 +111,6 @@ function SegmentedField<T extends string>({
   );
 }
 
-const WEEKDAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-
-const FREQ_OPTIONS = [
-  { label: 'Daily', value: RecurrenceFreq.DAILY },
-  { label: 'Weekly', value: RecurrenceFreq.WEEKLY },
-  { label: 'Monthly', value: RecurrenceFreq.MONTHLY },
-  { label: 'Yearly', value: RecurrenceFreq.YEARLY },
-];
-
-const END_OPTIONS = [
-  { label: 'Never', value: RecurrenceEnd.NEVER },
-  { label: 'On date', value: RecurrenceEnd.ON_DATE },
-];
-
-const MONTHDAY_OPTIONS = [
-  ...Array.from({ length: 31 }, (_, i) => ({ label: String(i + 1), value: String(i + 1) })),
-  { label: 'Last day of month', value: String(MONTHDAY_LAST) },
-];
-
-// Renders a plain-English summary from the framework-agnostic
-// summarizeRecurrence descriptor — mobile has no i18n infra yet, unlike
-// web's useRecurrenceSummary, so this is a direct string build instead of a
-// translation-key lookup.
-function summaryText(rule: RecurrenceValue): string {
-  const s = summarizeRecurrence(rule);
-  const days = s.weekdays.map(d => WEEKDAY_LABELS[d]).join(', ');
-  const plural = s.count === 1 ? '' : `${s.count} `;
-  const every = s.count === 1 ? 'Every' : `Every ${s.count}`;
-
-  let base: string;
-  switch (s.key) {
-    case 'summary.weekly':
-      base = `${every} week${s.count === 1 ? '' : 's'} on ${days}`;
-      break;
-    case 'freq.weekly':
-      base = 'Weekly';
-      break;
-    case 'summary.monthly':
-      base = `${every} month${s.count === 1 ? '' : 's'} on day ${s.day}`;
-      break;
-    case 'summary.monthlyLast':
-      base = `${every} month${s.count === 1 ? '' : 's'} on the last day`;
-      break;
-    case 'summary.yearly':
-      base = `${plural}${s.count === 1 ? 'Every' : ''} year${s.count === 1 ? '' : 's'}`.trim() || 'Every year';
-      break;
-    default:
-      base = `${every} day${s.count === 1 ? '' : 's'}`;
-  }
-
-  return s.endDate ? `${base}, until ${s.endDate}` : base;
-}
-
 interface RecurrenceFieldProps {
   value: RecurrenceValue | null;
   onChange: (value: RecurrenceValue | null) => void;
@@ -173,9 +121,28 @@ interface RecurrenceFieldProps {
 // mobile picker (a None/Daily/Weekly/Monthly dropdown with no interval or
 // weekday control) undersold what a "repeating task" actually configures.
 export function RecurrenceField({ value, onChange }: RecurrenceFieldProps) {
+  const { t } = useTranslation('recurrence');
+  const summarize = useRecurrenceSummary();
   const isDark = useColorScheme() === 'dark';
   const enabled = value !== null;
   const rule = value ?? defaultRecurrence();
+
+  const FREQ_OPTIONS = [
+    { label: t('freq.daily'), value: RecurrenceFreq.DAILY },
+    { label: t('freq.weekly'), value: RecurrenceFreq.WEEKLY },
+    { label: t('freq.monthly'), value: RecurrenceFreq.MONTHLY },
+    { label: t('freq.yearly'), value: RecurrenceFreq.YEARLY },
+  ];
+
+  const END_OPTIONS = [
+    { label: t('field.endNever'), value: RecurrenceEnd.NEVER },
+    { label: t('field.endOnDate'), value: RecurrenceEnd.ON_DATE },
+  ];
+
+  const MONTHDAY_OPTIONS = [
+    ...Array.from({ length: 31 }, (_, i) => ({ label: String(i + 1), value: String(i + 1) })),
+    { label: t('field.lastDayOfMonth'), value: String(MONTHDAY_LAST) },
+  ];
 
   const patch = (next: Partial<RecurrenceValue>) => onChange({ ...rule, ...next });
 
@@ -190,10 +157,10 @@ export function RecurrenceField({ value, onChange }: RecurrenceFieldProps) {
         <View className="flex-1 gap-0.5">
           <View className="flex-row items-center gap-2">
             <Repeat size={16} color={isDark ? '#94a3b8' : '#64748b'} />
-            <Text className="text-sm font-semibold text-foreground dark:text-foreground-dark">Repeats</Text>
+            <Text className="text-sm font-semibold text-foreground dark:text-foreground-dark">{t('field.label')}</Text>
           </View>
           <Text className="text-xs text-muted-foreground dark:text-muted-foreground-dark">
-            Turn this into a repeating task.
+            {t('field.description')}
           </Text>
         </View>
         <Pressable
@@ -219,12 +186,12 @@ export function RecurrenceField({ value, onChange }: RecurrenceFieldProps) {
       {enabled && (
         <View className="gap-3 rounded-md border border-border dark:border-border-dark p-3">
           <View className="gap-1.5">
-            <Text className="text-xs text-muted-foreground dark:text-muted-foreground-dark">Frequency</Text>
+            <Text className="text-xs text-muted-foreground dark:text-muted-foreground-dark">{t('field.freqLabel')}</Text>
             <SegmentedField value={rule.freq} onChange={freq => patch({ freq })} options={FREQ_OPTIONS} />
           </View>
 
           <View className="gap-1.5">
-            <Text className="text-xs text-muted-foreground dark:text-muted-foreground-dark">Every</Text>
+            <Text className="text-xs text-muted-foreground dark:text-muted-foreground-dark">{t('field.intervalLabel')}</Text>
             <TextInput
               keyboardType="number-pad"
               value={String(rule.interval)}
@@ -242,7 +209,7 @@ export function RecurrenceField({ value, onChange }: RecurrenceFieldProps) {
 
           {rule.freq === RecurrenceFreq.WEEKLY && (
             <View className="gap-1.5">
-              <Text className="text-xs text-muted-foreground dark:text-muted-foreground-dark">On days</Text>
+              <Text className="text-xs text-muted-foreground dark:text-muted-foreground-dark">{t('field.weekdayLabel')}</Text>
               <View className="flex-row flex-wrap gap-1.5">
                 {RECURRENCE_WEEKDAYS.map(day => {
                   const active = rule.byWeekday.includes(day);
@@ -263,7 +230,7 @@ export function RecurrenceField({ value, onChange }: RecurrenceFieldProps) {
                           'text-xs font-medium',
                           active ? 'text-primary-foreground' : 'text-foreground dark:text-foreground-dark'
                         )}>
-                        {WEEKDAY_LABELS[day]}
+                        {t(`weekdayShort.${day}` as 'weekdayShort.0')}
                       </Text>
                     </Pressable>
                   );
@@ -274,7 +241,7 @@ export function RecurrenceField({ value, onChange }: RecurrenceFieldProps) {
 
           {rule.freq === RecurrenceFreq.MONTHLY && (
             <View className="gap-1.5">
-              <Text className="text-xs text-muted-foreground dark:text-muted-foreground-dark">On day</Text>
+              <Text className="text-xs text-muted-foreground dark:text-muted-foreground-dark">{t('field.monthdayLabel')}</Text>
               <Select
                 value={String(rule.byMonthday ?? 1)}
                 onValueChange={v => patch({ byMonthday: Number(v) })}
@@ -286,11 +253,11 @@ export function RecurrenceField({ value, onChange }: RecurrenceFieldProps) {
 
           <View className="flex-row gap-3">
             <View className="flex-1 gap-1.5">
-              <Text className="text-xs text-muted-foreground dark:text-muted-foreground-dark">Starts</Text>
+              <Text className="text-xs text-muted-foreground dark:text-muted-foreground-dark">{t('field.startDateLabel')}</Text>
               <InlineDateField value={rule.startDate} onChange={v => patch({ startDate: v })} />
             </View>
             <View className="flex-1 gap-1.5">
-              <Text className="text-xs text-muted-foreground dark:text-muted-foreground-dark">Ends</Text>
+              <Text className="text-xs text-muted-foreground dark:text-muted-foreground-dark">{t('field.endLabel')}</Text>
               <SegmentedField
                 value={rule.endDate ? RecurrenceEnd.ON_DATE : RecurrenceEnd.NEVER}
                 onChange={mode =>
@@ -303,12 +270,12 @@ export function RecurrenceField({ value, onChange }: RecurrenceFieldProps) {
 
           {rule.endDate != null && (
             <View className="gap-1.5">
-              <Text className="text-xs text-muted-foreground dark:text-muted-foreground-dark">End date</Text>
+              <Text className="text-xs text-muted-foreground dark:text-muted-foreground-dark">{t('field.endDateLabel')}</Text>
               <InlineDateField value={rule.endDate ?? ""} onChange={v => patch({ endDate: v })} />
             </View>
           )}
 
-          <Text className="text-xs text-muted-foreground dark:text-muted-foreground-dark">{summaryText(rule)}</Text>
+          <Text className="text-xs text-muted-foreground dark:text-muted-foreground-dark">{summarize(rule)}</Text>
         </View>
       )}
     </View>

@@ -1,30 +1,25 @@
+import { formatDuration } from '@nicoflow/shared/utils';
 import { Clock, X } from 'lucide-react-native';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Pressable, Text, TextInput, useColorScheme, View } from 'react-native';
 
 import { cn } from '@/lib/utils/cn';
 
 import { FieldLabel } from './FieldLabel';
 
-const PRESETS: { minutes: number; label: string }[] = [
-  { minutes: 15, label: '15m' },
-  { minutes: 30, label: '30m' },
-  { minutes: 60, label: '1h' },
-  { minutes: 120, label: '2h' },
-  { minutes: 240, label: '4h' },
-  { minutes: 480, label: '8h' },
-];
-const PRESET_VALUES = new Set(PRESETS.map(p => p.minutes));
+const PRESETS = [15, 30, 60, 120, 240, 480];
+const PRESET_KEYS: Record<number, string> = {
+  15: 'fields.estChips.15m',
+  30: 'fields.estChips.30m',
+  60: 'fields.estChips.1h',
+  120: 'fields.estChips.2h',
+  240: 'fields.estChips.4h',
+  480: 'fields.estChips.8h',
+};
+const PRESET_VALUES = new Set(PRESETS);
 const MIN_MINUTES = 1;
 const MAX_MINUTES = 1440;
-
-const formatCustom = (minutes: number): string => {
-  const hours = Math.floor(minutes / 60);
-  const mins = minutes % 60;
-  if (hours === 0) return `${mins}m`;
-  if (mins === 0) return `${hours}h`;
-  return `${hours}h ${mins}m`;
-};
 
 interface EstimatedTimeFieldProps {
   value: number | null;
@@ -32,6 +27,7 @@ interface EstimatedTimeFieldProps {
 }
 
 export function EstimatedTimeField({ value, onChange }: EstimatedTimeFieldProps) {
+  const { t } = useTranslation('common');
   const isDark = useColorScheme() === 'dark';
   const isOffChip = value != null && !PRESET_VALUES.has(value);
   const [customOpen, setCustomOpen] = useState(isOffChip);
@@ -39,16 +35,16 @@ export function EstimatedTimeField({ value, onChange }: EstimatedTimeFieldProps)
 
   return (
     <View className="gap-1.5">
-      <FieldLabel icon={Clock} label="Estimated Time" optional />
+      <FieldLabel icon={Clock} label={t('fields.estimatedTimeLabel')} optional />
       <View className="flex-row flex-wrap gap-2">
-        {PRESETS.map(preset => {
-          const active = value === preset.minutes;
+        {PRESETS.map(minutes => {
+          const active = value === minutes;
           return (
             <Pressable
-              key={preset.minutes}
+              key={minutes}
               onPress={() => {
                 setCustomOpen(false);
-                onChange(preset.minutes);
+                onChange(minutes);
               }}
               accessibilityRole="button"
               accessibilityState={{ selected: active }}
@@ -63,7 +59,7 @@ export function EstimatedTimeField({ value, onChange }: EstimatedTimeFieldProps)
                   'text-sm font-medium',
                   active ? 'text-primary-foreground' : 'text-foreground dark:text-foreground-dark'
                 )}>
-                {preset.label}
+                {t(PRESET_KEYS[minutes] as 'fields.estChips.15m')}
               </Text>
             </Pressable>
           );
@@ -89,7 +85,9 @@ export function EstimatedTimeField({ value, onChange }: EstimatedTimeFieldProps)
               'text-sm font-medium',
               isCustomActive ? 'text-primary-foreground' : 'text-foreground dark:text-foreground-dark'
             )}>
-            {isCustomActive && value != null ? formatCustom(value) : 'Custom'}
+            {isCustomActive && value != null
+              ? formatDuration(value, t('fields.estChips.minSuffix'), t('fields.estChips.hourSuffix'))
+              : t('fields.estChips.custom')}
           </Text>
         </Pressable>
 
@@ -100,7 +98,7 @@ export function EstimatedTimeField({ value, onChange }: EstimatedTimeFieldProps)
               onChange(null);
             }}
             accessibilityRole="button"
-            accessibilityLabel="Clear estimated time"
+            accessibilityLabel={t('fields.estChips.clear')}
             className="h-8 w-8 items-center justify-center rounded-md border border-input dark:border-input-dark">
             <X size={14} color={isDark ? '#94a3b8' : '#64748b'} />
           </Pressable>
@@ -122,7 +120,7 @@ export function EstimatedTimeField({ value, onChange }: EstimatedTimeFieldProps)
             }}
             className="h-10 flex-1 text-sm text-foreground dark:text-foreground-dark"
           />
-          <Text className="text-xs text-muted-foreground dark:text-muted-foreground-dark">min</Text>
+          <Text className="text-xs text-muted-foreground dark:text-muted-foreground-dark">{t('fields.minutes')}</Text>
         </View>
       )}
     </View>

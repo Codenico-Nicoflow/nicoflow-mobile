@@ -22,6 +22,9 @@ const mockRecurrenceApi = createRecurrenceApi(baseQuery, mockTaskApi);
 jest.mock('@/lib/store', () => ({
   useGetTimeSpreadQuery: () => mockTaskApi.useGetTimeSpreadQuery(),
   useUpdateTaskStatusMutation: () => mockTaskApi.useUpdateTaskStatusMutation(),
+  useUpdateTaskMutation: () => mockTaskApi.useUpdateTaskMutation(),
+  useMarkTaskMissedMutation: () => mockTaskApi.useMarkTaskMissedMutation(),
+  useScheduleTaskMutation: () => mockTaskApi.useScheduleTaskMutation(),
   useDeleteTaskMutation: () => mockTaskApi.useDeleteTaskMutation(),
   useCreateTaskMutation: () => mockTaskApi.useCreateTaskMutation(),
   useGetProjectsQuery: () => mockProjectApi.useGetProjectsQuery(),
@@ -119,6 +122,6 @@ describe('TimeSpreadView', () => {
     );
     await renderView();
     await waitFor(() => expect(screen.getByTestId('timespread-empty')).toBeTruthy());
-    expect(screen.getByText('Nothing scheduled for today')).toBeTruthy();
+    expect(screen.getByText('Nothing scheduled for today.')).toBeTruthy();
   });
 });

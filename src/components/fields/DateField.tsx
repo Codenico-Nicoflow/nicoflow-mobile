@@ -1,5 +1,6 @@
 import { CalendarClock, X } from 'lucide-react-native';
 import { useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Pressable, Text, useColorScheme, View } from 'react-native';
 
 import { Calendar } from '@/components/ui/calendar';
@@ -28,6 +29,7 @@ interface DateFieldProps {
 // another Sheet works because Sheet sets stackBehavior="push" — see its own
 // comment for why that matters.
 export function DateField({ value, onChange, placeholder = 'Pick a date', clearable = true }: DateFieldProps) {
+  const { t } = useTranslation('common');
   const isDark = useColorScheme() === 'dark';
   const selectedDate = value ? parseISODate(value) : undefined;
   const pickerRef = useRef<SheetRef>(null);
@@ -52,7 +54,7 @@ export function DateField({ value, onChange, placeholder = 'Pick a date', cleara
         <Pressable
           onPress={() => onChange(null)}
           accessibilityRole="button"
-          accessibilityLabel="Clear date"
+          accessibilityLabel={t('fields.clearDate')}
           className="h-10 w-10 items-center justify-center rounded-md border border-input dark:border-input-dark">
           <X size={16} color={isDark ? '#94a3b8' : '#64748b'} />
         </Pressable>

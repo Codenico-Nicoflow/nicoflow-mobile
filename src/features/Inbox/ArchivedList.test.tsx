@@ -26,4 +26,10 @@ describe('ArchivedList', () => {
     expect(screen.getByText('Note')).toBeTruthy();
     expect(screen.getByText('Buy milk')).toBeTruthy();
   });
+
+  it('shows a relative "processed" timestamp', async () => {
+    const twoDaysAgo = new Date(Date.now() - 2 * 86400 * 1000).toISOString();
+    await render(<ArchivedList items={[bucket({ processedAt: twoDaysAgo })]} isLoading={false} />);
+    expect(screen.getByText(/Processed 2 days ago/)).toBeTruthy();
+  });
 });

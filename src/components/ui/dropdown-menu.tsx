@@ -54,12 +54,13 @@ export const DropdownMenu = forwardRef<DropdownMenuRef, { trigger: ReactNode; ch
 
 export interface DropdownMenuItemProps {
   children: ReactNode;
+  icon?: ReactNode;
   onPress: () => void;
   variant?: 'default' | 'destructive';
   disabled?: boolean;
 }
 
-export function DropdownMenuItem({ children, onPress, variant = 'default', disabled }: DropdownMenuItemProps) {
+export function DropdownMenuItem({ children, icon, onPress, variant = 'default', disabled }: DropdownMenuItemProps) {
   return (
     <Pressable
       onPress={onPress}
@@ -70,6 +71,7 @@ export function DropdownMenuItem({ children, onPress, variant = 'default', disab
         'flex-row items-center gap-2 rounded-sm px-3 py-3',
         disabled && 'opacity-50'
       )}>
+      {icon}
       <Text
         className={cn(
           'text-sm',

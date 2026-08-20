@@ -6,6 +6,7 @@ process.env.EXPO_PUBLIC_API_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://loc
 import { afterAll, afterEach, beforeAll, jest } from '@jest/globals';
 
 import { server } from './server';
+import { initI18n } from '../src/lib/i18n';
 
 jest.mock('react-native-worklets', () => require('react-native-worklets/src/mock'));
 jest.mock('react-native-reanimated', () => require('react-native-reanimated/mock'));
@@ -30,6 +31,10 @@ jest.mock('expo-secure-store', () => {
   };
 });
 
+jest.mock('expo-localization', () => ({
+  getLocales: jest.fn(() => [{ languageCode: 'en', languageTag: 'en-US', textDirection: 'ltr' }]),
+}));
+
 jest.mock('expo-router', () => {
   const actual = jest.requireActual('expo-router') as object;
   return {
@@ -39,5 +44,9 @@ jest.mock('expo-router', () => {
 });
 
 beforeAll(() => server.listen({ onUnhandledRequest: 'error' }));
+// Every test renders real component trees through react-i18next's default
+// singleton (no <I18nextProvider> per test) — initialize it once, synchronously
+// resolved to English since AsyncStorage/expo-localization are mocked above.
+beforeAll(() => initI18n());
 afterEach(() => server.resetHandlers());
 afterAll(() => server.close());

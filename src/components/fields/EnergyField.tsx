@@ -1,16 +1,12 @@
 import { TaskEnergy } from '@nicoflow/shared/types';
-import { BatteryLow, BatteryMedium, Brain, type LucideIcon, Zap } from 'lucide-react-native';
+import { Zap } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 import { Pressable, Text, View } from 'react-native';
 
+import { ENERGY_OPTIONS } from '@/lib/constants/energy';
 import { cn } from '@/lib/utils/cn';
 
 import { FieldLabel } from './FieldLabel';
-
-const ENERGY_OPTIONS: { value: TaskEnergy; icon: LucideIcon; label: string; color: string; darkColor: string }[] = [
-  { value: TaskEnergy.LOW, icon: BatteryLow, label: 'Low', color: '#10b981', darkColor: '#34d399' },
-  { value: TaskEnergy.MEDIUM, icon: BatteryMedium, label: 'Medium', color: '#f59e0b', darkColor: '#fbbf24' },
-  { value: TaskEnergy.DEEP, icon: Brain, label: 'Deep', color: '#8b5cf6', darkColor: '#a78bfa' },
-];
 
 interface EnergyFieldProps {
   value: TaskEnergy;
@@ -19,9 +15,11 @@ interface EnergyFieldProps {
 }
 
 export function EnergyField({ value, onChange, isDark }: EnergyFieldProps) {
+  const { t } = useTranslation(['common', 'task']);
+
   return (
     <View className="gap-1.5">
-      <FieldLabel icon={Zap} label="Energy" />
+      <FieldLabel icon={Zap} label={t('common:fields.energyLabel')} />
       <View
         className="flex-row rounded-lg bg-muted dark:bg-muted-dark p-1"
         role="radiogroup"
@@ -47,7 +45,7 @@ export function EnergyField({ value, onChange, isDark }: EnergyFieldProps) {
                     ? 'text-foreground dark:text-foreground-dark'
                     : 'text-muted-foreground dark:text-muted-foreground-dark'
                 )}>
-                {option.label}
+                {t(`task:energy.${option.value}`)}
               </Text>
             </Pressable>
           );

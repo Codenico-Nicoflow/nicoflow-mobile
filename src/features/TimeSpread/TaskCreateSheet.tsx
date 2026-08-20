@@ -1,7 +1,9 @@
 import { TaskEnergy, TaskPriority } from '@nicoflow/shared/types';
 import { normalizeScheduleForFreq } from '@nicoflow/shared/utils';
+import { CheckSquare } from 'lucide-react-native';
 import { forwardRef, useImperativeHandle, useRef, useState } from 'react';
-import { Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
+import { Text, useColorScheme, View } from 'react-native';
 
 import { type RecurrenceValue } from '@/components/fields/recurrence';
 import { RecurrenceField } from '@/components/fields/RecurrenceField';
@@ -9,7 +11,7 @@ import { TaskFieldsForm, type TaskFieldsValue } from '@/components/fields/TaskFi
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Select, SelectTrigger } from '@/components/ui/select';
-import { Sheet, SheetHeader, SheetTitle, type SheetRef } from '@/components/ui/sheet';
+import { Sheet, SheetHeader, SheetTitle, SheetDescription, type SheetRef } from '@/components/ui/sheet';
 import { useCreateRecurrenceRuleMutation, useCreateTaskMutation, useGetProjectsQuery } from '@/lib/store';
 
 // present(scheduledFor) instead of a plain SheetRef — the caller hands the
@@ -54,6 +56,8 @@ export const TaskCreateSheet = forwardRef<TaskCreateSheetRef, TaskCreateSheetPro
   { onCreated },
   ref
 ) {
+  const { t } = useTranslation(['task', 'common']);
+  const isDark = useColorScheme() === 'dark';
   const { data: projectsData } = useGetProjectsQuery();
   const [createTask, { isLoading: isCreatingTask }] = useCreateTaskMutation();
   const [createRule, { isLoading: isCreatingRule }] = useCreateRecurrenceRuleMutation();
@@ -132,24 +136,34 @@ export const TaskCreateSheet = forwardRef<TaskCreateSheetRef, TaskCreateSheetPro
     <Sheet ref={sheetRef} snapPoints={['75%']}>
       <View className="gap-4">
         <SheetHeader>
-          <SheetTitle>New task</SheetTitle>
+          <View className="flex-row items-center gap-3">
+            <View className="size-10 items-center justify-center rounded-lg bg-primary/10 dark:bg-primary-dark/10">
+              <CheckSquare size={20} color={isDark ? '#6366f1' : '#4f46e5'} />
+            </View>
+            <View className="flex-1">
+              <SheetTitle>{t('task:dialog.createTitle')}</SheetTitle>
+              <SheetDescription>{t('task:dialog.createDescription')}</SheetDescription>
+            </View>
+          </View>
         </SheetHeader>
 
         {formError === 'planLimit' && (
           <Alert>
-            <AlertTitle>Recurrence limit reached</AlertTitle>
-            <AlertDescription>Upgrade to Pro for unlimited recurring tasks.</AlertDescription>
+            <AlertTitle>{t('common:planLimit.title')}</AlertTitle>
+            <AlertDescription>{t('common:planLimit.description')}</AlertDescription>
           </Alert>
         )}
         {formError === 'generic' && (
           <Alert variant="destructive">
-            <AlertTitle>Couldn&apos;t create task</AlertTitle>
-            <AlertDescription>Something went wrong. Try again.</AlertDescription>
+            <AlertTitle>{t('task:dialog.createErrorTitle')}</AlertTitle>
+            <AlertDescription>{t('task:dialog.genericErrorDescription')}</AlertDescription>
           </Alert>
         )}
 
         <View className="gap-1.5">
-          <Text className="text-sm font-semibold text-foreground dark:text-foreground-dark">Project</Text>
+          <Text className="text-sm font-semibold text-foreground dark:text-foreground-dark">
+            {t('task:dialog.projectLabel')}
+          </Text>
           <Select
             value={projectId}
             onValueChange={v => {
@@ -157,7 +171,7 @@ export const TaskCreateSheet = forwardRef<TaskCreateSheetRef, TaskCreateSheetPro
               setProjectError(undefined);
             }}
             options={projectOptions}>
-            <SelectTrigger placeholder="Choose a project" />
+            <SelectTrigger placeholder={t('task:dialog.projectPlaceholder')} />
           </Select>
           {projectError && <Text className="text-xs text-destructive dark:text-destructive-dark">{projectError}</Text>}
         </View>
@@ -166,7 +180,7 @@ export const TaskCreateSheet = forwardRef<TaskCreateSheetRef, TaskCreateSheetPro
 
         <RecurrenceField value={recurrence} onChange={setRecurrence} />
 
-        <Button label="Create task" onPress={onSubmit} loading={isCreatingTask || isCreatingRule} />
+        <Button label={t('common:actions.create')} onPress={onSubmit} loading={isCreatingTask || isCreatingRule} />
       </View>
     </Sheet>
   );
