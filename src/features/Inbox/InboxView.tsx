@@ -7,7 +7,9 @@ import { FlatList, Text, View } from 'react-native';
 import { EmptyState } from '@/components/ui/empty-state';
 import { type SheetRef } from '@/components/ui/sheet';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { toast } from '@/components/ui/toast';
 import { useDeleteBucketMutation, useGetBucketsQuery } from '@/lib/store';
+import { showErrorToast, showSuccessToast, ToastMessages } from '@/lib/toast';
 
 import { ArchivedList } from './ArchivedList';
 import { BucketProcessSheet } from './BucketProcessSheet';
@@ -26,7 +28,10 @@ export function InboxView() {
   const archived = items.filter(b => !!b.processedAt);
 
   const handleDelete = (bucket: IBucket) => {
-    void deleteBucket(bucket.id);
+    void deleteBucket(bucket.id)
+      .unwrap()
+      .then(() => showSuccessToast(ToastMessages.BUCKET_DELETED, toast))
+      .catch(error => showErrorToast(error, toast));
   };
 
   const handleOpenProcess = (bucket: IBucket) => {

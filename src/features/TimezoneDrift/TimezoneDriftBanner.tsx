@@ -5,7 +5,9 @@ import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Pressable, Text, useColorScheme, View } from 'react-native';
 
 import { Button } from '@/components/ui/button';
+import { toast } from '@/components/ui/toast';
 import { useAppUser, useUpdateProfileMutation } from '@/lib/store';
+import { showErrorToast } from '@/lib/toast';
 
 import { dismissDrift, isDriftDismissed } from './dismissal';
 
@@ -53,11 +55,12 @@ export function TimezoneDriftBanner() {
   const handleUpdate = async () => {
     try {
       await updateProfile({ timezone: drift.browserZone }).unwrap();
+      toast.success(t('calendar.timezoneDrift.updated', { zone: drift.browserZone.replace(/_/g, ' ') }));
       setDismissed(true);
-    } catch {
+    } catch (error) {
       // An unresolvable zone comes back as a typed error — keep the banner
-      // open so the user can still dismiss it. No toast plumbing on mobile
-      // yet, so this fails silently rather than half-wiring one.
+      // open so the user can still dismiss it.
+      showErrorToast(error, toast);
     }
   };
 

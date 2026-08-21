@@ -5,10 +5,12 @@ import { useTranslation } from 'react-i18next';
 import { useColorScheme, View } from 'react-native';
 
 import { TaskFieldsForm, type TaskFieldsValue } from '@/components/fields/TaskFieldsForm';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetHeader, SheetTitle, SheetDescription, type SheetRef } from '@/components/ui/sheet';
+import { toast } from '@/components/ui/toast';
+import { useRetryableMutation } from '@/hooks/useRetryableMutation';
 import { useUpdateTaskMutation } from '@/lib/store';
+import { showSuccessToast, ToastMessages } from '@/lib/toast';
 
 export interface TaskEditSheetRef {
   present: (task: ITask) => void;
@@ -47,13 +49,13 @@ export const TaskEditSheet = forwardRef<TaskEditSheetRef, { onUpdated: () => voi
   const { t } = useTranslation(['task', 'common']);
   const isDark = useColorScheme() === 'dark';
   const [updateTask, { isLoading }] = useUpdateTaskMutation();
+  const runUpdate = useRetryableMutation(updateTask);
   const sheetRef = useRef<SheetRef>(null);
 
   const [taskId, setTaskId] = useState<string | null>(null);
   const [initialFields, setInitialFields] = useState<TaskFieldsValue | null>(null);
   const [fields, setFields] = useState<TaskFieldsValue | null>(null);
   const [titleError, setTitleError] = useState<string | undefined>();
-  const [formError, setFormError] = useState(false);
 
   useImperativeHandle(ref, () => ({
     present: task => {
@@ -62,7 +64,6 @@ export const TaskEditSheet = forwardRef<TaskEditSheetRef, { onUpdated: () => voi
       setInitialFields(seeded);
       setFields(seeded);
       setTitleError(undefined);
-      setFormError(false);
       sheetRef.current?.present();
     },
     dismiss: () => sheetRef.current?.dismiss(),
@@ -79,27 +80,24 @@ export const TaskEditSheet = forwardRef<TaskEditSheetRef, { onUpdated: () => voi
 
   const onSubmit = async () => {
     if (!taskId || !fields) return;
-    setFormError(false);
     const missingTitle = !fields.title.trim();
     setTitleError(missingTitle ? 'Name is required' : undefined);
     if (missingTitle) return;
 
-    try {
-      await updateTask({
-        id: taskId,
-        title: fields.title,
-        notes: fields.notes || null,
-        priority: fields.priority,
-        energy: fields.energy,
-        rollsOver: fields.rollsOver,
-        scheduledFor: fields.scheduledFor || null,
-        estimatedMinutes: fields.estimatedMinutes ?? null,
-        url: fields.url || null,
-      }).unwrap();
-      onUpdated();
-    } catch {
-      setFormError(true);
-    }
+    const result = await runUpdate({
+      id: taskId,
+      title: fields.title,
+      notes: fields.notes || null,
+      priority: fields.priority,
+      energy: fields.energy,
+      rollsOver: fields.rollsOver,
+      scheduledFor: fields.scheduledFor || null,
+      estimatedMinutes: fields.estimatedMinutes ?? null,
+      url: fields.url || null,
+    });
+    if (!result) return;
+    showSuccessToast(ToastMessages.TASK_UPDATED_SUCCESSFULLY, toast);
+    onUpdated();
   };
 
   return (
@@ -116,13 +114,6 @@ export const TaskEditSheet = forwardRef<TaskEditSheetRef, { onUpdated: () => voi
             </View>
           </View>
         </SheetHeader>
-
-        {formError && (
-          <Alert variant="destructive">
-            <AlertTitle>{t('dialog.saveErrorTitle')}</AlertTitle>
-            <AlertDescription>{t('dialog.genericErrorDescription')}</AlertDescription>
-          </Alert>
-        )}
 
         {fields && <TaskFieldsForm value={fields} onChange={setField} titleError={titleError} />}
 
