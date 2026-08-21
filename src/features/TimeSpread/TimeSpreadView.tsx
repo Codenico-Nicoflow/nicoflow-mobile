@@ -7,7 +7,9 @@ import { FlatList, SectionList, Text, View } from 'react-native';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { toast } from '@/components/ui/toast';
 import { useDeleteTaskMutation, useGetTimeSpreadQuery, useScheduleTaskMutation, useUpdateTaskStatusMutation } from '@/lib/store';
+import { showErrorToast, showSuccessToast, ToastMessages } from '@/lib/toast';
 
 import { groupByDay, nextStatus, type Segment, SEGMENT_KEYS, segmentToScheduledFor, selectSegmentTasks } from './segments';
 import { SwipeableTaskRow } from './SwipeableTaskRow';
@@ -48,8 +50,19 @@ export function TimeSpreadView() {
     [i18n.resolvedLanguage]
   );
 
+  // Mirrors web's TimeSpreadRow `run()` — every optimistic-feeling row action
+  // (status/schedule) stays silent on success but surfaces an error toast on
+  // failure, never a crash or a silently dropped tap.
+  const run = async (op: Promise<unknown>) => {
+    try {
+      await op;
+    } catch (error) {
+      showErrorToast(error, toast);
+    }
+  };
+
   const handleToggleStatus = (task: ITask) => {
-    void updateStatus({ id: task.id, status: nextStatus(task.status) });
+    void run(updateStatus({ id: task.id, status: nextStatus(task.status) }).unwrap());
   };
 
   const handleEdit = (task: ITask) => {
@@ -57,19 +70,22 @@ export function TimeSpreadView() {
   };
 
   const handleScheduleToday = (task: ITask) => {
-    void scheduleTask({ id: task.id, scheduledFor: todayISO() });
+    void run(scheduleTask({ id: task.id, scheduledFor: todayISO() }).unwrap());
   };
 
   const handleScheduleTomorrow = (task: ITask) => {
-    void scheduleTask({ id: task.id, scheduledFor: tomorrowISO() });
+    void run(scheduleTask({ id: task.id, scheduledFor: tomorrowISO() }).unwrap());
   };
 
   const handleUnschedule = (task: ITask) => {
-    void scheduleTask({ id: task.id, scheduledFor: null });
+    void run(scheduleTask({ id: task.id, scheduledFor: null }).unwrap());
   };
 
   const handleDelete = (task: ITask) => {
-    void deleteTask(task.id);
+    void deleteTask(task.id)
+      .unwrap()
+      .then(() => showSuccessToast(ToastMessages.TASK_DELETED_SUCCESSFULLY, toast))
+      .catch(error => showErrorToast(error, toast));
   };
 
   const renderRow = (item: ITask) => (
