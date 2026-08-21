@@ -5,25 +5,22 @@ import { Controller, useForm, useWatch } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { Text, useColorScheme, View } from 'react-native';
 
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { toast } from '@/components/ui/toast';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
+import { useRetryableMutation } from '@/hooks/useRetryableMutation';
 import { useCreateBucketMutation } from '@/lib/store';
+import { showSuccessToast, ToastMessages } from '@/lib/toast';
 
 const MAX_LENGTH = 500;
 
 export function InboxCapture() {
   const { t } = useTranslation('bucket');
   const [createBucket, { isLoading }] = useCreateBucketMutation();
+  const runCreate = useRetryableMutation(createBucket);
   const isDark = useColorScheme() === 'dark';
 
-  const {
-    control,
-    handleSubmit,
-    reset,
-    setError,
-    formState: { errors },
-  } = useForm<BucketFormData>({
+  const { control, handleSubmit, reset } = useForm<BucketFormData>({
     resolver: zodResolver(bucketSchema),
     defaultValues: { content: '' },
   });
@@ -31,15 +28,13 @@ export function InboxCapture() {
   const content = useWatch({ control, name: 'content' });
 
   const onSubmit = async (data: BucketFormData) => {
-    try {
-      await createBucket(data).unwrap();
-      // Only clear on success — a failed capture must never lose what the
-      // user typed (AC4), and react-hook-form leaves the field untouched
-      // unless reset() is called.
-      reset({ content: '' });
-    } catch {
-      setError('root', { message: 'Couldn’t save. Check your connection and try again.' });
-    }
+    const result = await runCreate(data);
+    if (!result) return;
+    // Only clear on success — a failed capture must never lose what the
+    // user typed (AC4), and react-hook-form leaves the field untouched
+    // unless reset() is called.
+    reset({ content: '' });
+    showSuccessToast(ToastMessages.BUCKET_CREATED, toast);
   };
 
   return (
@@ -56,12 +51,6 @@ export function InboxCapture() {
         </View>
       </View>
 
-      {errors.root && (
-        <Alert variant="destructive">
-          <AlertDescription>{errors.root.message}</AlertDescription>
-        </Alert>
-      )}
-
       <Controller
         control={control}
         name="content"
@@ -72,7 +61,6 @@ export function InboxCapture() {
             onChangeText={field.onChange}
             maxLength={MAX_LENGTH}
             placeholder={t('quickInput.defaultPlaceholder')}
-            error={!!errors.content}
           />
         )}
       />

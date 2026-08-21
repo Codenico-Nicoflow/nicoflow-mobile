@@ -12,7 +12,9 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Select, SelectTrigger } from '@/components/ui/select';
 import { Sheet, SheetHeader, SheetTitle, SheetDescription, type SheetRef } from '@/components/ui/sheet';
+import { toast } from '@/components/ui/toast';
 import { useCreateRecurrenceRuleMutation, useCreateTaskMutation, useGetProjectsQuery } from '@/lib/store';
+import { showSuccessToast, ToastMessages } from '@/lib/toast';
 
 // present(scheduledFor) instead of a plain SheetRef — the caller hands the
 // default date directly at the moment it opens the sheet, rather than via a
@@ -68,7 +70,7 @@ export const TaskCreateSheet = forwardRef<TaskCreateSheetRef, TaskCreateSheetPro
   const [recurrence, setRecurrence] = useState<RecurrenceValue | null>(null);
   const [titleError, setTitleError] = useState<string | undefined>();
   const [projectError, setProjectError] = useState<string | undefined>();
-  const [formError, setFormError] = useState<'planLimit' | 'generic' | null>(null);
+  const [formError, setFormError] = useState<'planLimit' | null>(null);
 
   const resetForm = (scheduledFor: string) => {
     setFields(emptyFields(scheduledFor));
@@ -126,9 +128,23 @@ export const TaskCreateSheet = forwardRef<TaskCreateSheetRef, TaskCreateSheetPro
           ...normalizeScheduleForFreq(recurrence),
         }).unwrap();
       }
+      showSuccessToast(ToastMessages.TASK_CREATED_SUCCESSFULLY, toast);
       onCreated();
     } catch (error) {
-      setFormError(isApiErrorCode(error, 'PLAN_LIMIT_EXCEEDED') ? 'planLimit' : 'generic');
+      if (isApiErrorCode(error, 'PLAN_LIMIT_EXCEEDED')) {
+        // Plan-limit is a terminal, non-retryable state — the user must
+        // upgrade, not resend the same payload — so it stays an inline
+        // banner, never a Retry toast.
+        setFormError('planLimit');
+        return;
+      }
+      // NIC-1958: same payload, same branch, re-fired verbatim on Retry.
+      toast.errorWithRetry(t('common:mutationError'), {
+        label: t('common:actions.retry'),
+        onPress: () => {
+          void onSubmit();
+        },
+      });
     }
   };
 
@@ -151,12 +167,6 @@ export const TaskCreateSheet = forwardRef<TaskCreateSheetRef, TaskCreateSheetPro
           <Alert>
             <AlertTitle>{t('common:planLimit.title')}</AlertTitle>
             <AlertDescription>{t('common:planLimit.description')}</AlertDescription>
-          </Alert>
-        )}
-        {formError === 'generic' && (
-          <Alert variant="destructive">
-            <AlertTitle>{t('task:dialog.createErrorTitle')}</AlertTitle>
-            <AlertDescription>{t('task:dialog.genericErrorDescription')}</AlertDescription>
           </Alert>
         )}
 

@@ -13,6 +13,7 @@ import { PersistGate } from 'redux-persist/integration/react';
 
 import { AnimatedSplashOverlay } from '@/components/animated-icon';
 import { RootNavigator } from '@/components/root-navigator';
+import { Toaster } from '@/components/ui/toast';
 import i18n, { initI18n } from '@/lib/i18n';
 import { persistor, store } from '@/lib/store';
 import { useSessionRestore } from '@/lib/store/useSessionRestore';
@@ -53,6 +54,7 @@ function RootLayout() {
                   <BottomSheetModalProvider>
                     <AnimatedSplashOverlay />
                     <SessionRestoringNavigator />
+                    <Toaster />
                   </BottomSheetModalProvider>
                 </ThemeProvider>
               </ThemeOverrideProvider>

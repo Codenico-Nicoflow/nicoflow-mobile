@@ -5,11 +5,16 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react-nativ
 import { http, HttpResponse } from 'msw';
 import { Provider } from 'react-redux';
 
+import { __resetToastsForTests, subscribe, type ToastItem } from '@/components/ui/toast/store';
+
 import { server } from '../../../test/server';
 
 import { InboxCapture } from './InboxCapture';
 
 const API = 'http://localhost:8080/v1';
+
+let latestToasts: ToastItem[] = [];
+const subscribedItems = () => latestToasts;
 
 const baseQuery = fetchBaseQuery({ baseUrl: API });
 const mockBucketApi = createBucketApi(baseQuery);
@@ -32,6 +37,14 @@ const renderCapture = () =>
   );
 
 describe('InboxCapture', () => {
+  beforeEach(() => {
+    __resetToastsForTests();
+    latestToasts = [];
+    subscribe(items => {
+      latestToasts = items;
+    });
+  });
+
   it('AC1: clears the input after a successful capture', async () => {
     server.use(
       http.post(`${API}/bucket`, () =>
@@ -49,7 +62,7 @@ describe('InboxCapture', () => {
     await waitFor(() => expect(screen.getByPlaceholderText('Capture anything on your mind...').props.value).toBe(''));
   });
 
-  it('AC4: preserves the typed text and shows an error when capture fails', async () => {
+  it('AC4/NIC-1958: preserves the typed text and offers a Retry toast when capture fails', async () => {
     server.use(
       http.post(`${API}/bucket`, () =>
         HttpResponse.json({ data: null, error: { code: 'INTERNAL_ERROR', message: 'boom' } }, { status: 500 })
@@ -60,7 +73,11 @@ describe('InboxCapture', () => {
     await fireEvent.changeText(screen.getByPlaceholderText('Capture anything on your mind...'), 'Buy milk');
     await fireEvent.press(screen.getByRole('button', { name: 'Add to Bucket' }));
 
-    await waitFor(() => expect(screen.getByText(/Couldn’t save/)).toBeTruthy());
+    // Failure never drops the draft (AC4) and never crashes/silently fails —
+    // it surfaces via the shared toast queue with a Retry action, not an
+    // inline banner.
+    await waitFor(() => expect(subscribedItems()).toHaveLength(1));
+    expect(subscribedItems()[0]).toMatchObject({ variant: 'error', action: { label: 'Retry' } });
     expect(screen.getByPlaceholderText('Capture anything on your mind...').props.value).toBe('Buy milk');
   });
 

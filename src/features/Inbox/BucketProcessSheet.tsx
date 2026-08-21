@@ -10,7 +10,10 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectTrigger } from '@/components/ui/select';
 import { Sheet, SheetDescription, SheetHeader, SheetTitle, type SheetRef } from '@/components/ui/sheet';
 import { Textarea } from '@/components/ui/textarea';
+import { toast } from '@/components/ui/toast';
+import { useRetryableMutation } from '@/hooks/useRetryableMutation';
 import { useGetProjectsQuery, useProcessBucketMutation } from '@/lib/store';
+import { showSuccessToast, ToastMessages } from '@/lib/toast';
 
 import { captureToDoc, NOTE_TITLE_MAX, truncateNoteTitle } from './noteDraft';
 
@@ -38,13 +41,13 @@ export const BucketProcessSheet = forwardRef<SheetRef, BucketProcessSheetProps>(
   const isDark = useColorScheme() === 'dark';
   const { data: projectsData } = useGetProjectsQuery();
   const [processBucket, { isLoading }] = useProcessBucketMutation();
+  const runProcess = useRetryableMutation(processBucket);
   const [type, setType] = useState<ProcessingResult>(ProcessingResult.TASK);
   const [projectId, setProjectId] = useState('');
   const [fields, setFields] = useState<TaskFieldsValue>(() => emptyFields(''));
   const [titleError, setTitleError] = useState<string | undefined>();
   const [noteTitle, setNoteTitle] = useState('');
   const [noteBody, setNoteBody] = useState('');
-  const [error, setError] = useState<string | null>(null);
 
   const TYPE_OPTIONS: { value: ProcessingResult; label: string }[] = [
     { value: ProcessingResult.TASK, label: t('process.asTask') },
@@ -60,7 +63,6 @@ export const BucketProcessSheet = forwardRef<SheetRef, BucketProcessSheetProps>(
   const resetForm = () => {
     setType(ProcessingResult.TASK);
     setProjectId('');
-    setError(null);
     setTitleError(undefined);
     const content = bucket?.content ?? '';
     setNoteTitle(truncateNoteTitle(content));
@@ -86,55 +88,49 @@ export const BucketProcessSheet = forwardRef<SheetRef, BucketProcessSheetProps>(
       return;
     }
     setTitleError(undefined);
-    try {
-      await processBucket({
-        id: bucket.id,
-        data: {
-          processingResult: ProcessingResult.TASK,
-          projectId,
-          taskDetails: {
-            title: fields.title,
-            notes: fields.notes || undefined,
-            priority: fields.priority,
-            energy: fields.energy,
-            rollsOver: fields.rollsOver,
-            scheduledFor: fields.scheduledFor ?? undefined,
-            estimatedMinutes: fields.estimatedMinutes ?? undefined,
-            url: fields.url || undefined,
-          },
+    const result = await runProcess({
+      id: bucket.id,
+      data: {
+        processingResult: ProcessingResult.TASK,
+        projectId,
+        taskDetails: {
+          title: fields.title,
+          notes: fields.notes || undefined,
+          priority: fields.priority,
+          energy: fields.energy,
+          rollsOver: fields.rollsOver,
+          scheduledFor: fields.scheduledFor ?? undefined,
+          estimatedMinutes: fields.estimatedMinutes ?? undefined,
+          url: fields.url || undefined,
         },
-      }).unwrap();
-      onProcessed();
-    } catch {
-      setError('generic');
-    }
+      },
+    });
+    if (!result) return;
+    showSuccessToast(ToastMessages.BUCKET_PROCESSED_TASK, toast);
+    onProcessed();
   };
 
   const submitNote = async () => {
     if (!bucket) return;
-    try {
-      await processBucket({
-        id: bucket.id,
-        data: {
-          processingResult: ProcessingResult.NOTE,
-          projectId,
-          noteDetails: { title: truncateNoteTitle(noteTitle), content: captureToDoc(noteBody) },
-        },
-      }).unwrap();
-      onProcessed();
-    } catch {
-      setError('generic');
-    }
+    const result = await runProcess({
+      id: bucket.id,
+      data: {
+        processingResult: ProcessingResult.NOTE,
+        projectId,
+        noteDetails: { title: truncateNoteTitle(noteTitle), content: captureToDoc(noteBody) },
+      },
+    });
+    if (!result) return;
+    showSuccessToast(ToastMessages.BUCKET_PROCESSED_NOTE, toast);
+    onProcessed();
   };
 
   const submitTrash = async () => {
     if (!bucket) return;
-    try {
-      await processBucket({ id: bucket.id, data: { processingResult: ProcessingResult.TRASH } }).unwrap();
-      onProcessed();
-    } catch {
-      setError('generic');
-    }
+    const result = await runProcess({ id: bucket.id, data: { processingResult: ProcessingResult.TRASH } });
+    if (!result) return;
+    showSuccessToast(ToastMessages.BUCKET_PROCESSED_TRASH, toast);
+    onProcessed();
   };
 
   const onSubmit =
@@ -164,12 +160,6 @@ export const BucketProcessSheet = forwardRef<SheetRef, BucketProcessSheetProps>(
             </Text>
             <Text className="text-sm text-foreground dark:text-foreground-dark">{bucket.content}</Text>
           </View>
-        )}
-
-        {error && (
-          <Alert variant="destructive">
-            <AlertDescription>Couldn&apos;t process this item. Try again.</AlertDescription>
-          </Alert>
         )}
 
         <View className="gap-1.5">
