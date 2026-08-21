@@ -1,4 +1,4 @@
-import { type ITask } from '@nicoflow/shared/types';
+import { type ITask, TaskStatus } from '@nicoflow/shared/types';
 import { CalendarDays, Plus } from 'lucide-react-native';
 import { useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -62,7 +62,13 @@ export function TimeSpreadView() {
   };
 
   const handleToggleStatus = (task: ITask) => {
-    void run(updateStatus({ id: task.id, status: nextStatus(task.status) }).unwrap());
+    const next = nextStatus(task.status);
+    void updateStatus({ id: task.id, status: next })
+      .unwrap()
+      .then(() => {
+        if (next === TaskStatus.DONE) showSuccessToast(ToastMessages.TASK_COMPLETED, toast);
+      })
+      .catch(error => showErrorToast(error, toast));
   };
 
   const handleEdit = (task: ITask) => {
