@@ -1,8 +1,8 @@
 import { type ITask, TaskStatus } from '@nicoflow/shared/types';
 import { CalendarDays, Plus } from 'lucide-react-native';
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FlatList, SectionList, Text, View } from 'react-native';
+import { FlatList, ScrollView, SectionList, Text, View } from 'react-native';
 
 import { EmptyState } from '@/components/ui/empty-state';
 import { Button } from '@/components/ui/button';
@@ -15,6 +15,9 @@ import { groupByDay, nextStatus, type Segment, SEGMENT_KEYS, segmentToScheduledF
 import { SwipeableTaskRow } from './SwipeableTaskRow';
 import { TaskCreateSheet, type TaskCreateSheetRef } from './TaskCreateSheet';
 import { TaskEditSheet, type TaskEditSheetRef } from './TaskEditSheet';
+import { TimeSpreadCombinedView } from './TimeSpreadCombinedView';
+import { getStoredViewMode, setStoredViewMode, type ViewMode } from './viewMode';
+import { ViewModeToggle } from './ViewModeToggle';
 
 const todayISO = (date: Date = new Date()): string => {
   const pad = (n: number) => String(n).padStart(2, '0');
@@ -30,6 +33,7 @@ const tomorrowISO = (): string => {
 export function TimeSpreadView() {
   const { t, i18n } = useTranslation('task');
   const [segment, setSegment] = useState<Segment>('today');
+  const [viewMode, setViewMode] = useState<ViewMode>('tabs');
   const { data, isLoading, isFetching, refetch } = useGetTimeSpreadQuery();
   const [updateStatus] = useUpdateTaskStatusMutation();
   const [scheduleTask] = useScheduleTaskMutation();
@@ -37,13 +41,25 @@ export function TimeSpreadView() {
   const createSheetRef = useRef<TaskCreateSheetRef>(null);
   const editSheetRef = useRef<TaskEditSheetRef>(null);
 
+  useEffect(() => {
+    void getStoredViewMode().then(setViewMode);
+  }, []);
+
+  const handleViewModeChange = (mode: ViewMode) => {
+    setViewMode(mode);
+    void setStoredViewMode(mode);
+  };
+
   const tasks = selectSegmentTasks(segment, data);
   // isLoading only covers the very first request; a segment switch after that
   // is a refetch (same query, no args) so isFetching is what avoids showing
   // the previous segment's stale list while the new one loads (AC1).
   const showLoading = isLoading || isFetching;
 
-  const weekGroups = useMemo(() => (segment === 'week' ? groupByDay(tasks) : []), [segment, tasks]);
+  const weekGroups = useMemo(
+    () => (segment === 'week' || viewMode === 'combined' ? groupByDay(data?.thisWeek ?? []) : []),
+    [segment, viewMode, data?.thisWeek]
+  );
 
   const dayHeaderFormatter = useMemo(
     () => new Intl.DateTimeFormat(i18n.resolvedLanguage, { weekday: 'long', month: 'short', day: 'numeric' }),
@@ -119,23 +135,41 @@ export function TimeSpreadView() {
   return (
     <View className="flex-1">
       <View className="flex-1 gap-4 px-4 pt-4">
-        <View>
+        <View className="flex-row items-start justify-between gap-4">
           <Text className="text-2xl font-bold text-foreground dark:text-foreground-dark">
-            {t(`timeSpread.${segment}.title`)}
+            {viewMode === 'combined' ? t('timeSpread.title') : t(`timeSpread.${segment}.title`)}
           </Text>
+          <ViewModeToggle mode={viewMode} onChange={handleViewModeChange} />
         </View>
 
-        <Tabs value={segment} onValueChange={value => setSegment(value as Segment)}>
-          <TabsList>
-            {SEGMENT_KEYS.map(key => (
-              <TabsTrigger key={key} value={key}>
-                {t(`timeSpread.${key}.title`)}
-              </TabsTrigger>
-            ))}
-          </TabsList>
-        </Tabs>
+        {viewMode === 'tabs' && (
+          <Tabs value={segment} onValueChange={value => setSegment(value as Segment)}>
+            <TabsList>
+              {SEGMENT_KEYS.map(key => (
+                <TabsTrigger key={key} value={key}>
+                  {t(`timeSpread.${key}.title`)}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </Tabs>
+        )}
 
-        {segment === 'week' ? (
+        {viewMode === 'combined' ? (
+          <ScrollView contentContainerClassName="pb-4" testID="timespread-combined-scroll">
+            <TimeSpreadCombinedView
+              today={data?.today ?? []}
+              tomorrow={data?.tomorrow ?? []}
+              weekGroups={weekGroups}
+              dayHeaderFormatter={dayHeaderFormatter}
+              onToggleStatus={handleToggleStatus}
+              onEdit={handleEdit}
+              onScheduleToday={handleScheduleToday}
+              onScheduleTomorrow={handleScheduleTomorrow}
+              onUnschedule={handleUnschedule}
+              onDelete={handleDelete}
+            />
+          </ScrollView>
+        ) : segment === 'week' ? (
           <SectionList
             sections={
               showLoading

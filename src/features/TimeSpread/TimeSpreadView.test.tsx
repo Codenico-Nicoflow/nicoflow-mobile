@@ -124,4 +124,27 @@ describe('TimeSpreadView', () => {
     await waitFor(() => expect(screen.getByTestId('timespread-empty')).toBeTruthy());
     expect(screen.getByText('Nothing scheduled for today.')).toBeTruthy();
   });
+
+  it('switching to the combined view shows all three sections at once', async () => {
+    server.use(
+      http.get(`${API}/time-spread`, () =>
+        HttpResponse.json({
+          data: {
+            today: [task({ id: 't1', title: 'Today task' })],
+            tomorrow: [task({ id: 't2', title: 'Tomorrow task' })],
+            thisWeek: [],
+          },
+          error: null,
+        })
+      )
+    );
+    await renderView();
+    await waitFor(() => expect(screen.getByText('Today task')).toBeTruthy());
+
+    await fireEvent.press(screen.getByTestId('timespread-viewmode-combined'));
+
+    await waitFor(() => expect(screen.getByTestId('timespread-combined')).toBeTruthy());
+    expect(screen.getByText('Today task')).toBeTruthy();
+    expect(screen.getByText('Tomorrow task')).toBeTruthy();
+  });
 });
