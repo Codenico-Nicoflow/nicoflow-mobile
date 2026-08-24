@@ -1,10 +1,12 @@
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import {
   createAreaApi,
+  createNoteApi,
   createProjectApi,
   createRecurrenceApi,
   createTaskApi,
   type GetTasksRequest,
+  type ListNotesRequest,
 } from '@nicoflow/shared/api';
 import { type IProject } from '@nicoflow/shared/types';
 import { configureStore } from '@reduxjs/toolkit';
@@ -28,6 +30,7 @@ const mockAreaApi = createAreaApi(baseQuery);
 const mockProjectApi = createProjectApi(baseQuery, mockAreaApi);
 const mockTaskApi = createTaskApi(baseQuery);
 const mockRecurrenceApi = createRecurrenceApi(baseQuery, mockTaskApi);
+const mockNoteApi = createNoteApi(baseQuery);
 
 jest.mock('@/lib/store', () => ({
   useGetProjectQuery: (id: string) => mockProjectApi.useGetProjectQuery(id),
@@ -37,10 +40,20 @@ jest.mock('@/lib/store', () => ({
   useUpdateTaskStatusMutation: () => mockTaskApi.useUpdateTaskStatusMutation(),
   useCreateTaskMutation: () => mockTaskApi.useCreateTaskMutation(),
   useUpdateTaskMutation: () => mockTaskApi.useUpdateTaskMutation(),
+  useDeleteTaskMutation: () => mockTaskApi.useDeleteTaskMutation(),
+  useMarkTaskMissedMutation: () => mockTaskApi.useMarkTaskMissedMutation(),
   useCreateRecurrenceRuleMutation: () => mockRecurrenceApi.useCreateRecurrenceRuleMutation(),
+  useGetNotesInfiniteQuery: (arg: ListNotesRequest, opts: { skip?: boolean }) =>
+    mockNoteApi.useGetNotesInfiniteQuery(arg, opts),
+  useCreateNoteMutation: () => mockNoteApi.useCreateNoteMutation(),
 }));
 
-jest.mock('expo-router', () => ({ router: { replace: (...args: unknown[]) => mockRouterReplace(...args) } }));
+jest.mock('expo-router', () => ({
+  router: {
+    replace: (...args: unknown[]) => mockRouterReplace(...args),
+    push: jest.fn(),
+  },
+}));
 
 const makeStore = () =>
   configureStore({
@@ -48,8 +61,15 @@ const makeStore = () =>
       [mockProjectApi.reducerPath]: mockProjectApi.reducer,
       [mockTaskApi.reducerPath]: mockTaskApi.reducer,
       [mockRecurrenceApi.reducerPath]: mockRecurrenceApi.reducer,
+      [mockNoteApi.reducerPath]: mockNoteApi.reducer,
     },
-    middleware: gDM => gDM().concat(mockProjectApi.middleware, mockTaskApi.middleware, mockRecurrenceApi.middleware),
+    middleware: gDM =>
+      gDM().concat(
+        mockProjectApi.middleware,
+        mockTaskApi.middleware,
+        mockRecurrenceApi.middleware,
+        mockNoteApi.middleware
+      ),
   });
 
 const project = (overrides: Partial<IProject> = {}): IProject => ({
@@ -80,7 +100,8 @@ beforeEach(() => {
     http.get(`${API}/projects/:projectId/tasks`, () =>
       HttpResponse.json({ data: { items: [], nextCursor: '' }, error: null })
     ),
-    http.get(`${API}/projects`, () => HttpResponse.json({ data: { items: [], nextCursor: '' }, error: null }))
+    http.get(`${API}/projects`, () => HttpResponse.json({ data: { items: [], nextCursor: '' }, error: null })),
+    http.get(`${API}/notes`, () => HttpResponse.json({ data: { items: [], nextCursor: '' }, error: null }))
   );
 });
 

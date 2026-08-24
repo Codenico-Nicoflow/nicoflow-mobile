@@ -1,7 +1,7 @@
 import { forwardRef, useImperativeHandle, useRef, useState } from 'react';
 import { useColorScheme, View } from 'react-native';
 
-import { type ITask, TaskEnergy, TaskPriority } from '@nicoflow/shared/types';
+import { type ITask, TaskEnergy, TaskPriority, TaskStatus } from '@nicoflow/shared/types';
 import { normalizeScheduleForFreq } from '@nicoflow/shared/utils';
 import { CheckSquare } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
@@ -10,6 +10,7 @@ import { ProjectPicker } from '@/components/fields/ProjectPicker';
 import { type RecurrenceValue } from '@/components/fields/recurrence';
 import { RecurrenceField } from '@/components/fields/RecurrenceField';
 import { TaskFieldsForm, type TaskFieldsValue } from '@/components/fields/TaskFieldsForm';
+import { TaskStatusField } from '@/components/fields/TaskStatusField';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetDescription, SheetHeader, type SheetRef, SheetTitle } from '@/components/ui/sheet';
@@ -123,9 +124,11 @@ export const TaskSheet = forwardRef<TaskSheetRef, TaskSheetProps>(function TaskS
   const [projectId, setProjectId] = useState('');
   const [initialProjectId, setInitialProjectId] = useState('');
   const [recurrence, setRecurrence] = useState<RecurrenceValue | null>(null);
+  const [status, setStatus] = useState<TaskStatus>(TaskStatus.ACTIVE);
+  const [initialStatus, setInitialStatus] = useState<TaskStatus>(TaskStatus.ACTIVE);
   const [titleError, setTitleError] = useState<string | undefined>();
   const [projectError, setProjectError] = useState<string | undefined>();
-  const [formError, setFormError] = useState<'planLimit' | null>(null);
+  const [formError, setFormError] = useState<'planLimit' | 'timedScheduling' | null>(null);
 
   const resetForm = (arg: TaskSheetPresentArg | undefined) => {
     const nextTask = arg?.task ?? null;
@@ -133,12 +136,15 @@ export const TaskSheet = forwardRef<TaskSheetRef, TaskSheetProps>(function TaskS
       ? toFields(nextTask)
       : emptyFields(arg?.scheduledFor ?? '', arg?.initialTitle, arg?.initialNotes);
     const nextProjectId = nextTask?.projectId ?? arg?.projectId ?? '';
+    const nextStatus = nextTask?.status ?? TaskStatus.ACTIVE;
     setTask(nextTask);
     setFields(seeded);
     setInitialFields(seeded);
     setProjectId(nextProjectId);
     setInitialProjectId(nextProjectId);
     setRecurrence(null);
+    setStatus(nextStatus);
+    setInitialStatus(nextStatus);
     setTitleError(undefined);
     setProjectError(undefined);
     setFormError(null);
@@ -162,7 +168,8 @@ export const TaskSheet = forwardRef<TaskSheetRef, TaskSheetProps>(function TaskS
   // OR'd in separately: turning recurrence on, or reassigning the project, is
   // itself the change even if nothing else on the form moved.
   const projectChanged = isEditMode && projectId !== initialProjectId;
-  const hasChanges = !fieldsEqual(fields, initialFields) || !!recurrence || projectChanged;
+  const statusChanged = isEditMode && status !== initialStatus;
+  const hasChanges = !fieldsEqual(fields, initialFields) || !!recurrence || projectChanged || statusChanged;
 
   const onSubmit = async () => {
     setFormError(null);
@@ -208,6 +215,9 @@ export const TaskSheet = forwardRef<TaskSheetRef, TaskSheetProps>(function TaskS
         if (projectChanged) {
           updatePayload.projectId = projectId;
         }
+        if (statusChanged) {
+          updatePayload.status = status;
+        }
         await updateTask(updatePayload).unwrap();
         showSuccessToast(ToastMessages.TASK_UPDATED_SUCCESSFULLY, toast);
       } else if (onCreateSubmit) {
@@ -250,8 +260,11 @@ export const TaskSheet = forwardRef<TaskSheetRef, TaskSheetProps>(function TaskS
       if (isApiErrorCode(error, 'PLAN_LIMIT_EXCEEDED')) {
         // Plan-limit is a terminal, non-retryable state — the user must
         // upgrade, not resend the same payload — so it stays an inline
-        // banner, never a Retry toast.
-        setFormError('planLimit');
+        // banner, never a Retry toast. Only a submitted time can have tripped
+        // the timed-scheduling gate — on either the task or the recurrence
+        // rule; any other 403 on this form is a task/project/rule count.
+        const submittedTime = fields.scheduledTime || recurrence?.scheduledTime;
+        setFormError(submittedTime ? 'timedScheduling' : 'planLimit');
         return;
       }
       // NIC-1958: same payload, same branch, re-fired verbatim on Retry.
@@ -290,6 +303,19 @@ export const TaskSheet = forwardRef<TaskSheetRef, TaskSheetProps>(function TaskS
           </Alert>
         )}
 
+        {formError === 'timedScheduling' && (
+          <Alert>
+            <AlertTitle>{t('common:planLimit.title')}</AlertTitle>
+            {/* Web's calendar:timedSchedulingLocked copy — mobile has no
+                calendar i18n namespace registered yet (that feature isn't
+                built), so this is inlined verbatim rather than pulling in a
+                whole namespace for one string. */}
+            <AlertDescription>
+              Timed scheduling is a Pro feature. Upgrade to drag tasks to a specific time.
+            </AlertDescription>
+          </Alert>
+        )}
+
         <ProjectPicker
           value={projectId}
           onChange={v => {
@@ -300,6 +326,8 @@ export const TaskSheet = forwardRef<TaskSheetRef, TaskSheetProps>(function TaskS
         />
 
         <TaskFieldsForm value={fields} onChange={setField} titleError={titleError} />
+
+        {isEditMode && <TaskStatusField value={status} onChange={setStatus} />}
 
         {/* Turning this on for an existing task starts a NEW series from here
             forward — it never edits the rule the task already belongs to.

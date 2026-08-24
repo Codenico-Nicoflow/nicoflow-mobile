@@ -13,6 +13,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useGetProjectQuery, useUpdateProjectMutation } from '@/lib/store';
 
+import { NotesSection } from './notes/NotesSection';
 import { TasksSection } from './tasks/TasksSection';
 import { ProjectHeader } from './ProjectHeader';
 
@@ -37,10 +38,7 @@ interface ProjectViewProps {
 // switching never refetches — TabsContent from components/ui/tabs.tsx
 // unmounts on switch instead (fine for its other, simpler consumers), so
 // this screen keeps its own two panels always mounted and toggles visibility
-// with `hidden` rather than delegating to TabsContent. Tab *content* (task
-// list, note list) are separate stories (NIC-1979, NIC-1983) — this shell
-// renders empty mount points either can fill in without touching this file's
-// tab-switching logic.
+// with `hidden` rather than delegating to TabsContent.
 export function ProjectView({ projectId }: ProjectViewProps) {
   const { t } = useTranslation(['project']);
   const { data: project, isLoading, isError } = useGetProjectQuery(projectId);
@@ -90,7 +88,7 @@ export function ProjectView({ projectId }: ProjectViewProps) {
         <TasksSection projectId={projectId} />
       </View>
       <View className="flex-1" style={tab === 'notes' ? undefined : { display: 'none' }} testID="project-notes-panel">
-        {/* Note list content lands with NIC-1983 */}
+        <NotesSection projectId={projectId} />
       </View>
     </View>
   );
