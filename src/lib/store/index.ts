@@ -80,6 +80,7 @@ export const { useCreateBucketMutation, useDeleteBucketMutation, useGetBucketsQu
 // Note exports — hooks are generated on the instance constructed in store.ts
 export const {
   useCreateNoteMutation,
+  useDeleteNoteMutation,
   useGetBacklinksQuery,
   useGetNoteQuery,
   useGetNotesInfiniteQuery,
