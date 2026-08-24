@@ -35,6 +35,8 @@ export interface TaskSheetPresentArg {
   scheduledFor?: string;
   initialTitle?: string;
   initialNotes?: string;
+  /** Create-mode only. Seeds the project picker (e.g. opening from a project's own task list). */
+  projectId?: string;
 }
 
 export interface TaskSheetRef {
@@ -130,7 +132,7 @@ export const TaskSheet = forwardRef<TaskSheetRef, TaskSheetProps>(function TaskS
     const seeded = nextTask
       ? toFields(nextTask)
       : emptyFields(arg?.scheduledFor ?? '', arg?.initialTitle, arg?.initialNotes);
-    const nextProjectId = nextTask?.projectId ?? '';
+    const nextProjectId = nextTask?.projectId ?? arg?.projectId ?? '';
     setTask(nextTask);
     setFields(seeded);
     setInitialFields(seeded);

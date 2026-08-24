@@ -13,6 +13,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useGetProjectQuery, useUpdateProjectMutation } from '@/lib/store';
 
+import { TasksSection } from './tasks/TasksSection';
 import { ProjectHeader } from './ProjectHeader';
 
 type ProjectTab = 'tasks' | 'notes';
@@ -86,7 +87,7 @@ export function ProjectView({ projectId }: ProjectViewProps) {
       </View>
 
       <View className="flex-1" style={tab === 'tasks' ? undefined : { display: 'none' }} testID="project-tasks-panel">
-        {/* Task list content lands with NIC-1979 */}
+        <TasksSection projectId={projectId} />
       </View>
       <View className="flex-1" style={tab === 'notes' ? undefined : { display: 'none' }} testID="project-notes-panel">
         {/* Note list content lands with NIC-1983 */}

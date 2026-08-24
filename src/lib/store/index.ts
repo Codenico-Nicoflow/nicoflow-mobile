@@ -40,8 +40,10 @@ export { clearAuth, selectUser, setToken, setUser } from './slices/auth/authSlic
 export const {
   useCreateTaskMutation,
   useDeleteTaskMutation,
+  useGetTasksInfiniteQuery,
   useGetTimeSpreadQuery,
   useMarkTaskMissedMutation,
+  useReorderTaskMutation,
   useScheduleTaskMutation,
   useUpdateTaskMutation,
   useUpdateTaskStatusMutation,
