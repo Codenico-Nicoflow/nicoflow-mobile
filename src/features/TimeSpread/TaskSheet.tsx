@@ -11,8 +11,8 @@ import { type RecurrenceValue } from '@/components/fields/recurrence';
 import { RecurrenceField } from '@/components/fields/RecurrenceField';
 import { TaskFieldsForm, type TaskFieldsValue } from '@/components/fields/TaskFieldsForm';
 import { TaskStatusField } from '@/components/fields/TaskStatusField';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
+import { PlanLimitAlert } from '@/components/ui/plan-limit-alert';
 import { Sheet, SheetDescription, SheetHeader, type SheetRef, SheetTitle } from '@/components/ui/sheet';
 import { toast } from '@/components/ui/toast';
 import { useCreateRecurrenceRuleMutation, useCreateTaskMutation, useUpdateTaskMutation } from '@/lib/store';
@@ -296,24 +296,14 @@ export const TaskSheet = forwardRef<TaskSheetRef, TaskSheetProps>(function TaskS
           </View>
         </SheetHeader>
 
-        {formError === 'planLimit' && (
-          <Alert>
-            <AlertTitle>{t('common:planLimit.title')}</AlertTitle>
-            <AlertDescription>{t('common:planLimit.description')}</AlertDescription>
-          </Alert>
-        )}
+        {formError === 'planLimit' && <PlanLimitAlert />}
 
+        {/* Web's calendar:timedSchedulingLocked copy — mobile has no calendar
+            i18n namespace registered yet (that feature isn't built), so this
+            is inlined verbatim rather than pulling in a whole namespace for
+            one string. */}
         {formError === 'timedScheduling' && (
-          <Alert>
-            <AlertTitle>{t('common:planLimit.title')}</AlertTitle>
-            {/* Web's calendar:timedSchedulingLocked copy — mobile has no
-                calendar i18n namespace registered yet (that feature isn't
-                built), so this is inlined verbatim rather than pulling in a
-                whole namespace for one string. */}
-            <AlertDescription>
-              Timed scheduling is a Pro feature. Upgrade to drag tasks to a specific time.
-            </AlertDescription>
-          </Alert>
+          <PlanLimitAlert message="Timed scheduling is a Pro feature. Upgrade to drag tasks to a specific time." />
         )}
 
         <ProjectPicker
