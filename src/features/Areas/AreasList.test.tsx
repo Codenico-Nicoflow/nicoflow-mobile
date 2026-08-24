@@ -1,4 +1,5 @@
-import { createAreaApi } from '@nicoflow/shared/api';
+import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
+import { createAreaApi, createProjectApi } from '@nicoflow/shared/api';
 import { type AreaWithProjects } from '@nicoflow/shared/api';
 import { configureStore } from '@reduxjs/toolkit';
 import { fetchBaseQuery } from '@reduxjs/toolkit/query';
@@ -14,19 +15,29 @@ const API = 'http://localhost:8080/v1';
 
 const baseQuery = fetchBaseQuery({ baseUrl: API });
 const mockAreaApi = createAreaApi(baseQuery);
+const mockProjectApi = createProjectApi(baseQuery, mockAreaApi);
 const mockRouterPush = jest.fn();
 
 jest.mock('@/lib/store', () => ({
   useGetAreasWithProjectsQuery: () => mockAreaApi.useGetAreasWithProjectsQuery(),
   useReorderAreasMutation: () => mockAreaApi.useReorderAreasMutation(),
+  useCreateAreaMutation: () => mockAreaApi.useCreateAreaMutation(),
+  useUpdateAreaMutation: () => mockAreaApi.useUpdateAreaMutation(),
+  useDeleteAreaMutation: () => mockAreaApi.useDeleteAreaMutation(),
+  useGetAreasQuery: () => mockAreaApi.useGetAreasQuery(),
+  useCreateProjectMutation: () => mockProjectApi.useCreateProjectMutation(),
+  useUpdateProjectMutation: () => mockProjectApi.useUpdateProjectMutation(),
+  useDeleteProjectMutation: () => mockProjectApi.useDeleteProjectMutation(),
 }));
+
+jest.mock('@gorhom/bottom-sheet', () => require('@gorhom/bottom-sheet/mock'));
 
 jest.mock('expo-router', () => ({ router: { push: (...args: unknown[]) => mockRouterPush(...args) } }));
 
 const makeStore = () =>
   configureStore({
-    reducer: { [mockAreaApi.reducerPath]: mockAreaApi.reducer },
-    middleware: gDM => gDM().concat(mockAreaApi.middleware),
+    reducer: { [mockAreaApi.reducerPath]: mockAreaApi.reducer, [mockProjectApi.reducerPath]: mockProjectApi.reducer },
+    middleware: gDM => gDM().concat(mockAreaApi.middleware, mockProjectApi.middleware),
   });
 
 const area = (overrides: Partial<AreaWithProjects> = {}): AreaWithProjects => ({
@@ -42,13 +53,18 @@ const area = (overrides: Partial<AreaWithProjects> = {}): AreaWithProjects => ({
 
 const renderList = () =>
   render(
-    <Provider store={makeStore()}>
-      <AreasList />
-    </Provider>
+    <BottomSheetModalProvider>
+      <Provider store={makeStore()}>
+        <AreasList />
+      </Provider>
+    </BottomSheetModalProvider>
   );
 
 beforeEach(() => {
   mockRouterPush.mockClear();
+  // ProjectDialog's AreaPicker queries the bare areas list — give it a
+  // default response so tests that don't care about it don't hang.
+  server.use(http.get(`${API}/areas`, () => HttpResponse.json({ data: { items: [], nextCursor: '' }, error: null })));
 });
 
 describe('AreasList', () => {
@@ -81,8 +97,8 @@ describe('AreasList', () => {
     await renderList();
 
     await waitFor(() => expect(screen.getByText('Your Areas')).toBeTruthy());
-    expect(screen.getByText('Work')).toBeTruthy();
-    expect(screen.getByText('Alpha')).toBeTruthy();
+    expect(screen.getAllByText('Work').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Alpha').length).toBeGreaterThan(0);
   });
 
   it('shows the empty-state copy when there are zero areas', async () => {
@@ -133,7 +149,11 @@ describe('AreasList', () => {
 
     await renderList();
 
-    await waitFor(() => expect(screen.getByText('Alpha')).toBeTruthy());
+    // "Alpha" also appears as plain text inside ProjectRow's own delete
+    // confirmation dialog (mounted unconditionally under the gorhom mock),
+    // so query by accessibilityLabel — only the tappable row itself carries
+    // that exact label.
+    await waitFor(() => expect(screen.getByLabelText('Alpha')).toBeTruthy());
     await fireEvent.press(screen.getByLabelText('Alpha'));
     expect(mockRouterPush).toHaveBeenCalledWith('/project/p1');
   });
