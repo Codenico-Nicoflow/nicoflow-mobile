@@ -1,3 +1,4 @@
+import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { createAreaApi } from '@nicoflow/shared/api';
 import { type AreaWithProjects } from '@nicoflow/shared/api';
 import { configureStore } from '@reduxjs/toolkit';
@@ -19,7 +20,12 @@ const mockRouterPush = jest.fn();
 jest.mock('@/lib/store', () => ({
   useGetAreasWithProjectsQuery: () => mockAreaApi.useGetAreasWithProjectsQuery(),
   useReorderAreasMutation: () => mockAreaApi.useReorderAreasMutation(),
+  useCreateAreaMutation: () => mockAreaApi.useCreateAreaMutation(),
+  useUpdateAreaMutation: () => mockAreaApi.useUpdateAreaMutation(),
+  useDeleteAreaMutation: () => mockAreaApi.useDeleteAreaMutation(),
 }));
+
+jest.mock('@gorhom/bottom-sheet', () => require('@gorhom/bottom-sheet/mock'));
 
 jest.mock('expo-router', () => ({ router: { push: (...args: unknown[]) => mockRouterPush(...args) } }));
 
@@ -42,9 +48,11 @@ const area = (overrides: Partial<AreaWithProjects> = {}): AreaWithProjects => ({
 
 const renderList = () =>
   render(
-    <Provider store={makeStore()}>
-      <AreasList />
-    </Provider>
+    <BottomSheetModalProvider>
+      <Provider store={makeStore()}>
+        <AreasList />
+      </Provider>
+    </BottomSheetModalProvider>
   );
 
 beforeEach(() => {
@@ -81,7 +89,7 @@ describe('AreasList', () => {
     await renderList();
 
     await waitFor(() => expect(screen.getByText('Your Areas')).toBeTruthy());
-    expect(screen.getByText('Work')).toBeTruthy();
+    expect(screen.getAllByText('Work').length).toBeGreaterThan(0);
     expect(screen.getByText('Alpha')).toBeTruthy();
   });
 
