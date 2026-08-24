@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from 'react';
-import { ScrollView, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
 import { type ITask, ScheduleFilter, type TaskEnergy, TaskStatus } from '@nicoflow/shared/types';
 import { useTranslation } from 'react-i18next';
@@ -104,58 +104,52 @@ export function TasksSection({ projectId }: TasksSectionProps) {
   };
 
   return (
-    <View className="flex-1">
-      <ScrollView
-        className="flex-1 px-4 pt-3"
-        contentContainerStyle={{ paddingBottom: 24 }}
-        keyboardShouldPersistTaps="handled"
-      >
-        <TasksHeader taskCount={tasks.length} onAddTask={() => sheetRef.current?.present({ projectId })} />
+    <View className="flex-1 px-4 pt-3">
+      <TasksHeader taskCount={tasks.length} onAddTask={() => sheetRef.current?.present({ projectId })} />
 
-        {isLoading ? (
-          <TasksLoadingState />
-        ) : tasks.length > 0 ? (
-          <>
-            <View className="mb-4 gap-3">
-              <TaskQuickAdd projectId={projectId} />
-              <TaskFilters
-                activeFilter={activeFilter}
-                onFilterChange={changeFilter}
-                activeEnergy={activeEnergy}
-                onEnergyChange={setActiveEnergy}
-                taskCounts={taskCounts}
-                scheduleFilter={scheduleFilter}
-                onScheduleFilterChange={setScheduleFilter}
-              />
-            </View>
-
-            {filteredTasks.length > 0 ? (
-              <View className="gap-3" testID="tasks-list">
-                {filteredTasks.map(task => (
-                  <TaskListItem
-                    key={task.id}
-                    task={task}
-                    onEdit={editTask => sheetRef.current?.present({ task: editTask })}
-                    onToggleStatus={onToggleStatus}
-                  />
-                ))}
-              </View>
-            ) : (
-              <Text
-                className="py-12 text-center text-muted-foreground dark:text-muted-foreground-dark"
-                testID="task-no-results"
-              >
-                {t('noResults.filter')}
-              </Text>
-            )}
-          </>
-        ) : (
-          <>
+      {isLoading ? (
+        <TasksLoadingState />
+      ) : tasks.length > 0 ? (
+        <>
+          <View className="mb-4 gap-3">
             <TaskQuickAdd projectId={projectId} />
-            <TasksEmptyState onAddTask={() => sheetRef.current?.present({ projectId })} />
-          </>
-        )}
-      </ScrollView>
+            <TaskFilters
+              activeFilter={activeFilter}
+              onFilterChange={changeFilter}
+              activeEnergy={activeEnergy}
+              onEnergyChange={setActiveEnergy}
+              taskCounts={taskCounts}
+              scheduleFilter={scheduleFilter}
+              onScheduleFilterChange={setScheduleFilter}
+            />
+          </View>
+
+          {filteredTasks.length > 0 ? (
+            <View className="gap-3" testID="tasks-list">
+              {filteredTasks.map(task => (
+                <TaskListItem
+                  key={task.id}
+                  task={task}
+                  onEdit={editTask => sheetRef.current?.present({ task: editTask })}
+                  onToggleStatus={onToggleStatus}
+                />
+              ))}
+            </View>
+          ) : (
+            <Text
+              className="py-12 text-center text-muted-foreground dark:text-muted-foreground-dark"
+              testID="task-no-results"
+            >
+              {t('noResults.filter')}
+            </Text>
+          )}
+        </>
+      ) : (
+        <>
+          <TaskQuickAdd projectId={projectId} />
+          <TasksEmptyState onAddTask={() => sheetRef.current?.present({ projectId })} />
+        </>
+      )}
 
       <TaskSheet ref={sheetRef} onSaved={() => sheetRef.current?.dismiss()} />
 

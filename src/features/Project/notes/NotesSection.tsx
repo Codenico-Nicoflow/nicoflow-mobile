@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { ScrollView, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
 import { router } from 'expo-router';
 
@@ -60,11 +60,7 @@ export function NotesSection({ projectId }: NotesSectionProps) {
   };
 
   return (
-    <ScrollView
-      className="flex-1 px-4 pt-3"
-      contentContainerStyle={{ gap: 12, paddingBottom: 24 }}
-      testID="notes-section"
-    >
+    <View className="flex-1 px-4 pt-3 gap-3" testID="notes-section">
       <View className="flex-row items-center justify-between gap-2">
         <View className="flex-row items-center gap-2">
           <NotebookPen size={16} color="#64748b" />
@@ -97,6 +93,6 @@ export function NotesSection({ projectId }: NotesSectionProps) {
           ))}
         </View>
       )}
-    </ScrollView>
+    </View>
   );
 }
