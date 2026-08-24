@@ -1,5 +1,5 @@
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
-import { createAreaApi } from '@nicoflow/shared/api';
+import { createAreaApi, createProjectApi } from '@nicoflow/shared/api';
 import { type AreaWithProjects } from '@nicoflow/shared/api';
 import { configureStore } from '@reduxjs/toolkit';
 import { fetchBaseQuery } from '@reduxjs/toolkit/query';
@@ -18,15 +18,18 @@ const API = 'http://localhost:8080/v1';
 
 const baseQuery = fetchBaseQuery({ baseUrl: API });
 const mockAreaApi = createAreaApi(baseQuery);
+const mockProjectApi = createProjectApi(baseQuery, mockAreaApi);
 
 jest.mock('@/lib/store', () => ({
   useDeleteAreaMutation: () => mockAreaApi.useDeleteAreaMutation(),
+  useUpdateProjectMutation: () => mockProjectApi.useUpdateProjectMutation(),
+  useDeleteProjectMutation: () => mockProjectApi.useDeleteProjectMutation(),
 }));
 
 const makeStore = () =>
   configureStore({
-    reducer: { [mockAreaApi.reducerPath]: mockAreaApi.reducer },
-    middleware: gDM => gDM().concat(mockAreaApi.middleware),
+    reducer: { [mockAreaApi.reducerPath]: mockAreaApi.reducer, [mockProjectApi.reducerPath]: mockProjectApi.reducer },
+    middleware: gDM => gDM().concat(mockAreaApi.middleware, mockProjectApi.middleware),
   });
 
 const area = (overrides: Partial<AreaWithProjects> = {}): AreaWithProjects => ({
@@ -45,16 +48,25 @@ const area = (overrides: Partial<AreaWithProjects> = {}): AreaWithProjects => ({
 const renderCard = async (props: Partial<Parameters<typeof AreaCard>[0]> = {}) => {
   const onEdit = jest.fn();
   const onPressProject = jest.fn();
+  const onEditProject = jest.fn();
+  const onAddProject = jest.fn();
   await render(
     <GestureHandlerRootView>
       <BottomSheetModalProvider>
         <Provider store={makeStore()}>
-          <AreaCard area={area()} onPressProject={onPressProject} onEdit={onEdit} {...props} />
+          <AreaCard
+            area={area()}
+            onPressProject={onPressProject}
+            onEdit={onEdit}
+            onEditProject={onEditProject}
+            onAddProject={onAddProject}
+            {...props}
+          />
         </Provider>
       </BottomSheetModalProvider>
     </GestureHandlerRootView>
   );
-  return { onEdit, onPressProject };
+  return { onEdit, onPressProject, onEditProject, onAddProject };
 };
 
 describe('AreaCard', () => {
@@ -81,8 +93,13 @@ describe('AreaCard', () => {
 
     // The description renders as 3 sibling text nodes (before / bold name /
     // after) rather than one string, so assert each fragment individually —
-    // together they reconstruct web's exact copy word-for-word.
-    await waitFor(() => expect(screen.getByText('Are you sure you want to delete ', { exact: false })).toBeTruthy());
+    // together they reconstruct web's exact copy word-for-word. getAllByText
+    // since the nested ProjectRow's own delete dialog shares the "Are you
+    // sure you want to delete " prefix (mounted unconditionally under the
+    // gorhom mock).
+    await waitFor(() =>
+      expect(screen.getAllByText('Are you sure you want to delete ', { exact: false }).length).toBeGreaterThan(0)
+    );
     expect(screen.getAllByText('Work', { exact: true }).length).toBeGreaterThan(0);
     expect(screen.getByText('? All projects in this area will be permanently deleted.', { exact: false })).toBeTruthy();
   });
