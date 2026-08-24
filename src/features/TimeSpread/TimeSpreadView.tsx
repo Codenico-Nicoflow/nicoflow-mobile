@@ -13,8 +13,7 @@ import { showErrorToast, showSuccessToast, ToastMessages } from '@/lib/toast';
 
 import { groupByDay, nextStatus, type Segment, SEGMENT_KEYS, segmentToScheduledFor, selectSegmentTasks } from './segments';
 import { SwipeableTaskRow } from './SwipeableTaskRow';
-import { TaskCreateSheet, type TaskCreateSheetRef } from './TaskCreateSheet';
-import { TaskEditSheet, type TaskEditSheetRef } from './TaskEditSheet';
+import { TaskSheet, type TaskSheetRef } from './TaskSheet';
 import { TimeSpreadCombinedView } from './TimeSpreadCombinedView';
 import { getStoredViewMode, setStoredViewMode, type ViewMode } from './viewMode';
 import { ViewModeToggle } from './ViewModeToggle';
@@ -38,8 +37,7 @@ export function TimeSpreadView() {
   const [updateStatus] = useUpdateTaskStatusMutation();
   const [scheduleTask] = useScheduleTaskMutation();
   const [deleteTask] = useDeleteTaskMutation();
-  const createSheetRef = useRef<TaskCreateSheetRef>(null);
-  const editSheetRef = useRef<TaskEditSheetRef>(null);
+  const taskSheetRef = useRef<TaskSheetRef>(null);
 
   useEffect(() => {
     void getStoredViewMode().then(setViewMode);
@@ -88,7 +86,7 @@ export function TimeSpreadView() {
   };
 
   const handleEdit = (task: ITask) => {
-    editSheetRef.current?.present(task);
+    taskSheetRef.current?.present({ task });
   };
 
   const handleScheduleToday = (task: ITask) => {
@@ -202,14 +200,13 @@ export function TimeSpreadView() {
       </View>
 
       <Button
-        onPress={() => createSheetRef.current?.present(segmentToScheduledFor(segment))}
+        onPress={() => taskSheetRef.current?.present({ scheduledFor: segmentToScheduledFor(segment) })}
         className="absolute bottom-6 right-6 size-14 rounded-full"
         accessibilityLabel={t('quickAdd.fabLabel')}>
         <Plus size={24} color="#ffffff" />
       </Button>
 
-      <TaskCreateSheet ref={createSheetRef} onCreated={() => createSheetRef.current?.dismiss()} />
-      <TaskEditSheet ref={editSheetRef} onUpdated={() => editSheetRef.current?.dismiss()} />
+      <TaskSheet ref={taskSheetRef} onSaved={() => taskSheetRef.current?.dismiss()} />
     </View>
   );
 }
