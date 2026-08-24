@@ -1,4 +1,4 @@
-import { authApi, bucketApi, projectApi, recurrenceApi, taskApi } from './store';
+import { areaApi, authApi, bucketApi, projectApi, recurrenceApi, taskApi } from './store';
 
 // Store exports
 export type { AppDispatch, RootState } from './store';
@@ -47,8 +47,25 @@ export const {
   useUpdateTaskStatusMutation,
 } = taskApi;
 
-// Project exports — project selector for the task-creation sheet
-export const { useGetProjectsQuery } = projectApi;
+// Area exports — hooks are generated on the instance constructed in store.ts
+export const {
+  useCreateAreaMutation,
+  useDeleteAreaMutation,
+  useGetAreasQuery,
+  useGetAreasWithProjectsQuery,
+  useReorderAreasMutation,
+  useUpdateAreaMutation,
+} = areaApi;
+
+// Project exports — hooks are generated on the instance constructed in store.ts
+export const {
+  useCreateProjectMutation,
+  useDeleteProjectMutation,
+  useGetProjectQuery,
+  useGetProjectsQuery,
+  useReorderProjectsMutation,
+  useUpdateProjectMutation,
+} = projectApi;
 
 // Recurrence exports — a repeating task is created as a rule, not a task field
 export const { useCreateRecurrenceRuleMutation } = recurrenceApi;
