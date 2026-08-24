@@ -235,4 +235,77 @@ describe('TaskSheet', () => {
     expect(recurrence?.freq).toBe('weekly');
     expect(onSaved).toHaveBeenCalled();
   });
+
+  it('shows the Status field only in edit mode', async () => {
+    const { ref } = await renderSheet();
+    await waitFor(() => ref.current?.present());
+    await waitFor(() => expect(screen.getByText('Create New Task')).toBeTruthy());
+    expect(screen.queryByText('Select status')).toBeNull();
+
+    await waitFor(() => ref.current?.present({ task: task() }));
+    await waitFor(() => expect(screen.getByText('Edit Task')).toBeTruthy());
+    expect(screen.getAllByText('Active').length).toBeGreaterThan(0);
+  });
+
+  it('changing Status PATCHes it and enables Save', async () => {
+    let capturedBody: Record<string, unknown> | null = null;
+    server.use(
+      http.patch(`${API}/tasks/:id`, async ({ request }) => {
+        capturedBody = (await request.json()) as Record<string, unknown>;
+        return HttpResponse.json({ data: task({ status: TaskStatus.CANCELLED }), error: null });
+      })
+    );
+    const { ref, onSaved } = await renderSheet();
+    await waitFor(() => ref.current?.present({ task: task() }));
+    await waitFor(() => expect(screen.getByText('Edit Task')).toBeTruthy());
+    expect(screen.getByLabelText('Save Changes').props.accessibilityState.disabled).toBe(true);
+
+    // "Active" appears both as the picker's selected-value trigger text and
+    // as an option row (gorhom mock renders unconditionally) — press the
+    // trigger, then the Cancelled option.
+    await fireEvent.press(screen.getAllByText('Active')[0]);
+    await waitFor(() => expect(screen.getByText('Cancelled')).toBeTruthy());
+    await fireEvent.press(screen.getByText('Cancelled'));
+
+    await waitFor(() => expect(screen.getByLabelText('Save Changes').props.accessibilityState.disabled).toBe(false));
+    await fireEvent.press(screen.getByLabelText('Save Changes'));
+
+    await waitFor(() => expect(onSaved).toHaveBeenCalled());
+    expect(capturedBody).toMatchObject({ status: TaskStatus.CANCELLED });
+  });
+
+  it('shows the exact timed-scheduling Pro-gate copy on a 403 with a submitted time', async () => {
+    server.use(
+      http.patch(`${API}/tasks/:id`, () =>
+        HttpResponse.json({ data: null, error: { code: 'PLAN_LIMIT_EXCEEDED', message: 'nope' } }, { status: 403 })
+      )
+    );
+    const { ref } = await renderSheet();
+    await waitFor(() => ref.current?.present({ task: task({ scheduledTime: '09:00' }) }));
+    await waitFor(() => expect(screen.getByText('Edit Task')).toBeTruthy());
+
+    await fireEvent.changeText(screen.getByDisplayValue('Write report'), 'Write report v2');
+    await waitFor(() => expect(screen.getByLabelText('Save Changes').props.accessibilityState.disabled).toBe(false));
+    await fireEvent.press(screen.getByLabelText('Save Changes'));
+
+    await waitFor(() =>
+      expect(
+        screen.getByText('Timed scheduling is a Pro feature. Upgrade to drag tasks to a specific time.')
+      ).toBeTruthy()
+    );
+  });
+
+  it('recurrence weekly shows a weekday picker, monthly shows a day-of-month select', async () => {
+    const { ref } = await renderSheet();
+    await waitFor(() => ref.current?.present({ task: task() }));
+    await waitFor(() => expect(screen.getByText('Edit Task')).toBeTruthy());
+
+    await fireEvent.press(screen.getByText('Off'));
+    await waitFor(() => expect(screen.getByText('Weekly')).toBeTruthy());
+    // Weekly is the default frequency once enabled — weekday picker visible.
+    expect(screen.getByText('Sun')).toBeTruthy();
+
+    await fireEvent.press(screen.getByText('Monthly'));
+    await waitFor(() => expect(screen.queryByText('Sun')).toBeNull());
+  });
 });

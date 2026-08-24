@@ -4,6 +4,7 @@ import {
   createAreaApi,
   createAuthApi,
   createBucketApi,
+  createNoteApi,
   createProjectApi,
   createRecurrenceApi,
   createTaskApi,
@@ -45,6 +46,7 @@ export const areaApi = createAreaApi(baseQueryWithReauth);
 export const projectApi = createProjectApi(baseQueryWithReauth, areaApi);
 export const recurrenceApi = createRecurrenceApi(baseQueryWithReauth, taskApi);
 export const bucketApi = createBucketApi(baseQueryWithReauth);
+export const noteApi = createNoteApi(baseQueryWithReauth);
 
 const apiReducerPaths = [
   authApi.reducerPath,
@@ -53,6 +55,7 @@ const apiReducerPaths = [
   projectApi.reducerPath,
   recurrenceApi.reducerPath,
   bucketApi.reducerPath,
+  noteApi.reducerPath,
 ] as const;
 
 const combinedReducer = combineReducers({
@@ -63,6 +66,7 @@ const combinedReducer = combineReducers({
   [projectApi.reducerPath]: projectApi.reducer,
   [recurrenceApi.reducerPath]: recurrenceApi.reducer,
   [bucketApi.reducerPath]: bucketApi.reducer,
+  [noteApi.reducerPath]: noteApi.reducer,
 });
 
 type CombinedState = ReturnType<typeof combinedReducer>;
@@ -100,7 +104,8 @@ export const store = configureStore({
       areaApi.middleware,
       projectApi.middleware,
       recurrenceApi.middleware,
-      bucketApi.middleware
+      bucketApi.middleware,
+      noteApi.middleware
     ),
 });
 

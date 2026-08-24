@@ -9,7 +9,7 @@ import {
   RecurrenceEnd,
   RecurrenceFreq,
 } from '@nicoflow/shared/types';
-import { Repeat } from 'lucide-react-native';
+import { Repeat, X } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 
 import { Select, SelectTrigger } from '@/components/ui/select';
@@ -17,6 +17,24 @@ import { cn } from '@/lib/utils/cn';
 
 import { defaultRecurrence, type RecurrenceValue } from './recurrence';
 import { useRecurrenceSummary } from './useRecurrenceSummary';
+
+const TIME_STEP_MINUTES = 15;
+
+// Same rounding rule as ScheduledTimeField.snapTimeString, duplicated since
+// this field's label/hint differ (recurrence-specific copy, not the task's
+// own scheduled-time field) and a shared component would have to thread
+// label overrides through for a single caller.
+const snapTimeString = (value: string): string => {
+  const [hours = NaN, minutes = NaN] = value.split(':').map(Number);
+  if (Number.isNaN(hours) || Number.isNaN(minutes)) return value;
+  const total = Math.min(
+    Math.round((hours * 60 + minutes) / TIME_STEP_MINUTES) * TIME_STEP_MINUTES,
+    24 * 60 - TIME_STEP_MINUTES
+  );
+  return `${String(Math.floor(total / 60)).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`;
+};
+
+const isValidTime = (value: string): boolean => /^\d{2}:\d{2}$/.test(value);
 
 // Displays/accepts DD-MM-YYYY; the value prop/onChange still carry the wire
 // format (ISO "YYYY-MM-DD" — what CreateRecurrenceRuleRequest expects), so
@@ -63,6 +81,41 @@ function InlineDateField({ value, onChange }: { value: string; onChange: (value:
       placeholderTextColor={isDark ? '#94a3b8' : '#64748b'}
       className="h-10 rounded-md border border-input dark:border-input-dark px-3 text-sm text-foreground dark:text-foreground-dark bg-background dark:bg-background-dark"
     />
+  );
+}
+
+function InlineTimeField({ value, onChange }: { value: string | null; onChange: (value: string | null) => void }) {
+  const isDark = useColorScheme() === 'dark';
+  const [draft, setDraft] = useState<string | null>(null);
+  const text = draft ?? value ?? '';
+
+  return (
+    <View className="flex-row gap-2">
+      <TextInput
+        value={text}
+        onChangeText={setDraft}
+        onBlur={() => {
+          if (draft != null) {
+            onChange(draft && isValidTime(draft) ? snapTimeString(draft) : null);
+          }
+          setDraft(null);
+        }}
+        placeholder="HH:MM"
+        keyboardType="number-pad"
+        maxLength={5}
+        placeholderTextColor={isDark ? '#94a3b8' : '#64748b'}
+        className="h-10 flex-1 rounded-md border border-input dark:border-input-dark px-3 text-sm text-foreground dark:text-foreground-dark bg-background dark:bg-background-dark"
+      />
+      {!!value && (
+        <Pressable
+          onPress={() => onChange(null)}
+          accessibilityRole="button"
+          className="h-10 w-10 items-center justify-center rounded-md border border-input dark:border-input-dark"
+        >
+          <X size={16} color={isDark ? '#94a3b8' : '#64748b'} />
+        </Pressable>
+      )}
+    </View>
   );
 }
 
@@ -298,6 +351,14 @@ export function RecurrenceField({ value, onChange }: RecurrenceFieldProps) {
               <InlineDateField value={rule.endDate ?? ''} onChange={v => patch({ endDate: v })} />
             </View>
           )}
+
+          <View className="gap-1.5">
+            <Text className="text-xs text-muted-foreground dark:text-muted-foreground-dark">
+              {t('field.timeLabel')}
+            </Text>
+            <InlineTimeField value={rule.scheduledTime ?? null} onChange={v => patch({ scheduledTime: v })} />
+            <Text className="text-xs text-muted-foreground dark:text-muted-foreground-dark">{t('field.timeHint')}</Text>
+          </View>
 
           <Text className="text-xs text-muted-foreground dark:text-muted-foreground-dark">{summarize(rule)}</Text>
         </View>
