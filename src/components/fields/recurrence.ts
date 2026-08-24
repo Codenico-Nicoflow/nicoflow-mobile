@@ -9,6 +9,7 @@ export interface RecurrenceValue {
   byMonthday?: number | null;
   startDate: string; // ISO "YYYY-MM-DD"
   endDate?: string | null; // null = runs forever
+  scheduledTime?: string | null; // "HH:MM", null = all-day occurrence
 }
 
 // Today in the user's local timezone as YYYY-MM-DD — deliberately not
@@ -27,4 +28,5 @@ export const defaultRecurrence = (): RecurrenceValue => ({
   byMonthday: null,
   startDate: todayISO(),
   endDate: null,
+  scheduledTime: null,
 });

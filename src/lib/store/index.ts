@@ -1,4 +1,4 @@
-import { areaApi, authApi, bucketApi, projectApi, recurrenceApi, taskApi } from './store';
+import { areaApi, authApi, bucketApi, noteApi, projectApi, recurrenceApi, taskApi } from './store';
 
 // Store exports
 export type { AppDispatch, RootState } from './store';
@@ -8,6 +8,7 @@ export {
   bucketApi,
   mobileTokenStorage,
   mobileWSLifecycleAdapter,
+  noteApi,
   persistor,
   projectApi,
   recurrenceApi,
@@ -40,8 +41,10 @@ export { clearAuth, selectUser, setToken, setUser } from './slices/auth/authSlic
 export const {
   useCreateTaskMutation,
   useDeleteTaskMutation,
+  useGetTasksInfiniteQuery,
   useGetTimeSpreadQuery,
   useMarkTaskMissedMutation,
+  useReorderTaskMutation,
   useScheduleTaskMutation,
   useUpdateTaskMutation,
   useUpdateTaskStatusMutation,
@@ -73,3 +76,12 @@ export const { useCreateRecurrenceRuleMutation } = recurrenceApi;
 // Bucket exports — hooks are generated on the instance constructed in store.ts
 export const { useCreateBucketMutation, useDeleteBucketMutation, useGetBucketsQuery, useProcessBucketMutation } =
   bucketApi;
+
+// Note exports — hooks are generated on the instance constructed in store.ts
+export const {
+  useCreateNoteMutation,
+  useGetBacklinksQuery,
+  useGetNoteQuery,
+  useGetNotesInfiniteQuery,
+  useUpdateNoteMutation,
+} = noteApi;
