@@ -1,5 +1,6 @@
-import { cva, type VariantProps } from 'class-variance-authority';
 import { ActivityIndicator, Pressable, type PressableProps, Text } from 'react-native';
+
+import { cva, type VariantProps } from 'class-variance-authority';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 
 import { cn } from '@/lib/utils/cn';
@@ -63,7 +64,18 @@ export interface ButtonProps extends Omit<PressableProps, 'children'>, VariantPr
   className?: string;
 }
 
-export function Button({ label, children, loading, variant, size, disabled, className, onPressIn, onPressOut, ...props }: ButtonProps) {
+export function Button({
+  label,
+  children,
+  loading,
+  variant,
+  size,
+  disabled,
+  className,
+  onPressIn,
+  onPressOut,
+  ...props
+}: ButtonProps) {
   const scale = useSharedValue(1);
   const isDisabled = Boolean(loading || disabled);
 
@@ -87,7 +99,8 @@ export function Button({ label, children, loading, variant, size, disabled, clas
         scale.set(withSpring(1, { damping: 15, stiffness: 400 }));
         onPressOut?.(e);
       }}
-      {...props}>
+      {...props}
+    >
       {loading ? (
         <ActivityIndicator color={variant === 'outline' || variant === 'ghost' ? undefined : '#ffffff'} />
       ) : label ? (

@@ -1,7 +1,8 @@
-import { CalendarClock, X } from 'lucide-react-native';
 import { useRef } from 'react';
-import { useTranslation } from 'react-i18next';
 import { Pressable, Text, useColorScheme, View } from 'react-native';
+
+import { CalendarClock, X } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 
 import { Calendar } from '@/components/ui/calendar';
 import { Sheet, type SheetRef } from '@/components/ui/sheet';
@@ -39,13 +40,17 @@ export function DateField({ value, onChange, placeholder = 'Pick a date', cleara
       <Pressable
         onPress={() => pickerRef.current?.present()}
         accessibilityRole="button"
-        className="h-10 flex-1 flex-row items-center gap-2 rounded-md border border-input dark:border-input-dark px-3">
+        className="h-10 flex-1 flex-row items-center gap-2 rounded-md border border-input dark:border-input-dark px-3"
+      >
         <CalendarClock size={16} color={isDark ? '#94a3b8' : '#64748b'} />
         <Text
           className={cn(
             'text-sm',
-            selectedDate ? 'text-foreground dark:text-foreground-dark' : 'text-muted-foreground dark:text-muted-foreground-dark'
-          )}>
+            selectedDate
+              ? 'text-foreground dark:text-foreground-dark'
+              : 'text-muted-foreground dark:text-muted-foreground-dark'
+          )}
+        >
           {selectedDate ? MONTH_DAY.format(selectedDate) : placeholder}
         </Text>
       </Pressable>
@@ -55,7 +60,8 @@ export function DateField({ value, onChange, placeholder = 'Pick a date', cleara
           onPress={() => onChange(null)}
           accessibilityRole="button"
           accessibilityLabel={t('fields.clearDate')}
-          className="h-10 w-10 items-center justify-center rounded-md border border-input dark:border-input-dark">
+          className="h-10 w-10 items-center justify-center rounded-md border border-input dark:border-input-dark"
+        >
           <X size={16} color={isDark ? '#94a3b8' : '#64748b'} />
         </Pressable>
       )}

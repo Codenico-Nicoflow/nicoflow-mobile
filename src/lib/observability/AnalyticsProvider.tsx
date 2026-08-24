@@ -1,8 +1,9 @@
+import { createContext, useContext, useEffect, useMemo, useState } from 'react';
+
 import { createAnalyticsClient } from '@nicoflow/shared/analytics';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import type { ReactNode } from 'react';
-import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { PostHogProvider, usePostHog } from 'posthog-react-native';
+import type { ReactNode } from 'react';
 
 import { env } from '@/constants/env';
 

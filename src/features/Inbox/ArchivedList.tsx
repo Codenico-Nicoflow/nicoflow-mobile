@@ -1,7 +1,8 @@
+import { FlatList, Text, useColorScheme, View } from 'react-native';
+
 import { type IBucket, ProcessingResult } from '@nicoflow/shared/types';
 import { Archive, CheckSquare, FileText, Trash2 } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
-import { FlatList, Text, useColorScheme, View } from 'react-native';
 
 import { Badge } from '@/components/ui/badge';
 import { EmptyState } from '@/components/ui/empty-state';
@@ -69,7 +70,8 @@ export function ArchivedList({ items, isLoading }: ArchivedListProps) {
         return (
           <View
             className={`flex-row items-start gap-2 rounded-lg border-s-4 border border-border dark:border-border-dark bg-card dark:bg-card-dark px-3 py-2.5 ${meta.border}`}
-            testID={`archived-bucket-${item.id}`}>
+            testID={`archived-bucket-${item.id}`}
+          >
             <View className="flex-1 gap-1">
               <Text className="text-sm text-foreground dark:text-foreground-dark" numberOfLines={2}>
                 {item.content}
@@ -81,7 +83,8 @@ export function ArchivedList({ items, isLoading }: ArchivedListProps) {
             <Badge
               variant="outline"
               className={meta.badgeClass}
-              icon={<meta.Icon size={12} color={isDark ? meta.iconColorDark : meta.iconColor} />}>
+              icon={<meta.Icon size={12} color={isDark ? meta.iconColorDark : meta.iconColor} />}
+            >
               {t(meta.labelKey)}
             </Badge>
           </View>

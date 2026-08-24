@@ -1,12 +1,13 @@
+import { afterAll, afterEach, beforeAll, jest } from '@jest/globals';
+
+import { initI18n } from '../src/lib/i18n';
+
+import { server } from './server';
+
 import 'react-native-url-polyfill/auto';
 import 'fast-text-encoding';
 
 process.env.EXPO_PUBLIC_API_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:8080/v1';
-
-import { afterAll, afterEach, beforeAll, jest } from '@jest/globals';
-
-import { server } from './server';
-import { initI18n } from '../src/lib/i18n';
 
 jest.mock('react-native-worklets', () => require('react-native-worklets/src/mock'));
 jest.mock('react-native-reanimated', () => require('react-native-reanimated/mock'));

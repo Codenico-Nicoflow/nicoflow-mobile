@@ -1,6 +1,8 @@
-import type { BottomTabBarProps } from 'expo-router/build/react-navigation/bottom-tabs';
 import { useEffect, useState } from 'react';
 import { type LayoutChangeEvent, Pressable, Text, useColorScheme, View } from 'react-native';
+
+import type { BottomTabBarProps } from 'expo-router/build/react-navigation/bottom-tabs';
+
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -33,7 +35,8 @@ export function CustomTabBar({ state, navigation }: BottomTabBarProps) {
     <View
       onLayout={handleLayout}
       style={{ paddingBottom: insets.bottom }}
-      className="flex-row border-t border-border dark:border-border-dark bg-background dark:bg-background-dark">
+      className="flex-row border-t border-border dark:border-border-dark bg-background dark:bg-background-dark"
+    >
       {tabWidth > 0 && (
         <Animated.View
           style={[indicatorStyle, { position: 'absolute', top: 0, left: 0, width: tabWidth }]}
@@ -59,13 +62,21 @@ export function CustomTabBar({ state, navigation }: BottomTabBarProps) {
             accessibilityRole="tab"
             accessibilityState={{ selected: isFocused }}
             accessibilityLabel={destination.label}
-            className="flex-1 items-center gap-1 py-2">
-            <Icon size={22} strokeWidth={isFocused ? 2.5 : 2} color={isFocused ? (isDark ? '#6366f1' : '#4f46e5') : isDark ? '#94a3b8' : '#64748b'} />
+            className="flex-1 items-center gap-1 py-2"
+          >
+            <Icon
+              size={22}
+              strokeWidth={isFocused ? 2.5 : 2}
+              color={isFocused ? (isDark ? '#6366f1' : '#4f46e5') : isDark ? '#94a3b8' : '#64748b'}
+            />
             <Text
               className={cn(
                 'text-[11px]',
-                isFocused ? 'text-primary dark:text-primary-dark font-medium' : 'text-muted-foreground dark:text-muted-foreground-dark'
-              )}>
+                isFocused
+                  ? 'text-primary dark:text-primary-dark font-medium'
+                  : 'text-muted-foreground dark:text-muted-foreground-dark'
+              )}
+            >
               {destination.label}
             </Text>
           </Pressable>

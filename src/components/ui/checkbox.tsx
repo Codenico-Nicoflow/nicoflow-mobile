@@ -1,5 +1,6 @@
-import { Check } from 'lucide-react-native';
 import { Pressable } from 'react-native';
+
+import { Check } from 'lucide-react-native';
 import Animated, { useAnimatedStyle, withSpring } from 'react-native-reanimated';
 
 import { cn } from '@/lib/utils/cn';
@@ -27,10 +28,13 @@ export function Checkbox({ checked, onCheckedChange, disabled, className }: Chec
       accessibilityState={{ checked, disabled }}
       className={cn(
         'size-4 shrink-0 items-center justify-center rounded border',
-        checked ? 'bg-primary dark:bg-primary-dark border-primary dark:border-primary-dark' : 'border-input dark:border-input-dark',
+        checked
+          ? 'bg-primary dark:bg-primary-dark border-primary dark:border-primary-dark'
+          : 'border-input dark:border-input-dark',
         disabled && 'opacity-50',
         className
-      )}>
+      )}
+    >
       <AnimatedCheck style={animatedStyle} size={12} color="#ffffff" strokeWidth={3} />
     </Pressable>
   );

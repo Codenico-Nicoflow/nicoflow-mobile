@@ -1,5 +1,6 @@
-import type { WSLifecycleAdapter } from '@nicoflow/shared/api/adapters';
 import { AppState } from 'react-native';
+
+import type { WSLifecycleAdapter } from '@nicoflow/shared/api/adapters';
 
 // Mobile's WSLifecycleAdapter: web's equivalent is document.visibilitychange,
 // RN's is AppState. "Foreground" is the 'active' state; anything else

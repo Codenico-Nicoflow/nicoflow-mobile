@@ -1,5 +1,7 @@
-import { Tabs } from 'expo-router';
 import { View } from 'react-native';
+
+import { Tabs } from 'expo-router';
+
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { CustomTabBar } from '@/features/Tabs/CustomTabBar';

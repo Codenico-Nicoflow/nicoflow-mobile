@@ -1,5 +1,5 @@
 import { type ReactNode, useRef, useState } from 'react';
-import { Modal, Pressable, Text, View, type LayoutRectangle } from 'react-native';
+import { type LayoutRectangle, Modal, Pressable, Text, View } from 'react-native';
 
 import { cn } from '@/lib/utils/cn';
 
@@ -28,7 +28,8 @@ export function TooltipTrigger({ children, label }: { children: ReactNode; label
         <Modal transparent visible={open} animationType="fade">
           <View
             style={{ position: 'absolute', top: anchorRect.y - 36, left: anchorRect.x }}
-            className="rounded-md bg-foreground dark:bg-foreground-dark px-3 py-1.5">
+            className="rounded-md bg-foreground dark:bg-foreground-dark px-3 py-1.5"
+          >
             <Text className="text-xs text-background dark:text-background-dark">{label}</Text>
           </View>
         </Modal>

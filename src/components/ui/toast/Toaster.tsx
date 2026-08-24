@@ -1,6 +1,7 @@
-import { AlertCircle, AlertTriangle, CheckCircle2, Info, X } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import { Pressable, Text, useColorScheme, View } from 'react-native';
+
+import { AlertCircle, AlertTriangle, CheckCircle2, Info, X } from 'lucide-react-native';
 import Animated, { FadeInUp, FadeOutUp } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -38,7 +39,8 @@ function ToastRow({ item }: { item: ToastItem }) {
       // on web) — card surface, not a tinted variant background.
       style={[Shadows.md, { backgroundColor: c.card, borderColor: c.border }]}
       className="mb-2 flex-row items-start gap-2.5 rounded-lg border px-3.5 py-3"
-      accessibilityRole="alert">
+      accessibilityRole="alert"
+    >
       <Icon size={18} color={accent} style={{ marginTop: 1 }} />
       <Text className="flex-1 text-sm" style={{ color: c.text }}>
         {item.message}
@@ -49,7 +51,8 @@ function ToastRow({ item }: { item: ToastItem }) {
             item.action?.onPress();
             dismissToast(item.id);
           }}
-          hitSlop={8}>
+          hitSlop={8}
+        >
           <Text className="text-sm font-semibold" style={{ color: c.primary }}>
             {item.action.label}
           </Text>
@@ -76,10 +79,7 @@ export function Toaster() {
   if (items.length === 0) return null;
 
   return (
-    <View
-      pointerEvents="box-none"
-      className={cn('absolute inset-x-0 z-50 px-4')}
-      style={{ top: insets.top + 8 }}>
+    <View pointerEvents="box-none" className={cn('absolute inset-x-0 z-50 px-4')} style={{ top: insets.top + 8 }}>
       {items.map(item => (
         <ToastRow key={item.id} item={item} />
       ))}

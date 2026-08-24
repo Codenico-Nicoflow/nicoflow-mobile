@@ -1,3 +1,3 @@
-export { Toaster } from './Toaster';
-export { toast } from './store';
 export type { ToastAction, ToastItem, ToastVariant } from './store';
+export { toast } from './store';
+export { Toaster } from './Toaster';

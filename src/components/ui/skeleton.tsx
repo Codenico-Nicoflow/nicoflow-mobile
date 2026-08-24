@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { useColorScheme } from 'react-native';
+
 import Animated, { Easing, useAnimatedStyle, useSharedValue, withRepeat, withTiming } from 'react-native-reanimated';
 
 import { cn } from '@/lib/utils/cn';

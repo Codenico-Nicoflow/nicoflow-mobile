@@ -1,4 +1,5 @@
 import { Text, useColorScheme, View } from 'react-native';
+
 import Svg, { Path } from 'react-native-svg';
 
 import { Colors, Spacing } from '@/constants/theme';
@@ -32,7 +33,8 @@ export function Logo({ size = 28, showWordmark = true }: LogoProps) {
             letterSpacing: 2,
             textTransform: 'uppercase',
             color: colors.text,
-          }}>
+          }}
+        >
           Nicoflow
         </Text>
       )}

@@ -1,3 +1,5 @@
+import { router } from 'expo-router';
+
 import {
   createAreaApi,
   createAuthApi,
@@ -6,11 +8,10 @@ import {
   createRecurrenceApi,
   createTaskApi,
 } from '@nicoflow/shared/api';
-import { router } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { combineReducers, configureStore, type UnknownAction } from '@reduxjs/toolkit';
 import { setupListeners } from '@reduxjs/toolkit/query';
 import { FLUSH, PAUSE, PERSIST, persistReducer, persistStore, PURGE, REGISTER, REHYDRATE } from 'redux-persist';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import authReducer, { clearAuth, setToken, setUser } from './slices/auth/authSlice';
 import { createBaseQueryWithReauth } from './slices/baseQuery';

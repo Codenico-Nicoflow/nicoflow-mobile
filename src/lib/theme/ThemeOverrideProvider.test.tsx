@@ -1,9 +1,11 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import { Appearance } from 'react-native';
 
-import { ThemeOverrideProvider } from './ThemeOverrideProvider';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
+
 import { ThemeToggle } from '@/features/Tabs/ThemeToggle';
+
+import { ThemeOverrideProvider } from './ThemeOverrideProvider';
 
 const renderToggle = () =>
   render(

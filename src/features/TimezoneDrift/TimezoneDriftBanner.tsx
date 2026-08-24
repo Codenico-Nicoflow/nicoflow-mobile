@@ -1,8 +1,9 @@
+import { useEffect, useState } from 'react';
+import { ActivityIndicator, Pressable, Text, useColorScheme, View } from 'react-native';
+
 import { detectTimezoneDrift, formatZoneOffset } from '@nicoflow/shared/utils';
 import { Globe } from 'lucide-react-native';
-import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Pressable, Text, useColorScheme, View } from 'react-native';
 
 import { Button } from '@/components/ui/button';
 import { toast } from '@/components/ui/toast';
@@ -69,7 +70,8 @@ export function TimezoneDriftBanner() {
   return (
     <View
       accessibilityRole="alert"
-      className="flex-row items-start gap-3 rounded-xl border border-border dark:border-border-dark bg-muted dark:bg-muted-dark p-4 mx-4 mt-2">
+      className="flex-row items-start gap-3 rounded-xl border border-border dark:border-border-dark bg-muted dark:bg-muted-dark p-4 mx-4 mt-2"
+    >
       <View className="h-9 w-9 items-center justify-center rounded-full bg-accent dark:bg-accent-dark">
         <Globe size={18} color={isDark ? '#c7d2fe' : '#4f46e5'} />
       </View>
@@ -89,14 +91,16 @@ export function TimezoneDriftBanner() {
             label={isLoading ? undefined : t('calendar.timezoneDrift.update')}
             size="sm"
             disabled={isBusy}
-            onPress={handleUpdate}>
+            onPress={handleUpdate}
+          >
             {isLoading && <ActivityIndicator size="small" />}
           </Button>
           <Pressable
             onPress={handleDismiss}
             disabled={isBusy}
             accessibilityRole="button"
-            accessibilityLabel={t('calendar.timezoneDrift.dismiss')}>
+            accessibilityLabel={t('calendar.timezoneDrift.dismiss')}
+          >
             <Text className="text-sm text-muted-foreground dark:text-muted-foreground-dark px-2 py-2">
               {t('calendar.timezoneDrift.dismiss')}
             </Text>

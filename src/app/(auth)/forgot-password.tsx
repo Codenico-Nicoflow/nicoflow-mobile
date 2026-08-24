@@ -1,10 +1,11 @@
 import { useState } from 'react';
+import { Text, View } from 'react-native';
+
+import { Link } from 'expo-router';
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { type ForgotPasswordFormData, forgotPasswordSchema } from '@nicoflow/shared/schemas';
-import { Link } from 'expo-router';
 import { Controller, useForm } from 'react-hook-form';
-import { Text, View } from 'react-native';
 
 import { AuthCard } from '@/components/auth-card';
 import { Button } from '@/components/ui/button';
@@ -51,7 +52,8 @@ export default function ForgotPassword() {
   return (
     <AuthCard
       title="Forgot password?"
-      description="Enter the email associated with your account and we'll send you a reset link.">
+      description="Enter the email associated with your account and we'll send you a reset link."
+    >
       <View className="gap-3">
         <Controller
           control={control}

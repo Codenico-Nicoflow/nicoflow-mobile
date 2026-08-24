@@ -43,11 +43,21 @@ export function Tabs({ children, value, defaultValue = '', onValueChange, classN
 
 export function TabsList({ children, className }: { children: ReactNode; className?: string }) {
   return (
-    <View className={cn('flex-row items-center rounded-lg bg-muted dark:bg-muted-dark p-1', className)}>{children}</View>
+    <View className={cn('flex-row items-center rounded-lg bg-muted dark:bg-muted-dark p-1', className)}>
+      {children}
+    </View>
   );
 }
 
-export function TabsTrigger({ value, children, className }: { value: string; children: ReactNode; className?: string }) {
+export function TabsTrigger({
+  value,
+  children,
+  className,
+}: {
+  value: string;
+  children: ReactNode;
+  className?: string;
+}) {
   const { value: activeValue, setValue } = useTabsContext();
   const isActive = activeValue === value;
 
@@ -60,19 +70,31 @@ export function TabsTrigger({ value, children, className }: { value: string; chi
         'flex-1 items-center justify-center rounded-md px-3 py-1',
         isActive && 'bg-background dark:bg-background-dark shadow-sm',
         className
-      )}>
+      )}
+    >
       <Text
         className={cn(
           'text-sm font-medium',
-          isActive ? 'text-foreground dark:text-foreground-dark' : 'text-muted-foreground dark:text-muted-foreground-dark'
-        )}>
+          isActive
+            ? 'text-foreground dark:text-foreground-dark'
+            : 'text-muted-foreground dark:text-muted-foreground-dark'
+        )}
+      >
         {children}
       </Text>
     </Pressable>
   );
 }
 
-export function TabsContent({ value, children, className }: { value: string; children: ReactNode; className?: string }) {
+export function TabsContent({
+  value,
+  children,
+  className,
+}: {
+  value: string;
+  children: ReactNode;
+  className?: string;
+}) {
   const { value: activeValue } = useTabsContext();
   if (activeValue !== value) return null;
 

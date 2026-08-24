@@ -1,7 +1,8 @@
+import { Text, View } from 'react-native';
+
 import { TaskPriority } from '@nicoflow/shared/types';
 import { Flag } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
-import { Text, View } from 'react-native';
 
 import { Select, SelectTrigger } from '@/components/ui/select';
 import { PRIORITY_DOT_COLOR, PRIORITY_OPTIONS } from '@/lib/constants/priority';

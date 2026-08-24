@@ -1,6 +1,7 @@
+import { Pressable, useColorScheme, View } from 'react-native';
+
 import { LayoutList, Rows3 } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
-import { Pressable, useColorScheme, View } from 'react-native';
 
 import { cn } from '@/lib/utils/cn';
 
@@ -16,7 +17,10 @@ export function ViewModeToggle({ mode, onChange }: { mode: ViewMode; onChange: (
   const isDark = useColorScheme() === 'dark';
 
   return (
-    <View className="flex-row items-center gap-1 rounded-lg bg-muted dark:bg-muted-dark p-1" accessibilityRole="radiogroup">
+    <View
+      className="flex-row items-center gap-1 rounded-lg bg-muted dark:bg-muted-dark p-1"
+      accessibilityRole="radiogroup"
+    >
       {OPTIONS.map(({ mode: optionMode, icon: Icon }) => {
         const isActive = optionMode === mode;
         return (
@@ -27,7 +31,8 @@ export function ViewModeToggle({ mode, onChange }: { mode: ViewMode; onChange: (
             accessibilityState={{ selected: isActive }}
             accessibilityLabel={t(optionMode === 'tabs' ? 'timeSpread.viewModeTabs' : 'timeSpread.viewModeCombined')}
             testID={`timespread-viewmode-${optionMode}`}
-            className={cn('rounded-md p-1.5', isActive && 'bg-background dark:bg-background-dark shadow-sm')}>
+            className={cn('rounded-md p-1.5', isActive && 'bg-background dark:bg-background-dark shadow-sm')}
+          >
             <Icon size={16} color={isActive ? (isDark ? '#f8fafc' : '#0f172a') : isDark ? '#94a3b8' : '#64748b'} />
           </Pressable>
         );

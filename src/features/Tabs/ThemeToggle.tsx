@@ -1,7 +1,7 @@
 import { Pressable, Text, View } from 'react-native';
 
-import { cn } from '@/lib/utils/cn';
 import { useThemeOverride } from '@/lib/theme/ThemeOverrideProvider';
+import { cn } from '@/lib/utils/cn';
 
 const OPTIONS: { label: string; value: 'light' | 'dark' | null }[] = [
   { label: 'Light', value: 'light' },
@@ -25,12 +25,16 @@ export function ThemeToggle() {
             className={cn(
               'flex-1 items-center rounded-md px-3 py-2',
               isActive && 'bg-background dark:bg-background-dark shadow-sm'
-            )}>
+            )}
+          >
             <Text
               className={cn(
                 'text-sm font-medium',
-                isActive ? 'text-foreground dark:text-foreground-dark' : 'text-muted-foreground dark:text-muted-foreground-dark'
-              )}>
+                isActive
+                  ? 'text-foreground dark:text-foreground-dark'
+                  : 'text-muted-foreground dark:text-muted-foreground-dark'
+              )}
+            >
               {option.label}
             </Text>
           </Pressable>

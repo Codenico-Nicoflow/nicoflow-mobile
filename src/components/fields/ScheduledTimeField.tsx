@@ -1,7 +1,8 @@
-import { AlarmClock, X } from 'lucide-react-native';
 import { useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import { Pressable, TextInput, useColorScheme, View } from 'react-native';
+
+import { AlarmClock, X } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 
 import { FieldLabel } from './FieldLabel';
 
@@ -39,7 +40,7 @@ export function ScheduledTimeField({ value, onChange, disabled }: ScheduledTimeF
   const { t } = useTranslation('common');
   const isDark = useColorScheme() === 'dark';
   const [draft, setDraft] = useState<string | null>(null);
-  const text = draft ?? (value ?? '');
+  const text = draft ?? value ?? '';
 
   return (
     <View className="gap-1.5">
@@ -66,7 +67,8 @@ export function ScheduledTimeField({ value, onChange, disabled }: ScheduledTimeF
             onPress={() => onChange(null)}
             accessibilityRole="button"
             accessibilityLabel={t('fields.scheduledTimeClear')}
-            className="h-10 w-10 items-center justify-center rounded-md border border-input dark:border-input-dark">
+            className="h-10 w-10 items-center justify-center rounded-md border border-input dark:border-input-dark"
+          >
             <X size={16} color={isDark ? '#94a3b8' : '#64748b'} />
           </Pressable>
         )}

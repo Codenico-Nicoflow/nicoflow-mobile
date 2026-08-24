@@ -1,23 +1,20 @@
+import { forwardRef, useImperativeHandle, useRef, useState } from 'react';
+import { useColorScheme, View } from 'react-native';
+
 import { type ITask, TaskEnergy, TaskPriority } from '@nicoflow/shared/types';
 import { normalizeScheduleForFreq } from '@nicoflow/shared/utils';
 import { CheckSquare } from 'lucide-react-native';
-import { forwardRef, useImperativeHandle, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useColorScheme, View } from 'react-native';
 
-import { type RecurrenceValue } from '@/components/fields/recurrence';
 import { ProjectPicker } from '@/components/fields/ProjectPicker';
+import { type RecurrenceValue } from '@/components/fields/recurrence';
 import { RecurrenceField } from '@/components/fields/RecurrenceField';
 import { TaskFieldsForm, type TaskFieldsValue } from '@/components/fields/TaskFieldsForm';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { Sheet, SheetHeader, SheetTitle, SheetDescription, type SheetRef } from '@/components/ui/sheet';
+import { Sheet, SheetDescription, SheetHeader, type SheetRef, SheetTitle } from '@/components/ui/sheet';
 import { toast } from '@/components/ui/toast';
-import {
-  useCreateRecurrenceRuleMutation,
-  useCreateTaskMutation,
-  useUpdateTaskMutation,
-} from '@/lib/store';
+import { useCreateRecurrenceRuleMutation, useCreateTaskMutation, useUpdateTaskMutation } from '@/lib/store';
 import { showSuccessToast, ToastMessages } from '@/lib/toast';
 
 // present(task?, scheduledFor?) instead of a plain SheetRef — the caller hands
@@ -108,10 +105,7 @@ const isApiErrorCode = (error: unknown, code: string): boolean =>
 // TaskDialog.tsx. Replaces the former TaskCreateSheet/TaskEditSheet split —
 // both modes now share the project picker and recurrence field, which used
 // to be create-only.
-export const TaskSheet = forwardRef<TaskSheetRef, TaskSheetProps>(function TaskSheet(
-  { onSaved, onCreateSubmit },
-  ref
-) {
+export const TaskSheet = forwardRef<TaskSheetRef, TaskSheetProps>(function TaskSheet({ onSaved, onCreateSubmit }, ref) {
   const { t } = useTranslation(['task', 'common']);
   const isDark = useColorScheme() === 'dark';
   const [createTask, { isLoading: isCreatingTask }] = useCreateTaskMutation();

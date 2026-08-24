@@ -1,6 +1,12 @@
 import { forwardRef, type ReactNode, useCallback, useImperativeHandle, useMemo, useRef } from 'react';
 import { Pressable, Text, useColorScheme, View } from 'react-native';
-import { BottomSheetBackdrop, type BottomSheetBackdropProps, BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet';
+
+import {
+  BottomSheetBackdrop,
+  type BottomSheetBackdropProps,
+  BottomSheetModal,
+  BottomSheetView,
+} from '@gorhom/bottom-sheet';
 
 import { cn } from '@/lib/utils/cn';
 
@@ -44,7 +50,8 @@ export const DropdownMenu = forwardRef<DropdownMenuRef, { trigger: ReactNode; ch
           enablePanDownToClose
           backdropComponent={renderBackdrop}
           backgroundStyle={{ borderRadius: 20, backgroundColor: isDark ? '#0b1120' : '#f8fafc' }}
-          handleIndicatorStyle={{ width: 40, backgroundColor: isDark ? '#283549' : '#e2e8f0' }}>
+          handleIndicatorStyle={{ width: 40, backgroundColor: isDark ? '#283549' : '#e2e8f0' }}
+        >
           <BottomSheetView className="gap-1 px-2 pb-4">{children}</BottomSheetView>
         </BottomSheetModal>
       </>
@@ -67,16 +74,17 @@ export function DropdownMenuItem({ children, icon, onPress, variant = 'default',
       disabled={disabled}
       accessibilityRole="button"
       accessibilityState={{ disabled }}
-      className={cn(
-        'flex-row items-center gap-2 rounded-sm px-3 py-3',
-        disabled && 'opacity-50'
-      )}>
+      className={cn('flex-row items-center gap-2 rounded-sm px-3 py-3', disabled && 'opacity-50')}
+    >
       {icon}
       <Text
         className={cn(
           'text-sm',
-          variant === 'destructive' ? 'text-destructive dark:text-destructive-dark' : 'text-foreground dark:text-foreground-dark'
-        )}>
+          variant === 'destructive'
+            ? 'text-destructive dark:text-destructive-dark'
+            : 'text-foreground dark:text-foreground-dark'
+        )}
+      >
         {children}
       </Text>
     </Pressable>
@@ -84,7 +92,11 @@ export function DropdownMenuItem({ children, icon, onPress, variant = 'default',
 }
 
 export function DropdownMenuLabel({ children }: { children: ReactNode }) {
-  return <Text className="px-3 py-1.5 text-xs font-medium text-muted-foreground dark:text-muted-foreground-dark">{children}</Text>;
+  return (
+    <Text className="px-3 py-1.5 text-xs font-medium text-muted-foreground dark:text-muted-foreground-dark">
+      {children}
+    </Text>
+  );
 }
 
 export function DropdownMenuSeparator() {

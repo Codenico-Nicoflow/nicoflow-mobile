@@ -1,6 +1,7 @@
+import { Linking, Pressable, useColorScheme, View } from 'react-native';
+
 import { type ITask } from '@nicoflow/shared/types';
 import { AlarmClock, Clock, ExternalLink, Repeat } from 'lucide-react-native';
-import { Linking, Pressable, useColorScheme, View } from 'react-native';
 
 import { Badge } from '@/components/ui/badge';
 import { getEnergyOption } from '@/lib/constants/energy';
@@ -45,7 +46,8 @@ export function TaskChips({ task }: { task: ITask }) {
         <Badge
           variant="outline"
           className={PRIORITY_CHIP_CLASS[task.priority]}
-          textClassName={PRIORITY_TEXT_CLASS[task.priority]}>
+          textClassName={PRIORITY_TEXT_CLASS[task.priority]}
+        >
           {priorityLabel(task.priority)}
         </Badge>
       )}

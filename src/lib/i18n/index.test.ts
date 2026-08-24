@@ -1,6 +1,13 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-import i18n, { initI18n, isRTLLanguage, LANGUAGE_STORAGE_KEY, resolveInitialLanguage, setLanguage, SUPPORTED_LANGUAGES } from '.';
+import i18n, {
+  initI18n,
+  isRTLLanguage,
+  LANGUAGE_STORAGE_KEY,
+  resolveInitialLanguage,
+  setLanguage,
+  SUPPORTED_LANGUAGES,
+} from '.';
 
 beforeAll(async () => {
   await initI18n();

@@ -1,13 +1,14 @@
+import { Text, useColorScheme, View } from 'react-native';
+
 import { zodResolver } from '@hookform/resolvers/zod';
-import { bucketSchema, type BucketFormData } from '@nicoflow/shared/schemas';
+import { type BucketFormData, bucketSchema } from '@nicoflow/shared/schemas';
 import { Sparkles } from 'lucide-react-native';
 import { Controller, useForm, useWatch } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
-import { Text, useColorScheme, View } from 'react-native';
 
-import { toast } from '@/components/ui/toast';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
+import { toast } from '@/components/ui/toast';
 import { useRetryableMutation } from '@/hooks/useRetryableMutation';
 import { useCreateBucketMutation } from '@/lib/store';
 import { showSuccessToast, ToastMessages } from '@/lib/toast';
@@ -45,9 +46,7 @@ export function InboxCapture() {
           <Text className="text-sm font-semibold text-foreground dark:text-foreground-dark">
             {t('page.captureHeading')}
           </Text>
-          <Text className="text-xs text-muted-foreground dark:text-muted-foreground-dark">
-            {t('page.captureHint')}
-          </Text>
+          <Text className="text-xs text-muted-foreground dark:text-muted-foreground-dark">{t('page.captureHint')}</Text>
         </View>
       </View>
 

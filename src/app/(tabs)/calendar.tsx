@@ -1,4 +1,5 @@
 import { Text, View } from 'react-native';
+
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 // Placeholder only — Pro-gating is E-058's scope. This screen must not crash

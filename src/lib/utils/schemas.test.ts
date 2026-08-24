@@ -1,4 +1,4 @@
-import { loginSchema, registerSchema, forgotPasswordSchema } from '@nicoflow/shared/schemas';
+import { forgotPasswordSchema, loginSchema, registerSchema } from '@nicoflow/shared/schemas';
 
 // Mobile imports the same schema instances @nicoflow/shared exports — there is
 // no mobile-specific copy to drift from web. This just proves the import wires

@@ -1,11 +1,11 @@
-import { createProjectApi, createRecurrenceApi, createTaskApi, createAreaApi } from '@nicoflow/shared/api';
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
+import { createAreaApi, createProjectApi, createRecurrenceApi, createTaskApi } from '@nicoflow/shared/api';
 import { configureStore } from '@reduxjs/toolkit';
 import { fetchBaseQuery } from '@reduxjs/toolkit/query';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import { http, HttpResponse } from 'msw';
-import { Provider } from 'react-redux';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { Provider } from 'react-redux';
 
 import { server } from '../../../test/server';
 
@@ -100,7 +100,11 @@ describe('TimeSpreadView', () => {
     server.use(
       http.get(`${API}/time-spread`, () =>
         HttpResponse.json({
-          data: { today: [task({ id: 't1', title: 'Today task' })], tomorrow: [task({ id: 't2', title: 'Tomorrow task' })], thisWeek: [] },
+          data: {
+            today: [task({ id: 't1', title: 'Today task' })],
+            tomorrow: [task({ id: 't2', title: 'Tomorrow task' })],
+            thisWeek: [],
+          },
           error: null,
         })
       )

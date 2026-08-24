@@ -1,6 +1,7 @@
+import { Pressable, Text, useColorScheme, View } from 'react-native';
+
 import { Repeat } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
-import { Pressable, Text, useColorScheme, View } from 'react-native';
 
 import { Checkbox } from '@/components/ui/checkbox';
 
@@ -18,7 +19,8 @@ export function RollOverField({ value, onChange }: RollOverFieldProps) {
       onPress={() => onChange(!value)}
       accessibilityRole="checkbox"
       accessibilityState={{ checked: value }}
-      className="flex-row items-center gap-3 rounded-lg border border-border dark:border-border-dark bg-muted/40 dark:bg-muted-dark/40 p-3">
+      className="flex-row items-center gap-3 rounded-lg border border-border dark:border-border-dark bg-muted/40 dark:bg-muted-dark/40 p-3"
+    >
       <Checkbox checked={value} onCheckedChange={onChange} />
       <Repeat size={16} color={isDark ? '#6366f1' : '#4f46e5'} />
       <View className="flex-1 gap-0.5">
