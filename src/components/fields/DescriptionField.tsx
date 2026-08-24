@@ -1,5 +1,6 @@
-import { FileText } from 'lucide-react-native';
 import { View } from 'react-native';
+
+import { FileText } from 'lucide-react-native';
 
 import { Textarea } from '@/components/ui/textarea';
 

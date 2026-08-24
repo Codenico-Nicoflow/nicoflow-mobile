@@ -1,5 +1,6 @@
-import { isRunningInExpoGo } from 'expo';
 import { DevSettings } from 'react-native';
+
+import { isRunningInExpoGo } from 'expo';
 
 // RTL direction (I18nManager.forceRTL) only takes effect after a full reload
 // — RN can't hot-swap layout direction. Updates.reloadAsync() is the

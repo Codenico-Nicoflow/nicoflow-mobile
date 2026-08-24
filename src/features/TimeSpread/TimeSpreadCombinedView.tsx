@@ -1,6 +1,7 @@
+import { Text, View } from 'react-native';
+
 import { type ITask } from '@nicoflow/shared/types';
 import { useTranslation } from 'react-i18next';
-import { Text, View } from 'react-native';
 
 import { Separator } from '@/components/ui/separator';
 

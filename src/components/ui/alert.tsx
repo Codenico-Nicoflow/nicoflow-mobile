@@ -1,6 +1,7 @@
+import { Text, View } from 'react-native';
+
 import { cva, type VariantProps } from 'class-variance-authority';
 import type { ReactNode } from 'react';
-import { Text, View } from 'react-native';
 
 import { cn } from '@/lib/utils/cn';
 
@@ -28,20 +29,32 @@ export function AlertTitle({ children, variant }: { children: ReactNode; variant
     <Text
       className={cn(
         'font-medium text-sm mb-1',
-        variant === 'destructive' ? 'text-destructive dark:text-destructive-dark' : 'text-foreground dark:text-foreground-dark'
-      )}>
+        variant === 'destructive'
+          ? 'text-destructive dark:text-destructive-dark'
+          : 'text-foreground dark:text-foreground-dark'
+      )}
+    >
       {children}
     </Text>
   );
 }
 
-export function AlertDescription({ children, variant }: { children: ReactNode; variant?: 'default' | 'destructive' | null }) {
+export function AlertDescription({
+  children,
+  variant,
+}: {
+  children: ReactNode;
+  variant?: 'default' | 'destructive' | null;
+}) {
   return (
     <Text
       className={cn(
         'text-sm',
-        variant === 'destructive' ? 'text-destructive dark:text-destructive-dark' : 'text-muted-foreground dark:text-muted-foreground-dark'
-      )}>
+        variant === 'destructive'
+          ? 'text-destructive dark:text-destructive-dark'
+          : 'text-muted-foreground dark:text-muted-foreground-dark'
+      )}
+    >
       {children}
     </Text>
   );

@@ -1,4 +1,5 @@
 import type { BottomTabBarProps } from 'expo-router/build/react-navigation/bottom-tabs';
+
 import { fireEvent, render, screen } from '@testing-library/react-native';
 
 import { CustomTabBar } from './CustomTabBar';

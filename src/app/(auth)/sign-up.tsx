@@ -1,10 +1,11 @@
 import { useState } from 'react';
+import { Text, View } from 'react-native';
+
+import { Link, router } from 'expo-router';
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { type RegisterFormData, registerSchema } from '@nicoflow/shared/schemas';
-import { Link, router } from 'expo-router';
 import { Controller, useForm } from 'react-hook-form';
-import { Text, View } from 'react-native';
 
 import { AuthCard } from '@/components/auth-card';
 import { Button } from '@/components/ui/button';
@@ -37,7 +38,10 @@ export default function SignUp() {
 
   if (registeredEmail) {
     return (
-      <AuthCard title="Check your email" description="We've sent a verification link to your inbox. Verify your email, then sign in.">
+      <AuthCard
+        title="Check your email"
+        description="We've sent a verification link to your inbox. Verify your email, then sign in."
+      >
         <Button label="Go to sign in" onPress={() => router.replace('/sign-in')} />
       </AuthCard>
     );

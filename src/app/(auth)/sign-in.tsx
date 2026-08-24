@@ -1,13 +1,15 @@
+import { Text, View } from 'react-native';
+
+import { Link, router } from 'expo-router';
+
 import { zodResolver } from '@hookform/resolvers/zod';
 import { type LoginFormData, loginSchema } from '@nicoflow/shared/schemas';
-import { Link, router } from 'expo-router';
 import { Controller, useForm } from 'react-hook-form';
-import { Text, View } from 'react-native';
 
 import { AuthCard } from '@/components/auth-card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { useAppDispatch, useLoginMutation, setToken, setUser, mobileTokenStorage } from '@/lib/store';
+import { mobileTokenStorage, setToken, setUser, useAppDispatch, useLoginMutation } from '@/lib/store';
 import { resolveApiErrorMessage } from '@/lib/utils/apiError';
 
 export default function SignIn() {
@@ -79,7 +81,10 @@ export default function SignIn() {
         <Button label="Sign in" onPress={handleSubmit(onSubmit)} loading={isLoading} />
       </View>
 
-      <Link href="/forgot-password" className="text-sm text-center mt-3 font-medium text-primary dark:text-primary-dark">
+      <Link
+        href="/forgot-password"
+        className="text-sm text-center mt-3 font-medium text-primary dark:text-primary-dark"
+      >
         Forgot password?
       </Link>
       <View className="flex-row justify-center mt-1">

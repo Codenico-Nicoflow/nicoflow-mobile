@@ -1,6 +1,7 @@
+import { useColorScheme, View } from 'react-native';
+
 import { type TaskEnergy, type TaskPriority } from '@nicoflow/shared/types';
 import { useTranslation } from 'react-i18next';
-import { useColorScheme, View } from 'react-native';
 
 import { DescriptionField } from './DescriptionField';
 import { EnergyField } from './EnergyField';

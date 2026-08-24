@@ -23,9 +23,7 @@ export function ExpandableText({ children, maxLength = 280, className }: Expanda
       </Pressable>
       {shouldTruncate && (
         <Pressable onPress={() => setIsExpanded(!isExpanded)} accessibilityRole="button">
-          <Text className="text-xs text-primary dark:text-primary-dark">
-            {isExpanded ? 'Show less' : 'Show more'}
-          </Text>
+          <Text className="text-xs text-primary dark:text-primary-dark">{isExpanded ? 'Show less' : 'Show more'}</Text>
         </Pressable>
       )}
     </View>

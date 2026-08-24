@@ -1,9 +1,11 @@
+import { I18nManager } from 'react-native';
+
+import * as Localization from 'expo-localization';
+
 import { en, he, ru } from '@nicoflow/shared/i18n';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as Localization from 'expo-localization';
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
-import { I18nManager } from 'react-native';
 
 export const SUPPORTED_LANGUAGES = ['en', 'he', 'ru'] as const;
 export type SupportedLanguage = (typeof SUPPORTED_LANGUAGES)[number];
@@ -30,8 +32,7 @@ export const NAMESPACES = [
   'habits',
 ] as const;
 
-const isSupported = (lng: string): lng is SupportedLanguage =>
-  (SUPPORTED_LANGUAGES as readonly string[]).includes(lng);
+const isSupported = (lng: string): lng is SupportedLanguage => (SUPPORTED_LANGUAGES as readonly string[]).includes(lng);
 
 // No i18next-browser-languagedetector equivalent on RN — that plugin reads
 // navigator/localStorage, neither of which exist here. Resolve once at

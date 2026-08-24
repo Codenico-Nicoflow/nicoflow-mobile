@@ -1,23 +1,25 @@
+import { forwardRef, useEffect, useRef, useState } from 'react';
+import { Text, TextInput, useColorScheme, View } from 'react-native';
+
 import { type IBucket, ProcessingResult } from '@nicoflow/shared/types';
 import { CheckSquare } from 'lucide-react-native';
-import { forwardRef, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, TextInput, useColorScheme, View } from 'react-native';
 
 import { type RecurrenceValue } from '@/components/fields/recurrence';
 import { type TaskFieldsValue } from '@/components/fields/TaskFieldsForm';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Select, SelectTrigger } from '@/components/ui/select';
-import { Sheet, SheetDescription, SheetHeader, SheetTitle, type SheetRef } from '@/components/ui/sheet';
+import { Sheet, SheetDescription, SheetHeader, type SheetRef, SheetTitle } from '@/components/ui/sheet';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/components/ui/toast';
 import { useRetryableMutation } from '@/hooks/useRetryableMutation';
 import { useGetProjectsQuery, useProcessBucketMutation } from '@/lib/store';
 import { showSuccessToast, ToastMessages } from '@/lib/toast';
 
-import { captureToDoc, NOTE_TITLE_MAX, truncateNoteTitle } from './noteDraft';
 import { TaskSheet, type TaskSheetRef } from '../TimeSpread/TaskSheet';
+
+import { captureToDoc, NOTE_TITLE_MAX, truncateNoteTitle } from './noteDraft';
 
 type ProcessBucketRequestArg = Parameters<ReturnType<typeof useProcessBucketMutation>[0]>[0];
 
@@ -242,7 +244,11 @@ export const BucketProcessSheet = forwardRef<SheetRef, BucketProcessSheetProps>(
         </View>
       </Sheet>
 
-      <TaskSheet ref={taskSheetRef} onSaved={() => taskSheetRef.current?.dismiss()} onCreateSubmit={handleTaskCreateSubmit} />
+      <TaskSheet
+        ref={taskSheetRef}
+        onSaved={() => taskSheetRef.current?.dismiss()}
+        onCreateSubmit={handleTaskCreateSubmit}
+      />
     </>
   );
 });

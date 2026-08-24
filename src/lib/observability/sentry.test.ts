@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-require-imports */
 const mockInit = jest.fn();
 
 jest.mock('@sentry/react-native', () => ({ init: mockInit }));

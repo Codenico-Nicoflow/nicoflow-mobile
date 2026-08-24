@@ -1,17 +1,30 @@
-import { type ITask, TaskStatus } from '@nicoflow/shared/types';
-import { CalendarDays, Plus } from 'lucide-react-native';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import { FlatList, ScrollView, SectionList, Text, View } from 'react-native';
 
-import { EmptyState } from '@/components/ui/empty-state';
+import { type ITask, TaskStatus } from '@nicoflow/shared/types';
+import { CalendarDays, Plus } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
+
 import { Button } from '@/components/ui/button';
+import { EmptyState } from '@/components/ui/empty-state';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from '@/components/ui/toast';
-import { useDeleteTaskMutation, useGetTimeSpreadQuery, useScheduleTaskMutation, useUpdateTaskStatusMutation } from '@/lib/store';
+import {
+  useDeleteTaskMutation,
+  useGetTimeSpreadQuery,
+  useScheduleTaskMutation,
+  useUpdateTaskStatusMutation,
+} from '@/lib/store';
 import { showErrorToast, showSuccessToast, ToastMessages } from '@/lib/toast';
 
-import { groupByDay, nextStatus, type Segment, SEGMENT_KEYS, segmentToScheduledFor, selectSegmentTasks } from './segments';
+import {
+  groupByDay,
+  nextStatus,
+  type Segment,
+  SEGMENT_KEYS,
+  segmentToScheduledFor,
+  selectSegmentTasks,
+} from './segments';
 import { SwipeableTaskRow } from './SwipeableTaskRow';
 import { TaskSheet, type TaskSheetRef } from './TaskSheet';
 import { TimeSpreadCombinedView } from './TimeSpreadCombinedView';
@@ -202,7 +215,8 @@ export function TimeSpreadView() {
       <Button
         onPress={() => taskSheetRef.current?.present({ scheduledFor: segmentToScheduledFor(segment) })}
         className="absolute bottom-6 right-6 size-14 rounded-full"
-        accessibilityLabel={t('quickAdd.fabLabel')}>
+        accessibilityLabel={t('quickAdd.fabLabel')}
+      >
         <Plus size={24} color="#ffffff" />
       </Button>
 

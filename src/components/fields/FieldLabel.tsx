@@ -1,6 +1,7 @@
+import { Text, useColorScheme, View } from 'react-native';
+
 import { type LucideIcon } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
-import { Text, useColorScheme, View } from 'react-native';
 
 interface FieldLabelProps {
   icon: LucideIcon;

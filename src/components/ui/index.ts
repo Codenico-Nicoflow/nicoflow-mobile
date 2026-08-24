@@ -1,4 +1,14 @@
 export * from './alert';
+export type { AlertDialogRef } from './alert-dialog';
+export {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from './alert-dialog';
 export * from './avatar';
 export * from './badge';
 export * from './button';
@@ -7,6 +17,8 @@ export * from './card';
 export * from './checkbox';
 export * from './collapsible';
 export * from './command';
+export type { DialogRef } from './dialog';
+export { Dialog, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from './dialog';
 export * from './dropdown-menu';
 export * from './expandable-text';
 export * from './form';
@@ -21,17 +33,3 @@ export * from './switch';
 export * from './tabs';
 export * from './textarea';
 export * from './tooltip';
-
-export {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from './alert-dialog';
-export type { AlertDialogRef } from './alert-dialog';
-
-export { Dialog, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from './dialog';
-export type { DialogRef } from './dialog';

@@ -1,5 +1,8 @@
 import { TaskEnergy } from '@nicoflow/shared/types';
-import { ENERGY_OPTIONS as SHARED_ENERGY_OPTIONS, getEnergyOption as sharedGetEnergyOption } from '@nicoflow/shared/utils';
+import {
+  ENERGY_OPTIONS as SHARED_ENERGY_OPTIONS,
+  getEnergyOption as sharedGetEnergyOption,
+} from '@nicoflow/shared/utils';
 import { BatteryLow, BatteryMedium, Brain, type LucideIcon } from 'lucide-react-native';
 
 // Icon + hex-color pairing is RN-specific (lucide-react-native, not

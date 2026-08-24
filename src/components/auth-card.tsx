@@ -1,5 +1,6 @@
-import type { ReactNode } from 'react';
 import { Text, View } from 'react-native';
+
+import type { ReactNode } from 'react';
 
 interface AuthCardProps {
   title: string;
@@ -15,9 +16,7 @@ export function AuthCard({ title, description, children }: AuthCardProps) {
   return (
     <View className="w-full max-w-md">
       <View className="items-center gap-1 mb-8">
-        <Text className="text-foreground dark:text-foreground-dark text-2xl font-bold tracking-tight">
-          {title}
-        </Text>
+        <Text className="text-foreground dark:text-foreground-dark text-2xl font-bold tracking-tight">{title}</Text>
         <Text className="text-muted-foreground dark:text-muted-foreground-dark text-sm text-center max-w-xs">
           {description}
         </Text>

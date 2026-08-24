@@ -1,6 +1,7 @@
-import { Search, X } from 'lucide-react-native';
 import { type ReactNode } from 'react';
 import { Modal, Pressable, Text, TextInput, useColorScheme, View } from 'react-native';
+
+import { Search, X } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { cn } from '@/lib/utils/cn';
@@ -20,7 +21,12 @@ export function Command({ open, onOpenChange, value, onValueChange, placeholder 
   const isDark = scheme === 'dark';
 
   return (
-    <Modal visible={open} animationType="slide" onRequestClose={() => onOpenChange(false)} presentationStyle="pageSheet">
+    <Modal
+      visible={open}
+      animationType="slide"
+      onRequestClose={() => onOpenChange(false)}
+      presentationStyle="pageSheet"
+    >
       <View style={{ paddingTop: insets.top }} className="flex-1 bg-background dark:bg-background-dark">
         <View className="flex-row items-center gap-2 border-b border-border dark:border-border-dark px-4 py-3">
           <Search size={18} color={isDark ? '#94a3b8' : '#64748b'} />
@@ -58,15 +64,31 @@ export function CommandEmpty({ children }: { children: ReactNode }) {
 export function CommandGroup({ heading, children }: { heading?: string; children: ReactNode }) {
   return (
     <View className="gap-1 px-2 py-2">
-      {heading && <Text className="px-2 py-1 text-xs font-medium text-muted-foreground dark:text-muted-foreground-dark">{heading}</Text>}
+      {heading && (
+        <Text className="px-2 py-1 text-xs font-medium text-muted-foreground dark:text-muted-foreground-dark">
+          {heading}
+        </Text>
+      )}
       {children}
     </View>
   );
 }
 
-export function CommandItem({ children, onPress, className }: { children: ReactNode; onPress: () => void; className?: string }) {
+export function CommandItem({
+  children,
+  onPress,
+  className,
+}: {
+  children: ReactNode;
+  onPress: () => void;
+  className?: string;
+}) {
   return (
-    <Pressable onPress={onPress} accessibilityRole="button" className={cn('flex-row items-center gap-2 rounded-md px-2 py-3', className)}>
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      className={cn('flex-row items-center gap-2 rounded-md px-2 py-3', className)}
+    >
       {children}
     </Pressable>
   );

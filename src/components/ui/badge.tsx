@@ -1,6 +1,7 @@
+import { Text, View } from 'react-native';
+
 import { cva, type VariantProps } from 'class-variance-authority';
 import type { ReactNode } from 'react';
-import { Text, View } from 'react-native';
 
 import { cn } from '@/lib/utils/cn';
 

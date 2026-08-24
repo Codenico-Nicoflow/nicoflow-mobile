@@ -1,8 +1,9 @@
+import { useState } from 'react';
+import { Pressable, Text, TextInput, useColorScheme, View } from 'react-native';
+
 import { formatDuration } from '@nicoflow/shared/utils';
 import { Clock, X } from 'lucide-react-native';
-import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, Text, TextInput, useColorScheme, View } from 'react-native';
 
 import { cn } from '@/lib/utils/cn';
 
@@ -53,12 +54,14 @@ export function EstimatedTimeField({ value, onChange }: EstimatedTimeFieldProps)
                 active
                   ? 'bg-primary dark:bg-primary-dark border-primary dark:border-primary-dark'
                   : 'border-input dark:border-input-dark bg-transparent'
-              )}>
+              )}
+            >
               <Text
                 className={cn(
                   'text-sm font-medium',
                   active ? 'text-primary-foreground' : 'text-foreground dark:text-foreground-dark'
-                )}>
+                )}
+              >
                 {t(PRESET_KEYS[minutes] as 'fields.estChips.15m')}
               </Text>
             </Pressable>
@@ -79,12 +82,14 @@ export function EstimatedTimeField({ value, onChange }: EstimatedTimeFieldProps)
             isCustomActive
               ? 'bg-primary dark:bg-primary-dark border-primary dark:border-primary-dark'
               : 'border-input dark:border-input-dark bg-transparent'
-          )}>
+          )}
+        >
           <Text
             className={cn(
               'text-sm font-medium',
               isCustomActive ? 'text-primary-foreground' : 'text-foreground dark:text-foreground-dark'
-            )}>
+            )}
+          >
             {isCustomActive && value != null
               ? formatDuration(value, t('fields.estChips.minSuffix'), t('fields.estChips.hourSuffix'))
               : t('fields.estChips.custom')}
@@ -99,7 +104,8 @@ export function EstimatedTimeField({ value, onChange }: EstimatedTimeFieldProps)
             }}
             accessibilityRole="button"
             accessibilityLabel={t('fields.estChips.clear')}
-            className="h-8 w-8 items-center justify-center rounded-md border border-input dark:border-input-dark">
+            className="h-8 w-8 items-center justify-center rounded-md border border-input dark:border-input-dark"
+          >
             <X size={14} color={isDark ? '#94a3b8' : '#64748b'} />
           </Pressable>
         )}

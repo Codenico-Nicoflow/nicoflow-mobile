@@ -1,5 +1,6 @@
 import { createContext, useContext, useId } from 'react';
 import { Text, View } from 'react-native';
+
 import {
   Controller,
   type ControllerProps,
@@ -67,15 +68,17 @@ export function useFormField() {
 export function FormItem({ children, className }: { children: React.ReactNode; className?: string }) {
   const id = useId();
 
-  return <FormItemContext.Provider value={{ id }}><View className={cn('gap-2', className)}>{children}</View></FormItemContext.Provider>;
+  return (
+    <FormItemContext.Provider value={{ id }}>
+      <View className={cn('gap-2', className)}>{children}</View>
+    </FormItemContext.Provider>
+  );
 }
 
 export function FormLabel({ children, className }: { children: React.ReactNode; className?: string }) {
   const { error } = useFormField();
 
-  return (
-    <Label className={cn(error && 'text-destructive dark:text-destructive-dark', className)}>{children}</Label>
-  );
+  return <Label className={cn(error && 'text-destructive dark:text-destructive-dark', className)}>{children}</Label>;
 }
 
 export function FormControl({ children }: { children: React.ReactNode }) {
@@ -83,7 +86,9 @@ export function FormControl({ children }: { children: React.ReactNode }) {
 }
 
 export function FormDescription({ children, className }: { children: React.ReactNode; className?: string }) {
-  return <Text className={cn('text-sm text-muted-foreground dark:text-muted-foreground-dark', className)}>{children}</Text>;
+  return (
+    <Text className={cn('text-sm text-muted-foreground dark:text-muted-foreground-dark', className)}>{children}</Text>
+  );
 }
 
 export function FormMessage({ className }: { className?: string }) {

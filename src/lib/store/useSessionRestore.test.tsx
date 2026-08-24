@@ -1,7 +1,8 @@
+import { Text } from 'react-native';
+
 import type { IUser } from '@nicoflow/shared/types';
 import { configureStore } from '@reduxjs/toolkit';
 import { render, screen, waitFor } from '@testing-library/react-native';
-import { Text } from 'react-native';
 import { Provider } from 'react-redux';
 
 import authReducer, { setToken, setUser } from '@/lib/store/slices/auth/authSlice';
@@ -20,8 +21,7 @@ jest.mock('@/lib/store', () => ({
 
 let mockStore: ReturnType<typeof configureStore>;
 
-const makeUser = () =>
-  ({ id: 'u1', email: 'nico@example.com', username: 'nico', plan: 'free' }) as unknown as IUser;
+const makeUser = () => ({ id: 'u1', email: 'nico@example.com', username: 'nico', plan: 'free' }) as unknown as IUser;
 
 function Probe() {
   const { restoring } = useSessionRestore();

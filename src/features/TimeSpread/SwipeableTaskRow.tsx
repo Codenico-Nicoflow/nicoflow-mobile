@@ -1,9 +1,10 @@
+import { useRef, useState } from 'react';
+
 import { type ITask } from '@nicoflow/shared/types';
 import { Check, Trash2 } from 'lucide-react-native';
-import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { type SwipeableMethods } from 'react-native-gesture-handler/ReanimatedSwipeable';
 import ReanimatedSwipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
+import { type SwipeableMethods } from 'react-native-gesture-handler/ReanimatedSwipeable';
 import Reanimated, { type SharedValue, useAnimatedStyle } from 'react-native-reanimated';
 
 import {
@@ -13,8 +14,8 @@ import {
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
-  AlertDialogTitle,
   type AlertDialogRef,
+  AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 
 import type { Segment } from './segments';
@@ -25,7 +26,10 @@ const SWIPE_THRESHOLD = 64;
 function CompleteAction(_progress: SharedValue<number>, drag: SharedValue<number>) {
   const style = useAnimatedStyle(() => ({ transform: [{ translateX: drag.value - 50 }] }));
   return (
-    <Reanimated.View style={style} className="w-[50px] items-center justify-center bg-success dark:bg-success-dark rounded-xl">
+    <Reanimated.View
+      style={style}
+      className="w-[50px] items-center justify-center bg-success dark:bg-success-dark rounded-xl"
+    >
       <Check size={20} color="#ffffff" />
     </Reanimated.View>
   );
@@ -34,7 +38,10 @@ function CompleteAction(_progress: SharedValue<number>, drag: SharedValue<number
 function DeleteAction(_progress: SharedValue<number>, drag: SharedValue<number>) {
   const style = useAnimatedStyle(() => ({ transform: [{ translateX: drag.value + 50 }] }));
   return (
-    <Reanimated.View style={style} className="w-[50px] items-center justify-center bg-destructive dark:bg-destructive-dark rounded-xl">
+    <Reanimated.View
+      style={style}
+      className="w-[50px] items-center justify-center bg-destructive dark:bg-destructive-dark rounded-xl"
+    >
       <Trash2 size={20} color="#ffffff" />
     </Reanimated.View>
   );
@@ -89,7 +96,8 @@ export function SwipeableTaskRow({
             setPendingDelete(true);
             alertRef.current?.present();
           }
-        }}>
+        }}
+      >
         <TaskRow
           task={task}
           segment={segment}
@@ -106,7 +114,8 @@ export function SwipeableTaskRow({
         onDismiss={() => {
           setPendingDelete(false);
           swipeableRef.current?.close();
-        }}>
+        }}
+      >
         <AlertDialogHeader>
           <AlertDialogTitle>{t('task:deleteDialog.title')}</AlertDialogTitle>
           <AlertDialogDescription>{t('task:deleteDialog.description', { name: task.title })}</AlertDialogDescription>
@@ -116,10 +125,13 @@ export function SwipeableTaskRow({
             onPress={() => {
               if (pendingDelete) onDelete(task);
               alertRef.current?.dismiss();
-            }}>
+            }}
+          >
             {t('common:actions.delete')}
           </AlertDialogAction>
-          <AlertDialogCancel onPress={() => alertRef.current?.dismiss()}>{t('common:actions.cancel')}</AlertDialogCancel>
+          <AlertDialogCancel onPress={() => alertRef.current?.dismiss()}>
+            {t('common:actions.cancel')}
+          </AlertDialogCancel>
         </AlertDialogFooter>
       </AlertDialog>
     </>

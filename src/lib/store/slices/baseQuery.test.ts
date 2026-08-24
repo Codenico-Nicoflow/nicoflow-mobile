@@ -1,9 +1,10 @@
 import type { TokenStorage } from '@nicoflow/shared/api/adapters';
-import { createApi } from '@reduxjs/toolkit/query';
 import { configureStore } from '@reduxjs/toolkit';
+import { createApi } from '@reduxjs/toolkit/query';
 import { http, HttpResponse } from 'msw';
 
 import { server } from '../../../../test/server';
+
 import { createBaseQueryWithReauth } from './baseQuery';
 
 const API = 'http://localhost:8080/v1';
@@ -50,7 +51,10 @@ describe('createBaseQueryWithReauth — refresh mutex', () => {
         if (authHeader === 'Bearer new-token') {
           return HttpResponse.json({ data: { ok: true }, error: null });
         }
-        return HttpResponse.json({ data: null, error: { code: 'UNAUTHORIZED', message: 'Unauthorized' } }, { status: 401 });
+        return HttpResponse.json(
+          { data: null, error: { code: 'UNAUTHORIZED', message: 'Unauthorized' } },
+          { status: 401 }
+        );
       }),
       http.post(`${API}/auth/refresh-token`, async () => {
         refreshCalls += 1;

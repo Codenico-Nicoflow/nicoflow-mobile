@@ -1,4 +1,5 @@
 import { Pressable, useColorScheme } from 'react-native';
+
 import Animated, { interpolateColor, useAnimatedStyle, withTiming } from 'react-native-reanimated';
 
 export interface SwitchProps {
@@ -27,12 +28,10 @@ export function Switch({ checked, onCheckedChange, disabled }: SwitchProps) {
       disabled={disabled}
       accessibilityRole="switch"
       accessibilityState={{ checked, disabled }}
-      style={{ opacity: disabled ? 0.5 : 1 }}>
-      <Animated.View
-        style={[{ height: 20, width: 36, borderRadius: 999, justifyContent: 'center' }, trackStyle]}>
-        <Animated.View
-          style={[{ height: 16, width: 16, borderRadius: 999, backgroundColor: '#ffffff' }, thumbStyle]}
-        />
+      style={{ opacity: disabled ? 0.5 : 1 }}
+    >
+      <Animated.View style={[{ height: 20, width: 36, borderRadius: 999, justifyContent: 'center' }, trackStyle]}>
+        <Animated.View style={[{ height: 16, width: 16, borderRadius: 999, backgroundColor: '#ffffff' }, thumbStyle]} />
       </Animated.View>
     </Pressable>
   );

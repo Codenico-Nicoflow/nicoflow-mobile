@@ -1,8 +1,9 @@
+import { useRef, useState } from 'react';
+import { FlatList, Text, View } from 'react-native';
+
 import type { IBucket } from '@nicoflow/shared/types';
 import { Inbox } from 'lucide-react-native';
-import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FlatList, Text, View } from 'react-native';
 
 import { EmptyState } from '@/components/ui/empty-state';
 import { type SheetRef } from '@/components/ui/sheet';

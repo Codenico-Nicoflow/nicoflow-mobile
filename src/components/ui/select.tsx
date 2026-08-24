@@ -1,7 +1,22 @@
-import { Check, ChevronDown } from 'lucide-react-native';
-import { createContext, forwardRef, type ReactNode, useCallback, useContext, useImperativeHandle, useMemo, useRef } from 'react';
+import {
+  createContext,
+  forwardRef,
+  type ReactNode,
+  useCallback,
+  useContext,
+  useImperativeHandle,
+  useMemo,
+  useRef,
+} from 'react';
 import { Pressable, Text, useColorScheme } from 'react-native';
-import { BottomSheetBackdrop, type BottomSheetBackdropProps, BottomSheetFlatList, BottomSheetModal } from '@gorhom/bottom-sheet';
+
+import {
+  BottomSheetBackdrop,
+  type BottomSheetBackdropProps,
+  BottomSheetFlatList,
+  BottomSheetModal,
+} from '@gorhom/bottom-sheet';
+import { Check, ChevronDown } from 'lucide-react-native';
 
 import { cn } from '@/lib/utils/cn';
 
@@ -75,7 +90,8 @@ export const Select = forwardRef<SelectRef, SelectProps>(function Select(
         stackBehavior="push"
         backdropComponent={renderBackdrop}
         backgroundStyle={{ borderRadius: 20, backgroundColor: isDark ? '#0b1120' : '#f8fafc' }}
-        handleIndicatorStyle={{ width: 40, backgroundColor: isDark ? '#283549' : '#e2e8f0' }}>
+        handleIndicatorStyle={{ width: 40, backgroundColor: isDark ? '#283549' : '#e2e8f0' }}
+      >
         <BottomSheetFlatList
           data={options}
           keyExtractor={item => item.value}
@@ -90,7 +106,8 @@ export const Select = forwardRef<SelectRef, SelectProps>(function Select(
                 }}
                 accessibilityRole="button"
                 accessibilityState={{ selected }}
-                className="flex-row items-center justify-between rounded-md px-2 py-3">
+                className="flex-row items-center justify-between rounded-md px-2 py-3"
+              >
                 <Text className="text-sm text-foreground dark:text-foreground-dark">{item.label}</Text>
                 {selected && <Check size={16} color={isDark ? '#6366f1' : '#4f46e5'} />}
               </Pressable>
@@ -130,15 +147,19 @@ export function SelectTrigger({
         'h-9 flex-row items-center justify-between gap-2 rounded-md border border-input dark:border-input-dark bg-transparent px-3',
         disabled && 'opacity-50',
         className
-      )}>
+      )}
+    >
       {renderValue ? (
         renderValue(selected)
       ) : (
         <Text
           className={cn(
             'text-sm',
-            selected ? 'text-foreground dark:text-foreground-dark' : 'text-muted-foreground dark:text-muted-foreground-dark'
-          )}>
+            selected
+              ? 'text-foreground dark:text-foreground-dark'
+              : 'text-muted-foreground dark:text-muted-foreground-dark'
+          )}
+        >
           {selected?.label ?? placeholder ?? ''}
         </Text>
       )}

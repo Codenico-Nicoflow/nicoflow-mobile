@@ -1,5 +1,5 @@
 import { createContext, type ReactNode, useCallback, useContext, useRef, useState } from 'react';
-import { Modal, Pressable, View, type LayoutRectangle } from 'react-native';
+import { type LayoutRectangle, Modal, Pressable, View } from 'react-native';
 
 import { cn } from '@/lib/utils/cn';
 
@@ -73,7 +73,8 @@ export function PopoverContent({ children, className }: { children: ReactNode; c
           className={cn(
             'rounded-md border p-4 shadow-md bg-card dark:bg-card-dark border-border dark:border-border-dark',
             className
-          )}>
+          )}
+        >
           <Pressable onPress={e => e.stopPropagation()}>{children}</Pressable>
         </View>
       </Pressable>

@@ -1,5 +1,6 @@
-import type { ReactNode } from 'react';
 import { Text, View } from 'react-native';
+
+import type { ReactNode } from 'react';
 
 import { cn } from '@/lib/utils/cn';
 
@@ -9,7 +10,8 @@ export function Card({ children, className }: { children: ReactNode; className?:
       className={cn(
         'bg-card dark:bg-card-dark rounded-xl border border-border dark:border-border-dark py-6 gap-6 shadow-sm',
         className
-      )}>
+      )}
+    >
       {children}
     </View>
   );
@@ -28,7 +30,9 @@ export function CardTitle({ children, className }: { children: ReactNode; classN
 }
 
 export function CardDescription({ children, className }: { children: ReactNode; className?: string }) {
-  return <Text className={cn('text-muted-foreground dark:text-muted-foreground-dark text-sm', className)}>{children}</Text>;
+  return (
+    <Text className={cn('text-muted-foreground dark:text-muted-foreground-dark text-sm', className)}>{children}</Text>
+  );
 }
 
 export function CardContent({ children, className }: { children: ReactNode; className?: string }) {

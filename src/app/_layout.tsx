@@ -1,12 +1,12 @@
-import '../../global.css';
+import { useEffect, useState } from 'react';
+import { useColorScheme } from 'react-native';
+
+import { DarkTheme, DefaultTheme, ThemeProvider } from 'expo-router';
+import * as SplashScreen from 'expo-splash-screen';
 
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import * as Sentry from '@sentry/react-native';
-import { DarkTheme, DefaultTheme, ThemeProvider } from 'expo-router';
-import * as SplashScreen from 'expo-splash-screen';
-import { useEffect, useState } from 'react';
 import { I18nextProvider } from 'react-i18next';
-import { useColorScheme } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Provider } from 'react-redux';
 import { PersistGate } from 'redux-persist/integration/react';
@@ -15,11 +15,13 @@ import { AnimatedSplashOverlay } from '@/components/animated-icon';
 import { RootNavigator } from '@/components/root-navigator';
 import { Toaster } from '@/components/ui/toast';
 import i18n, { initI18n } from '@/lib/i18n';
-import { persistor, store } from '@/lib/store';
-import { useSessionRestore } from '@/lib/store/useSessionRestore';
 import { AnalyticsProvider } from '@/lib/observability/AnalyticsProvider';
 import { initSentry } from '@/lib/observability/sentry';
+import { persistor, store } from '@/lib/store';
+import { useSessionRestore } from '@/lib/store/useSessionRestore';
 import { ThemeOverrideProvider } from '@/lib/theme/ThemeOverrideProvider';
+
+import '../../global.css';
 
 SplashScreen.preventAutoHideAsync();
 initSentry();

@@ -1,5 +1,6 @@
-import { CheckSquare } from 'lucide-react-native';
 import { Text, TextInput, useColorScheme, View } from 'react-native';
+
+import { CheckSquare } from 'lucide-react-native';
 
 import { cn } from '@/lib/utils/cn';
 

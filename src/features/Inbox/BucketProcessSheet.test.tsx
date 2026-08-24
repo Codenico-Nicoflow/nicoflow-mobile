@@ -1,22 +1,24 @@
-import { createAreaApi, createBucketApi, createProjectApi } from '@nicoflow/shared/api';
+import { createRef } from 'react';
+
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
+import { createAreaApi, createBucketApi, createProjectApi } from '@nicoflow/shared/api';
 import { configureStore } from '@reduxjs/toolkit';
 import { fetchBaseQuery } from '@reduxjs/toolkit/query';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import { http, HttpResponse } from 'msw';
-import { createRef } from 'react';
-import { Provider } from 'react-redux';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { Provider } from 'react-redux';
+
+import { type SheetRef } from '@/components/ui/sheet';
 
 import { server } from '../../../test/server';
 
 import { BucketProcessSheet } from './BucketProcessSheet';
-import { type SheetRef } from '@/components/ui/sheet';
 
 // See TaskSheet.test.tsx — the real gorhom BottomSheetModal only paints its
 // content once its native present() animation settles, which never happens
 // under jsdom. The documented test mock renders content unconditionally.
-// eslint-disable-next-line @typescript-eslint/no-require-imports -- jest.mock factories run before import hoisting; require() here is gorhom's own documented pattern
+
 jest.mock('@gorhom/bottom-sheet', () => require('@gorhom/bottom-sheet/mock'));
 
 const API = 'http://localhost:8080/v1';
@@ -39,7 +41,15 @@ jest.mock('@/lib/store', () => ({
 }));
 
 const projects = [
-  { id: 'p1', areaId: 'a1', name: 'Alpha Project', status: 'active', folderIcon: 'folder', createdAt: '', updatedAt: '' },
+  {
+    id: 'p1',
+    areaId: 'a1',
+    name: 'Alpha Project',
+    status: 'active',
+    folderIcon: 'folder',
+    createdAt: '',
+    updatedAt: '',
+  },
 ];
 
 beforeEach(() => {
@@ -91,7 +101,10 @@ describe('BucketProcessSheet', () => {
     server.use(
       http.post(`${API}/bucket/:id/process`, async ({ request }) => {
         capturedBody = (await request.json()) as Record<string, unknown>;
-        return HttpResponse.json({ data: { ...bucket, processedAt: '2026-08-24', processingResult: 'task' }, error: null });
+        return HttpResponse.json({
+          data: { ...bucket, processedAt: '2026-08-24', processingResult: 'task' },
+          error: null,
+        });
       })
     );
     const { ref, onProcessed } = await renderSheet();
@@ -124,7 +137,10 @@ describe('BucketProcessSheet', () => {
     server.use(
       http.post(`${API}/bucket/:id/process`, async ({ request }) => {
         capturedBody = (await request.json()) as Record<string, unknown>;
-        return HttpResponse.json({ data: { ...bucket, processedAt: '2026-08-24', processingResult: 'task' }, error: null });
+        return HttpResponse.json({
+          data: { ...bucket, processedAt: '2026-08-24', processingResult: 'task' },
+          error: null,
+        });
       })
     );
     const { ref, onProcessed } = await renderSheet();
@@ -157,7 +173,10 @@ describe('BucketProcessSheet', () => {
     server.use(
       http.post(`${API}/bucket/:id/process`, async ({ request }) => {
         capturedBody = (await request.json()) as Record<string, unknown>;
-        return HttpResponse.json({ data: { ...bucket, processedAt: '2026-08-24', processingResult: 'note' }, error: null });
+        return HttpResponse.json({
+          data: { ...bucket, processedAt: '2026-08-24', processingResult: 'note' },
+          error: null,
+        });
       })
     );
     const { ref, onProcessed } = await renderSheet();
@@ -182,7 +201,10 @@ describe('BucketProcessSheet', () => {
     server.use(
       http.post(`${API}/bucket/:id/process`, async ({ request }) => {
         capturedBody = (await request.json()) as Record<string, unknown>;
-        return HttpResponse.json({ data: { ...bucket, processedAt: '2026-08-24', processingResult: 'trash' }, error: null });
+        return HttpResponse.json({
+          data: { ...bucket, processedAt: '2026-08-24', processingResult: 'trash' },
+          error: null,
+        });
       })
     );
     const { ref, onProcessed } = await renderSheet();

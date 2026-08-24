@@ -1,5 +1,6 @@
-import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
+
+import { useTranslation } from 'react-i18next';
 
 import { Select, SelectTrigger } from '@/components/ui/select';
 import { useGetProjectsQuery } from '@/lib/store';

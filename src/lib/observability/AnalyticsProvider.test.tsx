@@ -71,4 +71,3 @@ describe('AnalyticsProvider', () => {
     expect(mockOptIn).not.toHaveBeenCalled();
   });
 });
-

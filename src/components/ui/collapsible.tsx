@@ -1,6 +1,7 @@
-import { ChevronRight } from 'lucide-react-native';
 import { createContext, type ReactNode, useContext, useState } from 'react';
 import { Pressable, Text, useColorScheme, View } from 'react-native';
+
+import { ChevronRight } from 'lucide-react-native';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 
 import { cn } from '@/lib/utils/cn';
@@ -58,9 +59,15 @@ export function CollapsibleTrigger({ title, className }: CollapsibleTriggerProps
       onPress={() => setOpen(!open)}
       accessibilityRole="button"
       accessibilityState={{ expanded: open }}
-      className={cn('flex-row items-center gap-2', className)}>
+      className={cn('flex-row items-center gap-2', className)}
+    >
       <View className="h-6 w-6 items-center justify-center rounded-full bg-accent dark:bg-accent-dark">
-        <ChevronRight size={14} strokeWidth={2.5} color={iconColor} style={{ transform: [{ rotate: open ? '90deg' : '0deg' }] }} />
+        <ChevronRight
+          size={14}
+          strokeWidth={2.5}
+          color={iconColor}
+          style={{ transform: [{ rotate: open ? '90deg' : '0deg' }] }}
+        />
       </View>
       <Text className="text-sm text-foreground dark:text-foreground-dark">{title}</Text>
     </Pressable>

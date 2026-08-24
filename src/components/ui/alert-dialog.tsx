@@ -1,7 +1,7 @@
 import { forwardRef, type ReactNode } from 'react';
 import { Pressable, Text } from 'react-native';
 
-import { Sheet, SheetDescription, SheetFooter, SheetHeader, SheetTitle, type SheetRef } from './sheet';
+import { Sheet, SheetDescription, SheetFooter, SheetHeader, type SheetRef, SheetTitle } from './sheet';
 
 export interface AlertDialogProps {
   children: ReactNode;
@@ -12,10 +12,7 @@ export interface AlertDialogProps {
 // (no drag-to-resize) and no pan-down-to-close, since an alert dialog's
 // destructive/cancel choice should be a deliberate tap, not an accidental
 // swipe dismissal.
-export const AlertDialog = forwardRef<SheetRef, AlertDialogProps>(function AlertDialog(
-  { children, onDismiss },
-  ref
-) {
+export const AlertDialog = forwardRef<SheetRef, AlertDialogProps>(function AlertDialog({ children, onDismiss }, ref) {
   return (
     <Sheet ref={ref} snapPoints={['35%']} enablePanDownToClose={false} onDismiss={onDismiss}>
       {children}
@@ -28,7 +25,8 @@ export function AlertDialogAction({ onPress, children }: { onPress: () => void; 
     <Pressable
       onPress={onPress}
       accessibilityRole="button"
-      className="h-11 rounded-md items-center justify-center bg-destructive dark:bg-destructive-dark">
+      className="h-11 rounded-md items-center justify-center bg-destructive dark:bg-destructive-dark"
+    >
       <Text className="text-destructive-foreground dark:text-destructive-foreground-dark text-[15px] font-semibold">
         {children}
       </Text>
@@ -41,7 +39,8 @@ export function AlertDialogCancel({ onPress, children }: { onPress: () => void; 
     <Pressable
       onPress={onPress}
       accessibilityRole="button"
-      className="h-11 rounded-md items-center justify-center border border-input dark:border-input-dark">
+      className="h-11 rounded-md items-center justify-center border border-input dark:border-input-dark"
+    >
       <Text className="text-foreground dark:text-foreground-dark text-[15px] font-semibold">{children}</Text>
     </Pressable>
   );

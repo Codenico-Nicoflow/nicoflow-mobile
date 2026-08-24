@@ -1,6 +1,7 @@
+import * as SecureStore from 'expo-secure-store';
+
 import type { TokenStorage } from '@nicoflow/shared/api/adapters';
 import type { UnknownAction } from '@reduxjs/toolkit';
-import * as SecureStore from 'expo-secure-store';
 
 import { clearAuth, setToken } from './auth/authSlice';
 

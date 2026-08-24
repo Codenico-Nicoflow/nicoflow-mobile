@@ -1,13 +1,14 @@
+import { createRef } from 'react';
+
+import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { createAreaApi, createProjectApi, createRecurrenceApi, createTaskApi } from '@nicoflow/shared/api';
 import { type ITask, TaskEnergy, TaskPriority, TaskStatus } from '@nicoflow/shared/types';
-import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { configureStore } from '@reduxjs/toolkit';
 import { fetchBaseQuery } from '@reduxjs/toolkit/query';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import { http, HttpResponse } from 'msw';
-import { createRef } from 'react';
-import { Provider } from 'react-redux';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { Provider } from 'react-redux';
 
 import { server } from '../../../test/server';
 
@@ -17,7 +18,7 @@ import { TaskSheet, type TaskSheetRef } from './TaskSheet';
 // present() animation settles, which never happens under jsdom — the
 // documented test mock renders sheet content unconditionally instead, which
 // is what makes present()/dismiss() interactions assertable here at all.
-// eslint-disable-next-line @typescript-eslint/no-require-imports -- jest.mock factories run before import hoisting; require() here is gorhom's own documented pattern
+
 jest.mock('@gorhom/bottom-sheet', () => require('@gorhom/bottom-sheet/mock'));
 
 const API = 'http://localhost:8080/v1';
@@ -36,8 +37,24 @@ jest.mock('@/lib/store', () => ({
 }));
 
 const projects = [
-  { id: 'p1', areaId: 'a1', name: 'Alpha Project', status: 'active', folderIcon: 'folder', createdAt: '', updatedAt: '' },
-  { id: 'p2', areaId: 'a1', name: 'Beta Project', status: 'active', folderIcon: 'folder', createdAt: '', updatedAt: '' },
+  {
+    id: 'p1',
+    areaId: 'a1',
+    name: 'Alpha Project',
+    status: 'active',
+    folderIcon: 'folder',
+    createdAt: '',
+    updatedAt: '',
+  },
+  {
+    id: 'p2',
+    areaId: 'a1',
+    name: 'Beta Project',
+    status: 'active',
+    folderIcon: 'folder',
+    createdAt: '',
+    updatedAt: '',
+  },
 ];
 
 beforeEach(() => {
@@ -55,7 +72,12 @@ const makeStore = () =>
       [mockRecurrenceApi.reducerPath]: mockRecurrenceApi.reducer,
     },
     middleware: gDM =>
-      gDM().concat(mockTaskApi.middleware, mockProjectApi.middleware, mockAreaApi.middleware, mockRecurrenceApi.middleware),
+      gDM().concat(
+        mockTaskApi.middleware,
+        mockProjectApi.middleware,
+        mockAreaApi.middleware,
+        mockRecurrenceApi.middleware
+      ),
   });
 
 const task = (overrides: Partial<ITask> = {}): ITask => ({

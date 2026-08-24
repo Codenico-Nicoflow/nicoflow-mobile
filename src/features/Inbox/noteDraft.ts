@@ -5,8 +5,7 @@ import type { TiptapDoc } from '@nicoflow/shared/types';
 // Capture allows 500 chars; a note title caps at 255.
 export const NOTE_TITLE_MAX = 255;
 
-export const truncateNoteTitle = (text: string): string =>
-  (text.split('\n')[0] ?? '').trim().slice(0, NOTE_TITLE_MAX);
+export const truncateNoteTitle = (text: string): string => (text.split('\n')[0] ?? '').trim().slice(0, NOTE_TITLE_MAX);
 
 // The captured text becomes the body verbatim: one paragraph per line, blank
 // lines dropped.

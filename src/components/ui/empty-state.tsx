@@ -1,6 +1,7 @@
-import { type LucideIcon } from 'lucide-react-native';
 import { type ReactNode } from 'react';
 import { Text, useColorScheme, View } from 'react-native';
+
+import { type LucideIcon } from 'lucide-react-native';
 
 export interface EmptyStateProps {
   icon: LucideIcon;
@@ -23,18 +24,21 @@ export function EmptyState({ icon: Icon, title, description, action, testID }: E
     <View className="items-center justify-center py-12 px-6" testID={testID ?? 'empty-state'}>
       <View
         className="items-center justify-center rounded-full bg-muted dark:bg-muted-dark border border-border dark:border-border-dark p-5 mb-4"
-        testID={testID ? `${testID}-icon` : 'empty-state-icon'}>
+        testID={testID ? `${testID}-icon` : 'empty-state-icon'}
+      >
         <Icon size={32} color={mutedColor} />
       </View>
       <Text
         className="text-base font-medium text-foreground dark:text-foreground-dark text-center mb-1"
-        testID={testID ? `${testID}-title` : 'empty-state-title'}>
+        testID={testID ? `${testID}-title` : 'empty-state-title'}
+      >
         {title}
       </Text>
       {!!description && (
         <Text
           className="text-sm text-muted-foreground dark:text-muted-foreground-dark text-center"
-          testID={testID ? `${testID}-description` : 'empty-state-description'}>
+          testID={testID ? `${testID}-description` : 'empty-state-description'}
+        >
           {description}
         </Text>
       )}

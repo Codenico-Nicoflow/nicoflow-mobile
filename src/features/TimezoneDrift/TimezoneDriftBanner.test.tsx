@@ -13,8 +13,9 @@ jest.mock('@/lib/store', () => ({
 
 function mockDeviceTimeZone(timeZone: string) {
   const RealDateTimeFormat = Intl.DateTimeFormat;
-  return jest.spyOn(Intl, 'DateTimeFormat').mockImplementation(
-    (...args: ConstructorParameters<typeof Intl.DateTimeFormat>) => {
+  return jest
+    .spyOn(Intl, 'DateTimeFormat')
+    .mockImplementation((...args: ConstructorParameters<typeof Intl.DateTimeFormat>) => {
       const [locale, options] = args;
       const instance = new RealDateTimeFormat(locale, options);
       if (options?.timeZone) return instance;
@@ -22,8 +23,7 @@ function mockDeviceTimeZone(timeZone: string) {
         ...instance,
         resolvedOptions: () => ({ ...instance.resolvedOptions(), timeZone }),
       } as Intl.DateTimeFormat;
-    }
-  );
+    });
 }
 
 describe('TimezoneDriftBanner', () => {

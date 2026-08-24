@@ -44,13 +44,23 @@ export function Calendar({ selected, onSelect, month, onMonthChange }: CalendarP
   return (
     <View className="gap-3">
       <View className="flex-row items-center justify-between px-1">
-        <Pressable onPress={() => changeMonth(-1)} accessibilityRole="button" accessibilityLabel="Previous month" className="p-2">
+        <Pressable
+          onPress={() => changeMonth(-1)}
+          accessibilityRole="button"
+          accessibilityLabel="Previous month"
+          className="p-2"
+        >
           <Text className="text-foreground dark:text-foreground-dark">{'<'}</Text>
         </Pressable>
         <Text className="text-sm font-medium text-foreground dark:text-foreground-dark">
           {viewedMonth.toLocaleDateString(undefined, { month: 'long', year: 'numeric' })}
         </Text>
-        <Pressable onPress={() => changeMonth(1)} accessibilityRole="button" accessibilityLabel="Next month" className="p-2">
+        <Pressable
+          onPress={() => changeMonth(1)}
+          accessibilityRole="button"
+          accessibilityLabel="Next month"
+          className="p-2"
+        >
           <Text className="text-foreground dark:text-foreground-dark">{'>'}</Text>
         </Pressable>
       </View>
@@ -80,12 +90,14 @@ export function Calendar({ selected, onSelect, month, onMonthChange }: CalendarP
                   'h-full w-full items-center justify-center rounded-md',
                   isSelected && 'bg-primary dark:bg-primary-dark',
                   !isSelected && isToday && 'border border-ring dark:border-ring-dark'
-                )}>
+                )}
+              >
                 <Text
                   className={cn(
                     'text-sm',
                     isSelected ? 'text-primary-foreground' : 'text-foreground dark:text-foreground-dark'
-                  )}>
+                  )}
+                >
                   {date.getDate()}
                 </Text>
               </Pressable>

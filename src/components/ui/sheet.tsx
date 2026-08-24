@@ -1,4 +1,13 @@
-import { forwardRef, type ReactNode, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
+import {
+  forwardRef,
+  type ReactNode,
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { BackHandler, Platform, Pressable, Text, useColorScheme, View } from 'react-native';
 
 import {
@@ -81,7 +90,8 @@ export const Sheet = forwardRef<SheetRef, SheetProps>(function Sheet(
       enableDynamicSizing={false}
       backdropComponent={renderBackdrop}
       backgroundStyle={{ borderRadius: 20, backgroundColor: isDark ? '#0b1120' : '#f8fafc' }}
-      handleIndicatorStyle={{ width: 40, backgroundColor: isDark ? '#283549' : '#e2e8f0' }}>
+      handleIndicatorStyle={{ width: 40, backgroundColor: isDark ? '#283549' : '#e2e8f0' }}
+    >
       <BottomSheetScrollView contentContainerClassName="px-5 pt-2 pb-8">{children}</BottomSheetScrollView>
     </BottomSheetModal>
   );

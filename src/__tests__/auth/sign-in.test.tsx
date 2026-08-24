@@ -13,7 +13,9 @@ import { server } from '../../../test/server';
 const API = 'http://localhost:8080/v1';
 
 jest.mock('@/lib/store', () => {
-  const actual = jest.requireActual('@/lib/store/slices/auth/authSlice') as typeof import('@/lib/store/slices/auth/authSlice');
+  const actual = jest.requireActual(
+    '@/lib/store/slices/auth/authSlice'
+  ) as typeof import('@/lib/store/slices/auth/authSlice');
   return {
     useAppDispatch: () => mockStore.dispatch,
     useLoginMutation: () => mockAuthApi.useLoginMutation(),

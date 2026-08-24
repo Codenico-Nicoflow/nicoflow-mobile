@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Text, TextInput, type TextInputProps, useColorScheme, View } from 'react-native';
+
 import Animated, {
   interpolateColor,
   useAnimatedStyle,
@@ -50,7 +51,11 @@ export function Input({ label, error, value, onFocus, onBlur, style, ...props }:
   }));
 
   const borderStyle = useAnimatedStyle(() => ({
-    borderColor: interpolateColor(focusProgress.get(), [0, 1], [error ? destructiveColor : borderColor, error ? destructiveColor : ringColor]),
+    borderColor: interpolateColor(
+      focusProgress.get(),
+      [0, 1],
+      [error ? destructiveColor : borderColor, error ? destructiveColor : ringColor]
+    ),
     borderWidth: withTiming(focused ? 1.5 : 1, { duration: 150 }),
     transform: [{ translateX: shakeX.get() }],
   }));
@@ -74,7 +79,8 @@ export function Input({ label, error, value, onFocus, onBlur, style, ...props }:
           borderStyle,
           { height: CONTAINER_HEIGHT, borderRadius: 12, paddingHorizontal: 14, justifyContent: 'center' },
         ]}
-        className="bg-card dark:bg-card-dark">
+        className="bg-card dark:bg-card-dark"
+      >
         <Animated.Text
           style={[
             animatedLabelStyle,
@@ -86,13 +92,17 @@ export function Input({ label, error, value, onFocus, onBlur, style, ...props }:
             },
           ]}
           pointerEvents="none"
-          numberOfLines={1}>
+          numberOfLines={1}
+        >
           {label}
         </Animated.Text>
         <TextInput
           value={value}
           accessibilityLabel={label}
-          style={[{ fontSize: REST_FONT_SIZE, marginTop: raised ? 9 : 0, color: isDark ? '#e2e8f0' : '#0f172a' }, style]}
+          style={[
+            { fontSize: REST_FONT_SIZE, marginTop: raised ? 9 : 0, color: isDark ? '#e2e8f0' : '#0f172a' },
+            style,
+          ]}
           onFocus={e => {
             setFocused(true);
             focusProgress.set(withTiming(1, { duration: 150 }));

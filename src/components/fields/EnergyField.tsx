@@ -1,7 +1,8 @@
+import { Pressable, Text, View } from 'react-native';
+
 import { TaskEnergy } from '@nicoflow/shared/types';
 import { Zap } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
-import { Pressable, Text, View } from 'react-native';
 
 import { ENERGY_OPTIONS } from '@/lib/constants/energy';
 import { cn } from '@/lib/utils/cn';
@@ -23,7 +24,8 @@ export function EnergyField({ value, onChange, isDark }: EnergyFieldProps) {
       <View
         className="flex-row rounded-lg bg-muted dark:bg-muted-dark p-1"
         role="radiogroup"
-        accessibilityRole="radiogroup">
+        accessibilityRole="radiogroup"
+      >
         {ENERGY_OPTIONS.map(option => {
           const selected = value === option.value;
           const Icon = option.icon;
@@ -36,15 +38,20 @@ export function EnergyField({ value, onChange, isDark }: EnergyFieldProps) {
               className={cn(
                 'flex-1 flex-row items-center justify-center gap-1.5 rounded-md px-2 py-2',
                 selected && 'bg-background dark:bg-background-dark shadow-sm'
-              )}>
-              <Icon size={16} color={selected ? (isDark ? option.darkColor : option.color) : isDark ? '#94a3b8' : '#64748b'} />
+              )}
+            >
+              <Icon
+                size={16}
+                color={selected ? (isDark ? option.darkColor : option.color) : isDark ? '#94a3b8' : '#64748b'}
+              />
               <Text
                 className={cn(
                   'text-sm font-medium',
                   selected
                     ? 'text-foreground dark:text-foreground-dark'
                     : 'text-muted-foreground dark:text-muted-foreground-dark'
-                )}>
+                )}
+              >
                 {t(`task:energy.${option.value}`)}
               </Text>
             </Pressable>

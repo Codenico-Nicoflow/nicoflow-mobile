@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-require-imports */
 // Expo Router resolves deep links purely from the app/ file structure — a
 // route file at src/app/task/[id].tsx IS the `nicoflow://task/:id` mapping,
 // there's no separate linking config to test. This repo has no

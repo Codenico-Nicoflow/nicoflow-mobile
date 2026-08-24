@@ -25,7 +25,9 @@ export function AvatarImage({ className, onError, ...props }: ImageProps & { cla
 
 export function AvatarFallback({ children, className }: { children: string; className?: string }) {
   return (
-    <View className={cn('bg-muted dark:bg-muted-dark h-full w-full items-center justify-center rounded-full', className)}>
+    <View
+      className={cn('bg-muted dark:bg-muted-dark h-full w-full items-center justify-center rounded-full', className)}
+    >
       <Text className="text-muted-foreground dark:text-muted-foreground-dark text-xs font-medium">{children}</Text>
     </View>
   );
