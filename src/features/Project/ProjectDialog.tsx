@@ -12,8 +12,8 @@ import { DescriptionField } from '@/components/fields/DescriptionField';
 import { IconField } from '@/components/fields/IconField';
 import { NameField } from '@/components/fields/NameField';
 import { type ProjectStatus, ProjectStatusField } from '@/components/fields/ProjectStatusField';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
+import { PlanLimitAlert } from '@/components/ui/plan-limit-alert';
 import { Sheet, SheetDescription, SheetFooter, SheetHeader, type SheetRef, SheetTitle } from '@/components/ui/sheet';
 import { toast } from '@/components/ui/toast';
 import { useCreateProjectMutation, useGetAreasQuery, useUpdateProjectMutation } from '@/lib/store';
@@ -213,12 +213,7 @@ export const ProjectDialog = forwardRef<ProjectDialogRef, ProjectDialogProps>(fu
             </View>
           </SheetHeader>
 
-          {formError === 'planLimit' && (
-            <Alert>
-              <AlertTitle>{t('common:planLimit.title')}</AlertTitle>
-              <AlertDescription>{t('common:planLimit.description')}</AlertDescription>
-            </Alert>
-          )}
+          {formError === 'planLimit' && <PlanLimitAlert />}
 
           <NameField
             value={fields.name}

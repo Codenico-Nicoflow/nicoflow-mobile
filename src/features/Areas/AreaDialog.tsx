@@ -8,8 +8,8 @@ import { useTranslation } from 'react-i18next';
 import { ColorField } from '@/components/fields/ColorField';
 import { IconField } from '@/components/fields/IconField';
 import { NameField } from '@/components/fields/NameField';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
+import { PlanLimitAlert } from '@/components/ui/plan-limit-alert';
 import { Sheet, SheetDescription, SheetHeader, type SheetRef, SheetTitle } from '@/components/ui/sheet';
 import { toast } from '@/components/ui/toast';
 import { useCreateAreaMutation, useUpdateAreaMutation } from '@/lib/store';
@@ -150,12 +150,7 @@ export const AreaDialog = forwardRef<AreaDialogRef, AreaDialogProps>(function Ar
           </View>
         </SheetHeader>
 
-        {formError === 'planLimit' && (
-          <Alert>
-            <AlertTitle>{t('common:planLimit.title')}</AlertTitle>
-            <AlertDescription>{t('common:planLimit.description')}</AlertDescription>
-          </Alert>
-        )}
+        {formError === 'planLimit' && <PlanLimitAlert />}
 
         <NameField
           value={fields.name}
