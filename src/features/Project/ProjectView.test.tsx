@@ -37,6 +37,8 @@ jest.mock('@/lib/store', () => ({
   useUpdateTaskStatusMutation: () => mockTaskApi.useUpdateTaskStatusMutation(),
   useCreateTaskMutation: () => mockTaskApi.useCreateTaskMutation(),
   useUpdateTaskMutation: () => mockTaskApi.useUpdateTaskMutation(),
+  useDeleteTaskMutation: () => mockTaskApi.useDeleteTaskMutation(),
+  useMarkTaskMissedMutation: () => mockTaskApi.useMarkTaskMissedMutation(),
   useCreateRecurrenceRuleMutation: () => mockRecurrenceApi.useCreateRecurrenceRuleMutation(),
 }));
 
