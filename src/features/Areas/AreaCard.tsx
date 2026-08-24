@@ -1,9 +1,9 @@
-import { useRef, useState } from 'react';
+import { useRef } from 'react';
 import { Pressable, Text, useColorScheme, View } from 'react-native';
 
 import { type AreaWithProjects } from '@nicoflow/shared/api';
 import { type IProject } from '@nicoflow/shared/types';
-import { ChevronDown, ChevronRight, GripVertical, MoreVertical, Pencil, Plus, Trash2 } from 'lucide-react-native';
+import { GripVertical, MoreVertical, Pencil, Plus, Trash2 } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 
 import {
@@ -37,11 +37,12 @@ interface AreaCardProps {
 }
 
 // Mirrors web's AreaCard.tsx: icon swatch tinted by area.color, name,
-// project-count badge, 3-dot actions menu (Edit Area/Delete Area), expandable
-// body listing ProjectRows or the "No projects yet. Add one below." fallback,
-// plus a dashed "Add project" affordance. Delete cascades (deletes nested
-// projects too) — matches web's actual wired behavior, not the unused
-// "kept and moved out" copy that exists elsewhere in web's i18n bundle.
+// project-count badge, 3-dot actions menu (Edit Area/Delete Area). Body is
+// ALWAYS visible (web has no collapse/accordion) listing ProjectRows or the
+// "No projects yet. Add one below." fallback, plus a dashed "Add project"
+// affordance. Delete cascades (deletes nested projects too) — matches web's
+// actual wired behavior, not the unused "kept and moved out" copy that
+// exists elsewhere in web's i18n bundle.
 export function AreaCard({
   area,
   onPressProject,
@@ -53,7 +54,6 @@ export function AreaCard({
 }: AreaCardProps) {
   const { t } = useTranslation(['area', 'common']);
   const isDark = useColorScheme() === 'dark';
-  const [expanded, setExpanded] = useState(true);
   const [deleteArea, { isLoading: isDeleting }] = useDeleteAreaMutation();
   const menuRef = useRef<DropdownMenuRef>(null);
   const alertRef = useRef<AlertDialogRef>(null);
@@ -82,12 +82,7 @@ export function AreaCard({
       className={`relative rounded-lg border border-border dark:border-border-dark bg-card dark:bg-card-dark ${isDragging ? 'opacity-70' : ''}`}
       testID={`area-card-${area.id}`}
     >
-      <Pressable
-        onPress={() => setExpanded(v => !v)}
-        accessibilityRole="button"
-        accessibilityState={{ expanded }}
-        className="flex-row items-center gap-3 p-3 pr-11"
-      >
+      <View className="flex-row items-center gap-3 p-3 pr-11">
         <Pressable
           onLongPress={dragHandleProps?.onLongPress}
           disabled={dragHandleProps?.disabled}
@@ -114,9 +109,7 @@ export function AreaCard({
             count: projects.length,
           })}
         </Badge>
-
-        {expanded ? <ChevronDown size={18} color={chevronColor} /> : <ChevronRight size={18} color={chevronColor} />}
-      </Pressable>
+      </View>
 
       <View className="absolute right-2 top-2">
         <DropdownMenu
@@ -149,34 +142,32 @@ export function AreaCard({
         </DropdownMenu>
       </View>
 
-      {expanded && (
-        <View className="gap-0.5 px-2 pb-3">
-          {projects.length === 0 ? (
-            <Text className="px-2 py-2 text-sm text-muted-foreground dark:text-muted-foreground-dark">
-              {t('area:card.noProjects')}
-            </Text>
-          ) : (
-            projects.map(project => (
-              <ProjectRow
-                key={project.id}
-                project={project}
-                onPress={() => onPressProject(project.id)}
-                onEdit={onEditProject}
-              />
-            ))
-          )}
-          <Pressable
-            onPress={() => onAddProject(area.id)}
-            accessibilityRole="button"
-            className="mt-1 flex-row items-center justify-center gap-1.5 rounded-md border border-dashed border-border dark:border-border-dark px-2 py-2"
-          >
-            <Plus size={14} color={chevronColor} />
-            <Text className="text-sm text-muted-foreground dark:text-muted-foreground-dark">
-              {t('area:card.addProject')}
-            </Text>
-          </Pressable>
-        </View>
-      )}
+      <View className="gap-0.5 px-2 pb-3">
+        {projects.length === 0 ? (
+          <Text className="px-2 py-2 text-sm text-muted-foreground dark:text-muted-foreground-dark">
+            {t('area:card.noProjects')}
+          </Text>
+        ) : (
+          projects.map(project => (
+            <ProjectRow
+              key={project.id}
+              project={project}
+              onPress={() => onPressProject(project.id)}
+              onEdit={onEditProject}
+            />
+          ))
+        )}
+        <Pressable
+          onPress={() => onAddProject(area.id)}
+          accessibilityRole="button"
+          className="mt-1 flex-row items-center justify-center gap-1.5 rounded-md border border-dashed border-border dark:border-border-dark px-2 py-2"
+        >
+          <Plus size={14} color={chevronColor} />
+          <Text className="text-sm text-muted-foreground dark:text-muted-foreground-dark">
+            {t('area:card.addProject')}
+          </Text>
+        </Pressable>
+      </View>
 
       <AlertDialog ref={alertRef}>
         <AlertDialogHeader>
