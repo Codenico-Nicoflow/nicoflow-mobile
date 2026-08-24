@@ -178,20 +178,39 @@ describe('TaskSheet', () => {
     expect(taskPatched).toBe(false);
   });
 
-  it('delegates create to onCreateSubmit when provided, and suppresses recurrence', async () => {
+  it('delegates create to onCreateSubmit when provided, with scheduledTime/recurrence fields available', async () => {
     const onCreateSubmit = jest.fn().mockResolvedValue(undefined);
     const { ref, onSaved } = await renderSheet(jest.fn(), onCreateSubmit);
     await waitFor(() => ref.current?.present({ initialTitle: 'Captured thought', initialNotes: 'more detail' }));
 
     await waitFor(() => expect(screen.getByDisplayValue('Captured thought')).toBeTruthy());
-    expect(screen.queryByText('Repeats')).toBeNull();
+    expect(screen.getByText('Scheduled time')).toBeTruthy();
+    expect(screen.getByText('Repeats')).toBeTruthy();
 
     await fireEvent.press(screen.getByText('Alpha Project'));
     await fireEvent.press(screen.getByLabelText('Create'));
 
     await waitFor(() =>
-      expect(onCreateSubmit).toHaveBeenCalledWith(expect.objectContaining({ title: 'Captured thought' }), 'p1')
+      expect(onCreateSubmit).toHaveBeenCalledWith(expect.objectContaining({ title: 'Captured thought' }), 'p1', null)
     );
+    expect(onSaved).toHaveBeenCalled();
+  });
+
+  it('delegated create with recurrence enabled sends the recurrence value through to onCreateSubmit', async () => {
+    const onCreateSubmit = jest.fn().mockResolvedValue(undefined);
+    const { ref, onSaved } = await renderSheet(jest.fn(), onCreateSubmit);
+    await waitFor(() => ref.current?.present({ initialTitle: 'Captured thought' }));
+
+    await waitFor(() => expect(screen.getByDisplayValue('Captured thought')).toBeTruthy());
+    await fireEvent.press(screen.getByText('Alpha Project'));
+    await fireEvent.press(screen.getByText('Off'));
+
+    await fireEvent.press(screen.getByLabelText('Create'));
+
+    await waitFor(() => expect(onCreateSubmit).toHaveBeenCalled());
+    const [, , recurrence] = onCreateSubmit.mock.calls[0] as [unknown, unknown, { freq: string } | null];
+    expect(recurrence).not.toBeNull();
+    expect(recurrence?.freq).toBe('weekly');
     expect(onSaved).toHaveBeenCalled();
   });
 });

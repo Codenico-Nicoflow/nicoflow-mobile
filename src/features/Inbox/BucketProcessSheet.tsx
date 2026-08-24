@@ -4,6 +4,7 @@ import { forwardRef, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, TextInput, useColorScheme, View } from 'react-native';
 
+import { type RecurrenceValue } from '@/components/fields/recurrence';
 import { type TaskFieldsValue } from '@/components/fields/TaskFieldsForm';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -17,6 +18,29 @@ import { showSuccessToast, ToastMessages } from '@/lib/toast';
 
 import { captureToDoc, NOTE_TITLE_MAX, truncateNoteTitle } from './noteDraft';
 import { TaskSheet, type TaskSheetRef } from '../TimeSpread/TaskSheet';
+
+// POST /v1/bucket/:id/process's taskDetails accepts scheduledTime + recurrence
+// (companion backend work, nicoflow-api PR #174). @nicoflow/shared 0.8.4's
+// TaskDetails/ProcessBucketDto don't carry them yet — widen locally until the
+// shared package publishes (nicoflow-shared PR #63), same workaround as
+// TaskSheet's UpdateTaskRequestWithProject, then delete this and pass the
+// fields straight through.
+type ProcessBucketRequestArg = Parameters<ReturnType<typeof useProcessBucketMutation>[0]>[0];
+type ProcessBucketRequestWithRecurringTaskDetails = Omit<ProcessBucketRequestArg, 'data'> & {
+  data: Omit<ProcessBucketRequestArg['data'], 'taskDetails'> & {
+    taskDetails?: NonNullable<ProcessBucketRequestArg['data']['taskDetails']> & {
+      scheduledTime?: string;
+      recurrence?: {
+        freq: string;
+        interval?: number;
+        byWeekday?: number[];
+        byMonthday?: number | null;
+        startDate: string;
+        endDate?: string | null;
+      };
+    };
+  };
+};
 
 interface BucketProcessSheetProps {
   bucket: IBucket | null;
@@ -69,15 +93,20 @@ export const BucketProcessSheet = forwardRef<SheetRef, BucketProcessSheetProps>(
   // atomic backend call (POST /bucket/:id/process) — there is no endpoint to
   // link an already-created task back to an inbox item. So TaskSheet can't
   // call useCreateTaskMutation like it normally does; it goes through
-  // useProcessBucketMutation directly via the onCreateSubmit override. The
-  // process contract has no recurrence/scheduledTime, which TaskSheet itself
-  // suppresses when onCreateSubmit is supplied. Errors are rethrown, not
+  // useProcessBucketMutation directly via the onCreateSubmit override. When
+  // recurrence is set, it folds into taskDetails.recurrence rather than a
+  // separate createRule call — the backend materializes instance #1 and marks
+  // the bucket item processed in the same request. Errors are rethrown, not
   // toasted here — TaskSheet's own catch turns PLAN_LIMIT_EXCEEDED into its
   // inline alert and everything else into a retry toast; toasting here too
   // would double them up.
-  const handleTaskCreateSubmit = async (fields: TaskFieldsValue, pickedProjectId: string) => {
+  const handleTaskCreateSubmit = async (
+    fields: TaskFieldsValue,
+    pickedProjectId: string,
+    recurrence: RecurrenceValue | null
+  ) => {
     if (!bucket) return;
-    await processBucket({
+    const request: ProcessBucketRequestWithRecurringTaskDetails = {
       id: bucket.id,
       data: {
         processingResult: ProcessingResult.TASK,
@@ -89,11 +118,23 @@ export const BucketProcessSheet = forwardRef<SheetRef, BucketProcessSheetProps>(
           energy: fields.energy,
           rollsOver: fields.rollsOver,
           scheduledFor: fields.scheduledFor ?? undefined,
+          scheduledTime: fields.scheduledTime ?? undefined,
           estimatedMinutes: fields.estimatedMinutes ?? undefined,
           url: fields.url || undefined,
+          ...(recurrence && {
+            recurrence: {
+              freq: recurrence.freq,
+              interval: recurrence.interval,
+              byWeekday: recurrence.byWeekday,
+              byMonthday: recurrence.byMonthday,
+              startDate: recurrence.startDate,
+              endDate: recurrence.endDate,
+            },
+          }),
         },
       },
-    }).unwrap();
+    };
+    await processBucket(request as ProcessBucketRequestArg).unwrap();
     showSuccessToast(ToastMessages.BUCKET_PROCESSED_TASK, toast);
     onProcessed();
   };

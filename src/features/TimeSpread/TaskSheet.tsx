@@ -61,9 +61,12 @@ interface TaskSheetProps {
    * call — the caller owns the request, success toast, and error handling.
    * Used by bucket-processing, whose endpoint atomically creates the task AND
    * marks the inbox item processed in one call; a plain createTask here would
-   * either double-create the task or leave the bucket item unprocessed.
+   * either double-create the task or leave the bucket item unprocessed. The
+   * caller also owns turning a set `recurrence` into whatever the delegated
+   * endpoint's contract expects (bucket-process folds it into `taskDetails`
+   * rather than a separate `createRule` call).
    */
-  onCreateSubmit?: (fields: TaskFieldsValue, projectId: string) => Promise<void>;
+  onCreateSubmit?: (fields: TaskFieldsValue, projectId: string, recurrence: RecurrenceValue | null) => Promise<void>;
 }
 
 const emptyFields = (scheduledFor: string, initialTitle?: string, initialNotes?: string): TaskFieldsValue => ({
@@ -72,6 +75,7 @@ const emptyFields = (scheduledFor: string, initialTitle?: string, initialNotes?:
   priority: TaskPriority.LOW,
   energy: TaskEnergy.MEDIUM,
   scheduledFor,
+  scheduledTime: null,
   rollsOver: true,
   estimatedMinutes: null,
   url: '',
@@ -83,6 +87,7 @@ const toFields = (task: ITask): TaskFieldsValue => ({
   priority: task.priority,
   energy: task.energy,
   scheduledFor: task.scheduledFor ?? '',
+  scheduledTime: task.scheduledTime ?? null,
   rollsOver: task.rollsOver,
   estimatedMinutes: task.estimatedMinutes ?? null,
   url: task.url ?? '',
@@ -94,6 +99,7 @@ const fieldsEqual = (a: TaskFieldsValue, b: TaskFieldsValue): boolean =>
   a.priority === b.priority &&
   a.energy === b.energy &&
   a.scheduledFor === b.scheduledFor &&
+  a.scheduledTime === b.scheduledTime &&
   a.rollsOver === b.rollsOver &&
   a.estimatedMinutes === b.estimatedMinutes &&
   a.url === b.url;
@@ -208,6 +214,7 @@ export const TaskSheet = forwardRef<TaskSheetRef, TaskSheetProps>(function TaskS
           energy: fields.energy,
           rollsOver: fields.rollsOver,
           scheduledFor: fields.scheduledFor || null,
+          scheduledTime: fields.scheduledTime || null,
           estimatedMinutes: fields.estimatedMinutes ?? null,
           url: fields.url || null,
         };
@@ -216,6 +223,13 @@ export const TaskSheet = forwardRef<TaskSheetRef, TaskSheetProps>(function TaskS
         }
         await updateTask(updatePayload).unwrap();
         showSuccessToast(ToastMessages.TASK_UPDATED_SUCCESSFULLY, toast);
+      } else if (onCreateSubmit) {
+        // Delegated create — the caller's endpoint does its own create (and any
+        // side effect, e.g. marking a bucket item processed) and owns success
+        // toasting; this sheet only dismisses. Recurrence is handed through
+        // rather than resolved here, since bucket-process folds it into its
+        // own taskDetails.recurrence instead of a separate createRule call.
+        await onCreateSubmit(fields, projectId, recurrence);
       } else if (recurrence) {
         // A repeating task is created as a rule; the backend stamps instance
         // #1 from this same template inside the same transaction.
@@ -229,11 +243,6 @@ export const TaskSheet = forwardRef<TaskSheetRef, TaskSheetProps>(function TaskS
           ...normalizeScheduleForFreq(recurrence),
         }).unwrap();
         showSuccessToast(ToastMessages.TASK_CREATED_SUCCESSFULLY, toast);
-      } else if (onCreateSubmit) {
-        // Delegated create — the caller's endpoint does its own create (and any
-        // side effect, e.g. marking a bucket item processed) and owns success
-        // toasting; this sheet only dismisses.
-        await onCreateSubmit(fields, projectId);
       } else {
         await createTask({
           projectId,
@@ -243,6 +252,7 @@ export const TaskSheet = forwardRef<TaskSheetRef, TaskSheetProps>(function TaskS
           energy: fields.energy,
           rollsOver: fields.rollsOver,
           scheduledFor: fields.scheduledFor ?? undefined,
+          scheduledTime: fields.scheduledTime ?? undefined,
           estimatedMinutes: fields.estimatedMinutes ?? undefined,
           url: fields.url || undefined,
         }).unwrap();
@@ -306,9 +316,10 @@ export const TaskSheet = forwardRef<TaskSheetRef, TaskSheetProps>(function TaskS
 
         {/* Turning this on for an existing task starts a NEW series from here
             forward — it never edits the rule the task already belongs to.
-            Managing/pausing an existing rule stays in Settings. Not offered on
-            a delegated create — the bucket-process contract has no recurrence. */}
-        {!onCreateSubmit && <RecurrenceField value={recurrence} onChange={setRecurrence} />}
+            Managing/pausing an existing rule stays in Settings. On a delegated
+            create, the value is handed to onCreateSubmit instead of resolved
+            here (see its call site above). */}
+        <RecurrenceField value={recurrence} onChange={setRecurrence} />
 
         <Button
           label={isEditMode ? t('common:actions.save') : t('common:actions.create')}

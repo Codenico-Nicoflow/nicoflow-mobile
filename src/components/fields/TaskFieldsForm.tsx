@@ -9,6 +9,7 @@ import { NameField } from './NameField';
 import { PriorityField } from './PriorityField';
 import { RollOverField } from './RollOverField';
 import { ScheduledForField } from './ScheduledForField';
+import { ScheduledTimeField } from './ScheduledTimeField';
 import { UrlField } from './UrlField';
 
 export interface TaskFieldsValue {
@@ -17,6 +18,7 @@ export interface TaskFieldsValue {
   priority: TaskPriority;
   energy: TaskEnergy;
   scheduledFor: string | null;
+  scheduledTime: string | null;
   rollsOver: boolean;
   estimatedMinutes: number | null;
   url: string;
@@ -59,6 +61,11 @@ export function TaskFieldsForm({ value, onChange, titleError }: TaskFieldsFormPr
 
       <View className="gap-3 rounded-lg border border-border dark:border-border-dark p-3">
         <ScheduledForField value={value.scheduledFor} onChange={v => onChange('scheduledFor', v)} />
+        <ScheduledTimeField
+          value={value.scheduledTime}
+          onChange={v => onChange('scheduledTime', v)}
+          disabled={!value.scheduledFor}
+        />
         <RollOverField value={value.rollsOver} onChange={v => onChange('rollsOver', v)} />
       </View>
 

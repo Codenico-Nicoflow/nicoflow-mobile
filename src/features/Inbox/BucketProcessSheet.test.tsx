@@ -119,6 +119,39 @@ describe('BucketProcessSheet', () => {
     });
   });
 
+  it('Task path: setting recurrence in the delegated TaskSheet sends it through taskDetails.recurrence', async () => {
+    let capturedBody: Record<string, unknown> | null = null;
+    server.use(
+      http.post(`${API}/bucket/:id/process`, async ({ request }) => {
+        capturedBody = (await request.json()) as Record<string, unknown>;
+        return HttpResponse.json({ data: { ...bucket, processedAt: '2026-08-24', processingResult: 'task' }, error: null });
+      })
+    );
+    const { ref, onProcessed } = await renderSheet();
+    await waitFor(() => ref.current?.present());
+    await waitFor(() => expect(screen.getByText('Process Bucket Item')).toBeTruthy());
+
+    await fireEvent.press(screen.getAllByLabelText('Create')[0]);
+    await waitFor(() => expect(screen.getByDisplayValue('Call the dentist')).toBeTruthy());
+
+    const projectOptions = screen.getAllByText('Alpha Project');
+    await fireEvent.press(projectOptions[projectOptions.length - 1]);
+    await fireEvent.press(screen.getByText('Off'));
+
+    const createButtons = screen.getAllByLabelText('Create');
+    await fireEvent.press(createButtons[createButtons.length - 1]);
+
+    await waitFor(() => expect(onProcessed).toHaveBeenCalled());
+    expect(capturedBody).toMatchObject({
+      processingResult: 'task',
+      projectId: 'p1',
+      taskDetails: expect.objectContaining({
+        title: 'Call the dentist',
+        recurrence: expect.objectContaining({ freq: 'weekly' }),
+      }),
+    });
+  });
+
   it('NOTE path is unaffected: still submits inline through the outer sheet', async () => {
     let capturedBody: Record<string, unknown> | null = null;
     server.use(
