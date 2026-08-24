@@ -4,7 +4,7 @@ import { Text, View } from 'react-native';
 import { router } from 'expo-router';
 
 import { type AreaWithProjects } from '@nicoflow/shared/api';
-import { FREE_PLAN_AREA_LIMIT } from '@nicoflow/shared/types';
+import { FREE_PLAN_AREA_LIMIT, FREE_PLAN_PROJECT_LIMIT, type IProject } from '@nicoflow/shared/types';
 import { Layers, Plus } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import DraggableFlatList, { type RenderItemParams, ScaleDecorator } from 'react-native-draggable-flatlist';
@@ -14,6 +14,8 @@ import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useGetAreasWithProjectsQuery, useReorderAreasMutation } from '@/lib/store';
+
+import { ProjectDialog, type ProjectDialogRef } from '../Project/ProjectDialog';
 
 import { AreaCard } from './AreaCard';
 import { AreaDialog, type AreaDialogRef } from './AreaDialog';
@@ -29,17 +31,17 @@ function AreasListSkeleton() {
   );
 }
 
-// Mirrors web's AreasBoard.tsx: header (title, counts, "New Area" action) +
-// list of AreaCards (accordion, nested projects), empty state, skeleton
-// loading. Drag-to-reorder persists displayOrder server-side via
-// reorderAreas. "New Project" header action and per-area "Add project" land
-// with the Projects CRUD story (NIC-1978).
+// Mirrors web's AreasBoard.tsx: header (title, counts, "New Area"/"New
+// Project" actions) + list of AreaCards (accordion, nested projects), empty
+// state, skeleton loading. Drag-to-reorder persists displayOrder server-side
+// via reorderAreas.
 export function AreasList() {
   const { t } = useTranslation(['area']);
   const { data: areas, isLoading, isFetching } = useGetAreasWithProjectsQuery();
   const [reorderAreas] = useReorderAreasMutation();
   const [localOrder, setLocalOrder] = useState<AreaWithProjects[]>([]);
-  const dialogRef = useRef<AreaDialogRef>(null);
+  const areaDialogRef = useRef<AreaDialogRef>(null);
+  const projectDialogRef = useRef<ProjectDialogRef>(null);
 
   // Server data is the source of truth; local state only exists so
   // DraggableFlatList has something to animate against mid-drag without
@@ -50,7 +52,10 @@ export function AreasList() {
 
   if (isLoading) return <AreasListSkeleton />;
 
+  const allProjects: IProject[] = localOrder.flatMap(a => a.projects ?? []);
+  const favoriteCount = allProjects.filter(p => p.isFavorite).length;
   const atAreaLimit = (areas?.length ?? 0) >= FREE_PLAN_AREA_LIMIT;
+  const atProjectLimit = allProjects.length >= FREE_PLAN_PROJECT_LIMIT;
 
   if (!areas || areas.length === 0) {
     return (
@@ -59,15 +64,15 @@ export function AreasList() {
           icon={Layers}
           title={t('area:board.empty')}
           description={t('area:board.emptyDescription')}
-          action={<Button label={t('area:board.newArea')} onPress={() => dialogRef.current?.present()} />}
+          action={<Button label={t('area:board.newArea')} onPress={() => areaDialogRef.current?.present()} />}
           testID="areas-empty-state"
         />
-        <AreaDialog ref={dialogRef} onSaved={() => {}} />
+        <AreaDialog ref={areaDialogRef} onSaved={() => {}} />
       </GestureHandlerRootView>
     );
   }
 
-  const projectTotal = localOrder.reduce((sum, a) => sum + (a.projects?.length ?? 0), 0);
+  const projectTotal = allProjects.length;
 
   const onDragEnd = ({ data }: { data: AreaWithProjects[] }) => {
     setLocalOrder(data);
@@ -82,7 +87,9 @@ export function AreasList() {
         <AreaCard
           area={item}
           onPressProject={projectId => router.push(`/project/${projectId}`)}
-          onEdit={editArea => dialogRef.current?.present(editArea)}
+          onEdit={editArea => areaDialogRef.current?.present(editArea)}
+          onEditProject={editProject => projectDialogRef.current?.present(editProject)}
+          onAddProject={areaId => projectDialogRef.current?.present(undefined, areaId)}
           dragHandleProps={{ onLongPress: drag, disabled: isActive }}
           isDragging={isActive}
         />
@@ -92,7 +99,7 @@ export function AreasList() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <View className="flex-row items-start justify-between px-4 pt-2 pb-3">
+      <View className="flex-row items-start justify-between gap-2 px-4 pt-2 pb-3">
         <View className="flex-1">
           <Text className="text-2xl font-bold text-foreground dark:text-foreground-dark">
             {t('area:board.yourAreas')}
@@ -107,15 +114,28 @@ export function AreasList() {
             })}
           </Text>
         </View>
-        <Button
-          size="sm"
-          disabled={atAreaLimit}
-          accessibilityLabel={atAreaLimit ? t('area:board.planLimitTooltip') : t('area:board.newArea')}
-          onPress={() => dialogRef.current?.present()}
-        >
-          <Plus size={16} color="#ffffff" />
-          <Text className="text-sm font-medium text-primary-foreground">{t('area:board.newArea')}</Text>
-        </Button>
+        <View className="flex-row gap-2">
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={atProjectLimit}
+            accessibilityLabel={atProjectLimit ? t('area:board.planLimitTooltip') : t('area:board.newProject')}
+            onPress={() => projectDialogRef.current?.present()}
+          >
+            <Text className="text-sm font-medium text-foreground dark:text-foreground-dark">
+              {t('area:board.newProject')}
+            </Text>
+          </Button>
+          <Button
+            size="sm"
+            disabled={atAreaLimit}
+            accessibilityLabel={atAreaLimit ? t('area:board.planLimitTooltip') : t('area:board.newArea')}
+            onPress={() => areaDialogRef.current?.present()}
+          >
+            <Plus size={16} color="#ffffff" />
+            <Text className="text-sm font-medium text-primary-foreground">{t('area:board.newArea')}</Text>
+          </Button>
+        </View>
       </View>
       <DraggableFlatList
         data={localOrder}
@@ -124,7 +144,13 @@ export function AreasList() {
         renderItem={renderItem}
         contentContainerStyle={{ paddingBottom: 24 }}
       />
-      <AreaDialog ref={dialogRef} onSaved={() => {}} />
+      <AreaDialog ref={areaDialogRef} onSaved={() => {}} />
+      <ProjectDialog
+        ref={projectDialogRef}
+        onSaved={() => {}}
+        onCreateAreaRequested={() => areaDialogRef.current?.present()}
+        favoriteCount={favoriteCount}
+      />
     </GestureHandlerRootView>
   );
 }

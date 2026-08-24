@@ -2,7 +2,8 @@ import { useRef, useState } from 'react';
 import { Pressable, Text, useColorScheme, View } from 'react-native';
 
 import { type AreaWithProjects } from '@nicoflow/shared/api';
-import { ChevronDown, ChevronRight, GripVertical, MoreVertical, Pencil, Trash2 } from 'lucide-react-native';
+import { type IProject } from '@nicoflow/shared/types';
+import { ChevronDown, ChevronRight, GripVertical, MoreVertical, Pencil, Plus, Trash2 } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 
 import {
@@ -29,18 +30,27 @@ interface AreaCardProps {
   area: AreaWithProjects;
   onPressProject: (projectId: string) => void;
   onEdit: (area: AreaWithProjects) => void;
+  onEditProject: (project: IProject) => void;
+  onAddProject: (areaId: string) => void;
   dragHandleProps?: { onLongPress?: () => void; disabled?: boolean };
   isDragging?: boolean;
 }
 
 // Mirrors web's AreaCard.tsx: icon swatch tinted by area.color, name,
 // project-count badge, 3-dot actions menu (Edit Area/Delete Area), expandable
-// body listing ProjectRows or the "No projects yet. Add one below." fallback.
-// Delete cascades (deletes nested projects too) — matches web's actual wired
-// behavior, not the unused "kept and moved out" copy that exists elsewhere in
-// web's i18n bundle. Web's dashed "Add project" affordance lands with the
-// Projects CRUD story (NIC-1978), once there's a ProjectDialog to open.
-export function AreaCard({ area, onPressProject, onEdit, dragHandleProps, isDragging }: AreaCardProps) {
+// body listing ProjectRows or the "No projects yet. Add one below." fallback,
+// plus a dashed "Add project" affordance. Delete cascades (deletes nested
+// projects too) — matches web's actual wired behavior, not the unused
+// "kept and moved out" copy that exists elsewhere in web's i18n bundle.
+export function AreaCard({
+  area,
+  onPressProject,
+  onEdit,
+  onEditProject,
+  onAddProject,
+  dragHandleProps,
+  isDragging,
+}: AreaCardProps) {
   const { t } = useTranslation(['area', 'common']);
   const isDark = useColorScheme() === 'dark';
   const [expanded, setExpanded] = useState(true);
@@ -147,9 +157,24 @@ export function AreaCard({ area, onPressProject, onEdit, dragHandleProps, isDrag
             </Text>
           ) : (
             projects.map(project => (
-              <ProjectRow key={project.id} project={project} onPress={() => onPressProject(project.id)} />
+              <ProjectRow
+                key={project.id}
+                project={project}
+                onPress={() => onPressProject(project.id)}
+                onEdit={onEditProject}
+              />
             ))
           )}
+          <Pressable
+            onPress={() => onAddProject(area.id)}
+            accessibilityRole="button"
+            className="mt-1 flex-row items-center justify-center gap-1.5 rounded-md border border-dashed border-border dark:border-border-dark px-2 py-2"
+          >
+            <Plus size={14} color={chevronColor} />
+            <Text className="text-sm text-muted-foreground dark:text-muted-foreground-dark">
+              {t('area:card.addProject')}
+            </Text>
+          </Pressable>
         </View>
       )}
 
