@@ -33,6 +33,8 @@ jest.mock('@/lib/store', () => ({
   useUpdateTaskStatusMutation: () => mockTaskApi.useUpdateTaskStatusMutation(),
   useCreateTaskMutation: () => mockTaskApi.useCreateTaskMutation(),
   useUpdateTaskMutation: () => mockTaskApi.useUpdateTaskMutation(),
+  useDeleteTaskMutation: () => mockTaskApi.useDeleteTaskMutation(),
+  useMarkTaskMissedMutation: () => mockTaskApi.useMarkTaskMissedMutation(),
   useCreateRecurrenceRuleMutation: () => mockRecurrenceApi.useCreateRecurrenceRuleMutation(),
   useGetProjectsQuery: () => mockProjectApi.useGetProjectsQuery(),
 }));
@@ -169,6 +171,50 @@ describe('TasksSection', () => {
     const { getAllByRole } = within(screen.getByTestId('task-item-t1'));
     await fireEvent.press(getAllByRole('checkbox')[0]);
 
+    await waitFor(() => expect(capturedStatus).toBe(TaskStatus.DONE));
+  });
+
+  it('guards completion when the task has open subtasks and completes on confirm', async () => {
+    withTasks([task({ id: 't1', title: 'Active one', status: TaskStatus.ACTIVE, openSubtaskCount: 2 })]);
+    let capturedStatus: unknown;
+    server.use(
+      http.patch(`${API}/tasks/t1/status`, async ({ request }) => {
+        capturedStatus = ((await request.json()) as { status: string }).status;
+        return HttpResponse.json({ data: task({ id: 't1', status: TaskStatus.DONE }), error: null });
+      })
+    );
+    await renderSection();
+    await waitFor(() => expect(screen.getByText('Active one')).toBeTruthy());
+
+    const { getAllByRole } = within(screen.getByTestId('task-item-t1'));
+    await fireEvent.press(getAllByRole('checkbox')[0]);
+
+    await waitFor(() => expect(screen.getByText('Complete this task?')).toBeTruthy());
+    expect(screen.getByText('This task still has 2 unfinished subtasks. Completing it leaves them open.')).toBeTruthy();
+    expect(capturedStatus).toBeUndefined();
+
+    await fireEvent.press(screen.getByText('Complete anyway'));
+
+    await waitFor(() => expect(capturedStatus).toBe(TaskStatus.DONE));
+  });
+
+  it('does not guard completion when the task has zero open subtasks', async () => {
+    withTasks([task({ id: 't1', title: 'Active one', status: TaskStatus.ACTIVE, openSubtaskCount: 0 })]);
+    let capturedStatus: unknown;
+    server.use(
+      http.patch(`${API}/tasks/t1/status`, async ({ request }) => {
+        capturedStatus = ((await request.json()) as { status: string }).status;
+        return HttpResponse.json({ data: task({ id: 't1', status: TaskStatus.DONE }), error: null });
+      })
+    );
+    await renderSection();
+    await waitFor(() => expect(screen.getByText('Active one')).toBeTruthy());
+
+    const { getAllByRole } = within(screen.getByTestId('task-item-t1'));
+    await fireEvent.press(getAllByRole('checkbox')[0]);
+
+    // No open subtasks — the toggle should go straight through without
+    // needing the guard sheet's "Complete anyway" confirm.
     await waitFor(() => expect(capturedStatus).toBe(TaskStatus.DONE));
   });
 });

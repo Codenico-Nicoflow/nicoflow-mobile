@@ -4,10 +4,13 @@ import { Text, View } from 'react-native';
 import { type ITask, ScheduleFilter, type TaskEnergy, TaskStatus } from '@nicoflow/shared/types';
 import { useTranslation } from 'react-i18next';
 
+import { Button } from '@/components/ui/button';
+import { Sheet, SheetDescription, SheetFooter, SheetHeader, type SheetRef, SheetTitle } from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
 import { TaskSheet, type TaskSheetRef } from '@/features/TimeSpread/TaskSheet';
 import { useGetTasksInfiniteQuery, useUpdateTaskStatusMutation } from '@/lib/store';
 
+import { needsCompletionConfirm } from './completionGuard';
 import {
   countTasks,
   defaultTaskFilter,
@@ -46,6 +49,8 @@ export function TasksSection({ projectId }: TasksSectionProps) {
   const { data, isLoading } = useGetTasksInfiniteQuery({ projectId });
   const [updateTaskStatus] = useUpdateTaskStatusMutation();
   const sheetRef = useRef<TaskSheetRef>(null);
+  const completeConfirmRef = useRef<SheetRef>(null);
+  const [pendingComplete, setPendingComplete] = useState<ITask | null>(null);
 
   const tasks = useMemo(() => data?.pages.flatMap(p => p.items) ?? [], [data]);
 
@@ -75,11 +80,27 @@ export function TasksSection({ projectId }: TasksSectionProps) {
     return [...filtered].sort((a, b) => a.displayOrder - b.displayOrder);
   }, [tasks, activeFilter, scheduleFilter, activeEnergy]);
 
+  const runToggle = (task: ITask, next: TaskStatus) => {
+    void updateTaskStatus({ id: task.id, status: next });
+  };
+
+  // Gate fires only on completing with open subtasks — never on uncompleting
+  // (mirrors web's useConfirmComplete: needsCompletionConfirm short-circuits
+  // any transition that isn't INTO done).
   const onToggleStatus = (task: ITask) => {
-    void updateTaskStatus({
-      id: task.id,
-      status: task.status === TaskStatus.DONE ? TaskStatus.ACTIVE : TaskStatus.DONE,
-    });
+    const next = task.status === TaskStatus.DONE ? TaskStatus.ACTIVE : TaskStatus.DONE;
+    if (needsCompletionConfirm(task, next)) {
+      setPendingComplete(task);
+      completeConfirmRef.current?.present();
+      return;
+    }
+    runToggle(task, next);
+  };
+
+  const onConfirmComplete = () => {
+    if (pendingComplete) runToggle(pendingComplete, TaskStatus.DONE);
+    completeConfirmRef.current?.dismiss();
+    setPendingComplete(null);
   };
 
   return (
@@ -131,6 +152,23 @@ export function TasksSection({ projectId }: TasksSectionProps) {
       )}
 
       <TaskSheet ref={sheetRef} onSaved={() => sheetRef.current?.dismiss()} />
+
+      <Sheet
+        ref={completeConfirmRef}
+        snapPoints={['35%']}
+        enablePanDownToClose={false}
+        onDismiss={() => setPendingComplete(null)}
+      >
+        <SheetHeader>
+          <SheetTitle>{t('completeConfirm.title')}</SheetTitle>
+          <SheetDescription>
+            {t('completeConfirm.description', { count: pendingComplete?.openSubtaskCount ?? 0 })}
+          </SheetDescription>
+        </SheetHeader>
+        <SheetFooter>
+          <Button label={t('completeConfirm.confirm')} onPress={onConfirmComplete} />
+        </SheetFooter>
+      </Sheet>
     </View>
   );
 }
