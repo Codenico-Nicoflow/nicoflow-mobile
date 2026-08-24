@@ -20,15 +20,6 @@ import {
 } from '@/lib/store';
 import { showSuccessToast, ToastMessages } from '@/lib/toast';
 
-// PATCH /v1/tasks/:id accepts an optional projectId for reassignment (companion
-// backend work). @nicoflow/shared 0.8.5's UpdateTaskRequest doesn't carry it yet
-// — widen locally until the shared package publishes the field, same workaround
-// nicoflow-frontend's TaskDialog uses, then delete this and pass projectId
-// straight through.
-type UpdateTaskRequestWithProject = Parameters<ReturnType<typeof useUpdateTaskMutation>[0]>[0] & {
-  projectId?: string;
-};
-
 // present(task?, scheduledFor?) instead of a plain SheetRef — the caller hands
 // the default date / task row directly at the moment it opens the sheet,
 // rather than via a prop this component re-derives on its own render cycle.
@@ -206,7 +197,7 @@ export const TaskSheet = forwardRef<TaskSheetRef, TaskSheetProps>(function TaskS
         }).unwrap();
         showSuccessToast(ToastMessages.TASK_CREATED_SUCCESSFULLY, toast);
       } else if (isEditMode && task) {
-        const updatePayload: UpdateTaskRequestWithProject = {
+        const updatePayload: Parameters<ReturnType<typeof useUpdateTaskMutation>[0]>[0] = {
           id: task.id,
           title: fields.title,
           notes: fields.notes || null,

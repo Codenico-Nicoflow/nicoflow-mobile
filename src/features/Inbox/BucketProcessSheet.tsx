@@ -19,28 +19,7 @@ import { showSuccessToast, ToastMessages } from '@/lib/toast';
 import { captureToDoc, NOTE_TITLE_MAX, truncateNoteTitle } from './noteDraft';
 import { TaskSheet, type TaskSheetRef } from '../TimeSpread/TaskSheet';
 
-// POST /v1/bucket/:id/process's taskDetails accepts scheduledTime + recurrence
-// (companion backend work, nicoflow-api PR #174). @nicoflow/shared 0.8.4's
-// TaskDetails/ProcessBucketDto don't carry them yet — widen locally until the
-// shared package publishes (nicoflow-shared PR #63), same workaround as
-// TaskSheet's UpdateTaskRequestWithProject, then delete this and pass the
-// fields straight through.
 type ProcessBucketRequestArg = Parameters<ReturnType<typeof useProcessBucketMutation>[0]>[0];
-type ProcessBucketRequestWithRecurringTaskDetails = Omit<ProcessBucketRequestArg, 'data'> & {
-  data: Omit<ProcessBucketRequestArg['data'], 'taskDetails'> & {
-    taskDetails?: NonNullable<ProcessBucketRequestArg['data']['taskDetails']> & {
-      scheduledTime?: string;
-      recurrence?: {
-        freq: string;
-        interval?: number;
-        byWeekday?: number[];
-        byMonthday?: number | null;
-        startDate: string;
-        endDate?: string | null;
-      };
-    };
-  };
-};
 
 interface BucketProcessSheetProps {
   bucket: IBucket | null;
@@ -106,7 +85,7 @@ export const BucketProcessSheet = forwardRef<SheetRef, BucketProcessSheetProps>(
     recurrence: RecurrenceValue | null
   ) => {
     if (!bucket) return;
-    const request: ProcessBucketRequestWithRecurringTaskDetails = {
+    const request: ProcessBucketRequestArg = {
       id: bucket.id,
       data: {
         processingResult: ProcessingResult.TASK,
@@ -134,7 +113,7 @@ export const BucketProcessSheet = forwardRef<SheetRef, BucketProcessSheetProps>(
         },
       },
     };
-    await processBucket(request as ProcessBucketRequestArg).unwrap();
+    await processBucket(request).unwrap();
     showSuccessToast(ToastMessages.BUCKET_PROCESSED_TASK, toast);
     onProcessed();
   };
