@@ -1,13 +1,22 @@
-import { FlatList, Text, useColorScheme, View } from 'react-native';
+import { FlatList, Pressable, Text, useColorScheme, View } from 'react-native';
+
+import { router } from 'expo-router';
 
 import { type IBucket, ProcessingResult } from '@nicoflow/shared/types';
-import { Archive, CheckSquare, FileText, Trash2 } from 'lucide-react-native';
+import { Archive, ArrowUpRight, CheckSquare, FileText, Trash2 } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 
 import { Badge } from '@/components/ui/badge';
 import { EmptyState } from '@/components/ui/empty-state';
 
 import { relativeTime } from './relativeTime';
+
+// Mirrors web's ArchivedBucketItem destination logic (nicoflow-frontend/src/features/Bucket/components/ArchivedBucketItem/index.tsx).
+const viewCreatedDestination = (item: IBucket): `/note/${string}` | `/task/${string}` | null => {
+  if (item.createdNoteId) return `/note/${item.createdNoteId}`;
+  if (item.createdTaskId) return `/task/${item.createdTaskId}`;
+  return null;
+};
 
 interface ArchivedListProps {
   items: IBucket[];
@@ -67,6 +76,7 @@ export function ArchivedList({ items, isLoading }: ArchivedListProps) {
       contentContainerClassName="gap-2 pb-4"
       renderItem={({ item }) => {
         const meta = RESULT_META[item.processingResult ?? ProcessingResult.TRASH];
+        const destination = viewCreatedDestination(item);
         return (
           <View
             className={`flex-row items-start gap-2 rounded-lg border-s-4 border border-border dark:border-border-dark bg-card dark:bg-card-dark px-3 py-2.5 ${meta.border}`}
@@ -79,6 +89,20 @@ export function ArchivedList({ items, isLoading }: ArchivedListProps) {
               <Text className="text-xs text-muted-foreground dark:text-muted-foreground-dark">
                 {t('page.processedTimestamp')} {relativeTime(item.processedAt ?? item.updatedAt)}
               </Text>
+              {destination && (
+                <Pressable
+                  className="flex-row items-center gap-1 self-start"
+                  onPress={() => router.push(destination)}
+                  testID="bucket-view-created"
+                  accessibilityRole="link"
+                  accessibilityLabel={t('page.viewCreated')}
+                >
+                  <Text className="text-xs font-medium text-primary dark:text-primary-dark underline">
+                    {t('page.viewCreated')}
+                  </Text>
+                  <ArrowUpRight size={12} color={isDark ? '#6366f1' : '#4f46e5'} />
+                </Pressable>
+              )}
             </View>
             <Badge
               variant="outline"

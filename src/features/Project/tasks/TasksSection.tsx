@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from 'react';
-import { Text, View } from 'react-native';
+import { FlatList, Text, View } from 'react-native';
 
 import { type ITask, ScheduleFilter, type TaskEnergy, TaskStatus } from '@nicoflow/shared/types';
 import { useTranslation } from 'react-i18next';
@@ -31,7 +31,7 @@ interface TasksSectionProps {
 
 function TasksLoadingState() {
   return (
-    <View className="gap-3" testID="tasks-loading">
+    <View style={{ gap: 12 }} testID="tasks-loading">
       {[0, 1, 2].map(i => (
         <Skeleton key={i} className="h-20 w-full rounded-xl" />
       ))}
@@ -110,40 +110,43 @@ export function TasksSection({ projectId }: TasksSectionProps) {
       {isLoading ? (
         <TasksLoadingState />
       ) : tasks.length > 0 ? (
-        <>
-          <View className="mb-4 gap-3">
-            <TaskQuickAdd projectId={projectId} />
-            <TaskFilters
-              activeFilter={activeFilter}
-              onFilterChange={changeFilter}
-              activeEnergy={activeEnergy}
-              onEnergyChange={setActiveEnergy}
-              taskCounts={taskCounts}
-              scheduleFilter={scheduleFilter}
-              onScheduleFilterChange={setScheduleFilter}
+        <FlatList
+          testID="tasks-list"
+          style={{ flex: 1 }}
+          data={filteredTasks}
+          keyExtractor={task => task.id}
+          renderItem={({ item: task }) => (
+            <TaskListItem
+              task={task}
+              onEdit={editTask => sheetRef.current?.present({ task: editTask })}
+              onToggleStatus={onToggleStatus}
             />
-          </View>
-
-          {filteredTasks.length > 0 ? (
-            <View className="gap-3" testID="tasks-list">
-              {filteredTasks.map(task => (
-                <TaskListItem
-                  key={task.id}
-                  task={task}
-                  onEdit={editTask => sheetRef.current?.present({ task: editTask })}
-                  onToggleStatus={onToggleStatus}
-                />
-              ))}
+          )}
+          ItemSeparatorComponent={() => <View style={{ height: 12 }} />}
+          ListHeaderComponent={
+            <View style={{ gap: 12, marginBottom: 16 }}>
+              <TaskQuickAdd projectId={projectId} />
+              <TaskFilters
+                activeFilter={activeFilter}
+                onFilterChange={changeFilter}
+                activeEnergy={activeEnergy}
+                onEnergyChange={setActiveEnergy}
+                taskCounts={taskCounts}
+                scheduleFilter={scheduleFilter}
+                onScheduleFilterChange={setScheduleFilter}
+              />
             </View>
-          ) : (
+          }
+          ListEmptyComponent={
             <Text
               className="py-12 text-center text-muted-foreground dark:text-muted-foreground-dark"
               testID="task-no-results"
             >
               {t('noResults.filter')}
             </Text>
-          )}
-        </>
+          }
+          showsVerticalScrollIndicator={false}
+        />
       ) : (
         <>
           <TaskQuickAdd projectId={projectId} />

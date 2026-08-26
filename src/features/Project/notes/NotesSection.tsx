@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { Text, View } from 'react-native';
+import { FlatList, Text, View } from 'react-native';
 
 import { router } from 'expo-router';
 
@@ -60,8 +60,8 @@ export function NotesSection({ projectId }: NotesSectionProps) {
   };
 
   return (
-    <View className="flex-1 px-4 pt-3 gap-3" testID="notes-section">
-      <View className="flex-row items-center justify-between gap-2">
+    <View className="flex-1 px-4 pt-3" testID="notes-section">
+      <View className="flex-row items-center justify-between gap-2 pb-3">
         <View className="flex-row items-center gap-2">
           <NotebookPen size={16} color="#64748b" />
           <Text className="text-sm font-semibold text-foreground dark:text-foreground-dark">{t('list.heading')}</Text>
@@ -87,11 +87,15 @@ export function NotesSection({ projectId }: NotesSectionProps) {
           testID="notes-empty"
         />
       ) : (
-        <View className="gap-2" testID="notes-list">
-          {notes.map(note => (
-            <NoteRow key={note.id} note={note} onOpen={id => router.push(`/note/${id}`)} />
-          ))}
-        </View>
+        <FlatList
+          testID="notes-list"
+          style={{ flex: 1 }}
+          data={notes}
+          keyExtractor={note => note.id}
+          renderItem={({ item: note }) => <NoteRow note={note} onOpen={id => router.push(`/note/${id}`)} />}
+          ItemSeparatorComponent={() => <View style={{ height: 8 }} />}
+          showsVerticalScrollIndicator={false}
+        />
       )}
     </View>
   );
