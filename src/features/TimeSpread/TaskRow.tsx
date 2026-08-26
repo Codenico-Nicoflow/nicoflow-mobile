@@ -2,12 +2,11 @@ import { useRef } from 'react';
 import { Pressable, Text, useColorScheme, View } from 'react-native';
 
 import { type ITask, TaskStatus } from '@nicoflow/shared/types';
-import { CalendarClock, CalendarX, MoreVertical } from 'lucide-react-native';
+import { CalendarClock, CalendarX, MoreVertical, Trash2 } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 
 import { Checkbox } from '@/components/ui/checkbox';
 import { DropdownMenu, DropdownMenuItem, type DropdownMenuRef } from '@/components/ui/dropdown-menu';
-import { PRIORITY_BORDER_COLOR } from '@/lib/constants/priority';
 import { cn } from '@/lib/utils/cn';
 
 import type { Segment } from './segments';
@@ -21,12 +20,17 @@ interface TaskRowProps {
   onScheduleToday: (task: ITask) => void;
   onScheduleTomorrow: (task: ITask) => void;
   onUnschedule: (task: ITask) => void;
+  onDelete: (task: ITask) => void;
 }
 
 // Mirrors web's TimeSpreadRow (nicoflow-frontend/src/features/TimeSpread/components/TimeSpreadRow.tsx):
 // the actions menu here is reschedule shortcuts, not the project-view
 // Edit/Cancel/Mark-missed/Delete set — this is a scheduling surface, not the
 // task's home. Editing other fields happens by tapping the card.
+//
+// No outer card container here on purpose — SwipeableTaskRow wraps this in
+// SwipeableRow, which owns the card's border/background/tint via its own
+// className. This component only renders the content inside that card.
 export function TaskRow({
   task,
   segment,
@@ -35,6 +39,7 @@ export function TaskRow({
   onScheduleToday,
   onScheduleTomorrow,
   onUnschedule,
+  onDelete,
 }: TaskRowProps) {
   const { t } = useTranslation('task');
   const isDone = task.status === TaskStatus.DONE;
@@ -43,17 +48,13 @@ export function TaskRow({
   const menuRef = useRef<DropdownMenuRef>(null);
 
   return (
-    <Pressable
-      onPress={() => onEdit(task)}
-      accessibilityRole="button"
-      accessibilityLabel={t('actions.edit')}
-      testID={`task-row-${task.id}`}
-      className={cn(
-        'flex-row items-start gap-3 rounded-xl border-s-4 border border-border dark:border-border-dark bg-card dark:bg-card-dark p-3 shadow-sm',
-        PRIORITY_BORDER_COLOR[task.priority]
-      )}
-    >
-      <View className={cn('flex-1 min-w-0 gap-1.5', isDone && 'opacity-60')}>
+    <View className="flex-row items-center gap-3 p-3" testID={`task-row-${task.id}`}>
+      <Pressable
+        onPress={() => onEdit(task)}
+        accessibilityRole="button"
+        accessibilityLabel={t('actions.edit')}
+        className={cn('flex-1 min-w-0 gap-1.5', isDone && 'opacity-60')}
+      >
         <Text
           className={cn(
             'text-sm font-medium text-foreground dark:text-foreground-dark',
@@ -71,7 +72,7 @@ export function TaskRow({
         )}
 
         <TaskChips task={task} />
-      </View>
+      </Pressable>
 
       <View className="flex-row items-center gap-1">
         <DropdownMenu
@@ -113,10 +114,20 @@ export function TaskRow({
           >
             {t('timeSpread.actions.remove')}
           </DropdownMenuItem>
+          <DropdownMenuItem
+            icon={<Trash2 size={16} color={isDark ? '#ef4444' : '#dc2626'} />}
+            variant="destructive"
+            onPress={() => {
+              menuRef.current?.dismiss();
+              onDelete(task);
+            }}
+          >
+            {t('actions.delete')}
+          </DropdownMenuItem>
         </DropdownMenu>
 
         <Checkbox checked={isDone} onCheckedChange={() => onToggleStatus(task)} />
       </View>
-    </Pressable>
+    </View>
   );
 }

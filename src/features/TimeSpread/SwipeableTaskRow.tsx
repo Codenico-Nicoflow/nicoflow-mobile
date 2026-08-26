@@ -3,9 +3,6 @@ import { useRef, useState } from 'react';
 import { type ITask } from '@nicoflow/shared/types';
 import { Check, Trash2 } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
-import ReanimatedSwipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
-import { type SwipeableMethods } from 'react-native-gesture-handler/ReanimatedSwipeable';
-import Reanimated, { type SharedValue, useAnimatedStyle } from 'react-native-reanimated';
 
 import {
   AlertDialog,
@@ -17,54 +14,19 @@ import {
   type AlertDialogRef,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { SwipeableRow, type SwipeableRowHandle } from '@/components/ui/swipeable-row';
+import { PRIORITY_BORDER_COLOR } from '@/lib/constants/priority';
+import { cn } from '@/lib/utils/cn';
 
 import type { Segment } from './segments';
 import { TaskRow } from './TaskRow';
 
-const SWIPE_THRESHOLD = 64;
-
-function CompleteAction(_progress: SharedValue<number>, drag: SharedValue<number>) {
-  const style = useAnimatedStyle(() => ({ transform: [{ translateX: drag.value - 50 }] }));
-  return (
-    <Reanimated.View
-      style={style}
-      className="w-[50px] items-center justify-center bg-success dark:bg-success-dark rounded-xl"
-    >
-      <Check size={20} color="#ffffff" />
-    </Reanimated.View>
-  );
-}
-
-function DeleteAction(_progress: SharedValue<number>, drag: SharedValue<number>) {
-  const style = useAnimatedStyle(() => ({ transform: [{ translateX: drag.value + 50 }] }));
-  return (
-    <Reanimated.View
-      style={style}
-      className="w-[50px] items-center justify-center bg-destructive dark:bg-destructive-dark rounded-xl"
-    >
-      <Trash2 size={20} color="#ffffff" />
-    </Reanimated.View>
-  );
-}
-
-interface SwipeableTaskRowProps {
-  task: ITask;
-  segment: Segment;
-  onToggleStatus: (task: ITask) => void;
-  onEdit: (task: ITask) => void;
-  onScheduleToday: (task: ITask) => void;
-  onScheduleTomorrow: (task: ITask) => void;
-  onUnschedule: (task: ITask) => void;
-  onDelete: (task: ITask) => void;
-}
-
-// Swipe right (renderLeftActions) completes; swipe left (renderRightActions)
-// asks for delete confirmation via AlertDialog before firing onDelete — a
-// destructive action must never fire straight off the gesture. Both paths
-// close() the row back to rest so a cancelled delete or a completed task
-// doesn't sit half-open. Delete-via-swipe is a mobile-only convenience — web's
-// TimeSpread has no delete action at all (that lives in Project view); this
-// diverges from web deliberately.
+// Swipe right completes; swipe left asks for delete confirmation via
+// AlertDialog before firing onDelete — a destructive action must never fire
+// straight off the gesture (see the memory: swipe-to-delete always needs a
+// confirm, no exceptions). TaskRow's own 3-dot menu delete item routes
+// through this same alert (its onDelete prop just opens it, doesn't call the
+// real onDelete directly) so both paths share one confirm step.
 export function SwipeableTaskRow({
   task,
   segment,
@@ -74,28 +36,48 @@ export function SwipeableTaskRow({
   onScheduleTomorrow,
   onUnschedule,
   onDelete,
-}: SwipeableTaskRowProps) {
+}: {
+  task: ITask;
+  segment: Segment;
+  onToggleStatus: (task: ITask) => void;
+  onEdit: (task: ITask) => void;
+  onScheduleToday: (task: ITask) => void;
+  onScheduleTomorrow: (task: ITask) => void;
+  onUnschedule: (task: ITask) => void;
+  onDelete: (task: ITask) => void;
+}) {
   const { t } = useTranslation(['task', 'common']);
-  const swipeableRef = useRef<SwipeableMethods>(null);
+  const swipeableRef = useRef<SwipeableRowHandle>(null);
   const alertRef = useRef<AlertDialogRef>(null);
   const [pendingDelete, setPendingDelete] = useState(false);
 
+  const openDeleteConfirm = () => {
+    setPendingDelete(true);
+    alertRef.current?.present();
+  };
+
   return (
     <>
-      <ReanimatedSwipeable
+      <SwipeableRow
         ref={swipeableRef}
-        leftThreshold={SWIPE_THRESHOLD}
-        rightThreshold={SWIPE_THRESHOLD}
-        renderLeftActions={CompleteAction}
-        renderRightActions={DeleteAction}
-        onSwipeableOpen={direction => {
-          if (direction === 'left') {
-            onToggleStatus(task);
-            swipeableRef.current?.close();
-          } else {
-            setPendingDelete(true);
-            alertRef.current?.present();
-          }
+        className={cn(
+          'rounded-xl border-s-4 border border-border dark:border-border-dark shadow-sm',
+          PRIORITY_BORDER_COLOR[task.priority]
+        )}
+        left={{
+          tone: 'success',
+          icon: <Check size={20} color="#ffffff" />,
+          onPress: () => onToggleStatus(task),
+          onOpen: () => onToggleStatus(task),
+        }}
+        right={{
+          tone: 'destructive',
+          icon: <Trash2 size={20} color="#ffffff" />,
+          // Both tap-the-panel and full-swipe-open only ever OPEN the confirm
+          // — neither calls onDelete directly. Destructive swipe actions
+          // always confirm, no exceptions.
+          onPress: openDeleteConfirm,
+          onOpen: openDeleteConfirm,
         }}
       >
         <TaskRow
@@ -106,16 +88,11 @@ export function SwipeableTaskRow({
           onScheduleToday={onScheduleToday}
           onScheduleTomorrow={onScheduleTomorrow}
           onUnschedule={onUnschedule}
+          onDelete={openDeleteConfirm}
         />
-      </ReanimatedSwipeable>
+      </SwipeableRow>
 
-      <AlertDialog
-        ref={alertRef}
-        onDismiss={() => {
-          setPendingDelete(false);
-          swipeableRef.current?.close();
-        }}
-      >
+      <AlertDialog ref={alertRef}>
         <AlertDialogHeader>
           <AlertDialogTitle>{t('task:deleteDialog.title')}</AlertDialogTitle>
           <AlertDialogDescription>{t('task:deleteDialog.description', { name: task.title })}</AlertDialogDescription>
@@ -124,12 +101,20 @@ export function SwipeableTaskRow({
           <AlertDialogAction
             onPress={() => {
               if (pendingDelete) onDelete(task);
+              setPendingDelete(false);
               alertRef.current?.dismiss();
+              swipeableRef.current?.close();
             }}
           >
             {t('common:actions.delete')}
           </AlertDialogAction>
-          <AlertDialogCancel onPress={() => alertRef.current?.dismiss()}>
+          <AlertDialogCancel
+            onPress={() => {
+              setPendingDelete(false);
+              alertRef.current?.dismiss();
+              swipeableRef.current?.close();
+            }}
+          >
             {t('common:actions.cancel')}
           </AlertDialogCancel>
         </AlertDialogFooter>

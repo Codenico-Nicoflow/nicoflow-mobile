@@ -7,7 +7,13 @@ import { Badge } from '@/components/ui/badge';
 import { getEnergyOption } from '@/lib/constants/energy';
 import { PRIORITY_CHIP_CLASS, PRIORITY_TEXT_CLASS, priorityLabel } from '@/lib/constants/priority';
 
-import { formatDuration, formatTaskGentleDate, gentleDateLabel } from './taskDisplay';
+import {
+  formatDuration,
+  formatTaskGentleDate,
+  gentleDateChipClass,
+  gentleDateChipTextClass,
+  gentleDateLabel,
+} from './taskDisplay';
 
 // Mirrors web's TaskBadges (nicoflow-frontend/src/features/Tasks/components/TaskBadges.tsx)
 // field-for-field: energy, estimated minutes, time of day, gentle date, priority, repeat, link.
@@ -37,7 +43,12 @@ export function TaskChips({ task }: { task: ITask }) {
       )}
 
       {gentleDate && (
-        <Badge variant="outline" icon={<Clock size={12} color={mutedColor} />}>
+        <Badge
+          variant="outline"
+          className={gentleDateChipClass(gentleDate)}
+          textClassName={gentleDateChipTextClass(gentleDate)}
+          icon={<Clock size={12} color={mutedColor} />}
+        >
           {gentleDateLabel(gentleDate)}
         </Badge>
       )}

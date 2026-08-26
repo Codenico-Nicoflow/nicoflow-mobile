@@ -147,9 +147,14 @@ export function TimeSpreadView() {
     <View className="flex-1">
       <View className="flex-1 gap-4 px-4 pt-4">
         <View className="flex-row items-start justify-between gap-4">
-          <Text className="text-2xl font-bold text-foreground dark:text-foreground-dark">
-            {viewMode === 'combined' ? t('timeSpread.title') : t(`timeSpread.${segment}.title`)}
-          </Text>
+          <View className="flex-1">
+            <Text className="text-2xl font-bold text-foreground dark:text-foreground-dark">
+              {t('timeSpread.title')}
+            </Text>
+            <Text className="text-sm text-muted-foreground dark:text-muted-foreground-dark">
+              {t('timeSpread.subtitle')}
+            </Text>
+          </View>
           <ViewModeToggle mode={viewMode} onChange={handleViewModeChange} />
         </View>
 
