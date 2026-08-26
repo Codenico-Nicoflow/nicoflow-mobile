@@ -12,6 +12,7 @@ import {
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { combineReducers, configureStore, type UnknownAction } from '@reduxjs/toolkit';
 import { setupListeners } from '@reduxjs/toolkit/query';
+import devToolsEnhancer from 'redux-devtools-expo-dev-plugin';
 import { FLUSH, PAUSE, PERSIST, persistReducer, persistStore, PURGE, REGISTER, REHYDRATE } from 'redux-persist';
 
 import authReducer, { clearAuth, setToken, setUser } from './slices/auth/authSlice';
@@ -93,6 +94,11 @@ const persistedReducer = persistReducer(persistConfig, rootReducer);
 
 export const store = configureStore({
   reducer: persistedReducer,
+  // Expo's own DevTools plugin replaces the default Redux DevTools connection
+  // (which has nothing to attach to on-device) — see redux-devtools-expo-dev-plugin
+  // in the Expo DevTools menu. Dev-only: __DEV__ is stripped from production
+  // bundles, so the plugin package never ships.
+  devTools: false,
   middleware: getDefaultMiddleware =>
     getDefaultMiddleware({
       serializableCheck: {
@@ -107,6 +113,8 @@ export const store = configureStore({
       bucketApi.middleware,
       noteApi.middleware
     ),
+  enhancers: getDefaultEnhancers =>
+    __DEV__ ? getDefaultEnhancers().concat(devToolsEnhancer()) : getDefaultEnhancers(),
 });
 
 export const persistor = persistStore(store);

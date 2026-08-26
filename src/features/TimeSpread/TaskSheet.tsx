@@ -248,8 +248,8 @@ export const TaskSheet = forwardRef<TaskSheetRef, TaskSheetProps>(function TaskS
           priority: fields.priority,
           energy: fields.energy,
           rollsOver: fields.rollsOver,
-          scheduledFor: fields.scheduledFor ?? undefined,
-          scheduledTime: fields.scheduledTime ?? undefined,
+          scheduledFor: fields.scheduledFor || undefined,
+          scheduledTime: fields.scheduledTime || undefined,
           estimatedMinutes: fields.estimatedMinutes ?? undefined,
           url: fields.url || undefined,
         }).unwrap();

@@ -17,6 +17,7 @@ import {
   BottomSheetModal,
 } from '@gorhom/bottom-sheet';
 import { Check, ChevronDown } from 'lucide-react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { cn } from '@/lib/utils/cn';
 
@@ -60,6 +61,8 @@ export const Select = forwardRef<SelectRef, SelectProps>(function Select(
   const modalRef = useRef<BottomSheetModal>(null);
   const scheme = useColorScheme();
   const isDark = scheme === 'dark';
+  const insets = useSafeAreaInsets();
+  const bottomPadding = insets.bottom > 0 ? insets.bottom + 12 : 16;
 
   useImperativeHandle(ref, () => ({
     present: () => modalRef.current?.present(),
@@ -95,7 +98,7 @@ export const Select = forwardRef<SelectRef, SelectProps>(function Select(
         <BottomSheetFlatList
           data={options}
           keyExtractor={item => item.value}
-          contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 16 }}
+          contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: bottomPadding }}
           renderItem={({ item }) => {
             const selected = item.value === value;
             return (

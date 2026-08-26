@@ -2,7 +2,7 @@ import { Text, useColorScheme, View } from 'react-native';
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { type BucketFormData, bucketSchema } from '@nicoflow/shared/schemas';
-import { Sparkles } from 'lucide-react-native';
+import { Inbox as InboxIcon, Sparkles } from 'lucide-react-native';
 import { Controller, useForm, useWatch } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 
@@ -68,12 +68,12 @@ export function InboxCapture() {
         <Text className="text-xs text-muted-foreground dark:text-muted-foreground-dark">
           {content.length}/{MAX_LENGTH}
         </Text>
-        <Button
-          label={isLoading ? t('quickInput.submitting') : t('quickInput.submit')}
-          onPress={handleSubmit(onSubmit)}
-          loading={isLoading}
-          disabled={!content.trim()}
-        />
+        <Button onPress={handleSubmit(onSubmit)} loading={isLoading} disabled={!content.trim()}>
+          <InboxIcon size={16} color="#ffffff" />
+          <Text className="text-sm font-medium text-primary-foreground">
+            {isLoading ? t('quickInput.submitting') : t('quickInput.submit')}
+          </Text>
+        </Button>
       </View>
     </View>
   );
