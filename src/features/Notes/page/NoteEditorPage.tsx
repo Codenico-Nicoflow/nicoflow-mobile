@@ -74,7 +74,7 @@ export function NoteEditorPage({ noteId }: NoteEditorPageProps) {
     );
   }
 
-  const backTo = note.projectId ? `/project/${note.projectId}` : '/areas';
+  const backTo: `/project/${string}` | '/areas' = note.projectId ? `/project/${note.projectId}` : '/areas';
 
   const handleDelete = async () => {
     try {

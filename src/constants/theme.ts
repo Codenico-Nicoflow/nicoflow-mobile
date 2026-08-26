@@ -5,8 +5,6 @@
 
 import { Platform } from 'react-native';
 
-import '@/global.css';
-
 // Mirrors nicoflow-frontend's src/index.css CSS custom properties (Indigo +
 // Slate palette) so the mobile app reads as the same product, not a generic
 // Expo template. Keep these two in sync by hand — there's no shared token

@@ -1,7 +1,11 @@
+import { router } from 'expo-router';
+
 import type { IBucket } from '@nicoflow/shared/types';
-import { render, screen } from '@testing-library/react-native';
+import { fireEvent, render, screen } from '@testing-library/react-native';
 
 import { ArchivedList } from './ArchivedList';
+
+jest.mock('expo-router', () => ({ router: { push: jest.fn() } }));
 
 const bucket = (overrides: Partial<IBucket> = {}): IBucket => ({
   id: 'b1',
@@ -31,5 +35,26 @@ describe('ArchivedList', () => {
     const twoDaysAgo = new Date(Date.now() - 2 * 86400 * 1000).toISOString();
     await render(<ArchivedList items={[bucket({ processedAt: twoDaysAgo })]} isLoading={false} />);
     expect(screen.getByText(/Processed 2 days ago/)).toBeTruthy();
+  });
+
+  it('navigates to the task deep-link route when "view what this became" is pressed', async () => {
+    await render(
+      <ArchivedList items={[bucket({ processingResult: 'task', createdTaskId: 'task-1' })]} isLoading={false} />
+    );
+    await fireEvent.press(screen.getByTestId('bucket-view-created'));
+    expect(router.push).toHaveBeenCalledWith('/task/task-1');
+  });
+
+  it('navigates to the note route when "view what this became" is pressed', async () => {
+    await render(
+      <ArchivedList items={[bucket({ processingResult: 'note', createdNoteId: 'note-1' })]} isLoading={false} />
+    );
+    await fireEvent.press(screen.getByTestId('bucket-view-created'));
+    expect(router.push).toHaveBeenCalledWith('/note/note-1');
+  });
+
+  it('renders no "view what this became" link when trashed', async () => {
+    await render(<ArchivedList items={[bucket({ processingResult: 'trash' })]} isLoading={false} />);
+    expect(screen.queryByTestId('bucket-view-created')).toBeNull();
   });
 });

@@ -37,6 +37,16 @@ interface TaskListItemProps {
 // active<->done (completion guard for open subtasks lives in TasksSection,
 // shared across all rows), 3-dot menu Edit/Cancel/Mark-Missed(conditional)/
 // Delete, delete via a confirm dialog matching web's exact copy.
+//
+// Layout/spacing here is deliberately inline `style`, not className `gap-*`:
+// this NativeWind build (v5 preview + react-native-css) silently drops `gap`
+// utilities on some nested Views, which starves Text children of an
+// intrinsic height (a Text with no resolvable line box renders zero pixels
+// tall — confirmed on-device: title text was invisible until every
+// className-based gap/spacing on its ancestor chain was replaced with
+// inline style). Colors/borders/radius via className still work fine — only
+// gap is affected — so only spacing moved to inline style here, not the
+// whole file.
 export function TaskListItem({ task, onEdit, onToggleStatus }: TaskListItemProps) {
   const { t } = useTranslation('task');
   const isDark = useColorScheme() === 'dark';
@@ -83,37 +93,39 @@ export function TaskListItem({ task, onEdit, onToggleStatus }: TaskListItemProps
   };
 
   return (
-    <View className="flex-row items-start">
+    <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
       <Pressable
         onPress={() => onEdit(task)}
         accessibilityRole="button"
         testID={`task-item-${task.id}`}
+        style={{ flex: 1, flexDirection: 'row', alignItems: 'flex-start', gap: 12, padding: 12, minHeight: 56 }}
         className={cn(
-          'flex-1 flex-row items-start gap-3 rounded-xl border-s-4 border border-border dark:border-border-dark bg-card dark:bg-card-dark p-3 shadow-sm',
+          'rounded-xl border-s-4 border border-border dark:border-border-dark bg-card dark:bg-card-dark shadow-sm',
           PRIORITY_BORDER_COLOR[task.priority]
         )}
       >
-        <View className={cn('flex-1 min-w-0 gap-1.5', isDone && 'opacity-60')}>
+        <View style={{ flex: 1, minWidth: 0, minHeight: 32, gap: 6 }}>
           <Text
-            className={cn(
-              'text-sm font-medium text-foreground dark:text-foreground-dark',
-              isDone && 'line-through text-muted-foreground dark:text-muted-foreground-dark'
-            )}
-            numberOfLines={2}
+            style={{
+              fontSize: 14,
+              lineHeight: 18,
+              minHeight: 18,
+              fontWeight: '500',
+              color: isDone ? mutedColor : isDark ? '#e2e8f0' : '#0f172a',
+              textDecorationLine: isDone ? 'line-through' : 'none',
+            }}
           >
             {task.title}
           </Text>
 
           {!!task.notes && (
-            <Text className="text-xs text-muted-foreground dark:text-muted-foreground-dark" numberOfLines={2}>
-              {task.notes}
-            </Text>
+            <Text style={{ fontSize: 12, lineHeight: 16, minHeight: 16, color: mutedColor }}>{task.notes}</Text>
           )}
 
           <TaskChips task={task} />
         </View>
 
-        <View className="flex-row items-center gap-1">
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
           <DropdownMenu
             ref={menuRef}
             trigger={
