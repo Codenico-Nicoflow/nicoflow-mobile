@@ -52,10 +52,12 @@ export function TabsList({ children, className }: { children: ReactNode; classNa
 export function TabsTrigger({
   value,
   children,
+  badge,
   className,
 }: {
   value: string;
   children: ReactNode;
+  badge?: ReactNode;
   className?: string;
 }) {
   const { value: activeValue, setValue } = useTabsContext();
@@ -67,7 +69,7 @@ export function TabsTrigger({
       accessibilityRole="tab"
       accessibilityState={{ selected: isActive }}
       className={cn(
-        'flex-1 items-center justify-center rounded-md px-3 py-1',
+        'flex-1 flex-row items-center justify-center gap-1.5 rounded-md px-3 py-1',
         isActive && 'bg-background dark:bg-background-dark shadow-sm',
         className
       )}
@@ -82,6 +84,7 @@ export function TabsTrigger({
       >
         {children}
       </Text>
+      {badge}
     </Pressable>
   );
 }

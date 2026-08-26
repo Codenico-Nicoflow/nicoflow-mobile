@@ -16,6 +16,7 @@ import {
   BottomSheetModal,
   BottomSheetScrollView,
 } from '@gorhom/bottom-sheet';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export interface SheetRef {
   present: () => void;
@@ -41,6 +42,11 @@ export const Sheet = forwardRef<SheetRef, SheetProps>(function Sheet(
   const scheme = useColorScheme();
   const isDark = scheme === 'dark';
   const [isOpen, setIsOpen] = useState(false);
+  const insets = useSafeAreaInsets();
+  // 32px base padding on devices with no home indicator (insets.bottom is 0
+  // there). On devices that have one, pad 12px past it rather than flush
+  // against it — clearing the nudge exactly still read as cramped.
+  const bottomPadding = insets.bottom > 0 ? insets.bottom + 12 : 32;
 
   useImperativeHandle(ref, () => ({
     present: () => modalRef.current?.present(),
@@ -92,7 +98,11 @@ export const Sheet = forwardRef<SheetRef, SheetProps>(function Sheet(
       backgroundStyle={{ borderRadius: 20, backgroundColor: isDark ? '#0b1120' : '#f8fafc' }}
       handleIndicatorStyle={{ width: 40, backgroundColor: isDark ? '#283549' : '#e2e8f0' }}
     >
-      <BottomSheetScrollView contentContainerClassName="px-5 pt-2 pb-8">{children}</BottomSheetScrollView>
+      <BottomSheetScrollView
+        contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 8, paddingBottom: bottomPadding }}
+      >
+        {children}
+      </BottomSheetScrollView>
     </BottomSheetModal>
   );
 });

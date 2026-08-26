@@ -7,6 +7,7 @@ import {
   BottomSheetModal,
   BottomSheetView,
 } from '@gorhom/bottom-sheet';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { cn } from '@/lib/utils/cn';
 
@@ -24,6 +25,8 @@ export const DropdownMenu = forwardRef<DropdownMenuRef, { trigger: ReactNode; ch
     const modalRef = useRef<BottomSheetModal>(null);
     const scheme = useColorScheme();
     const isDark = scheme === 'dark';
+    const insets = useSafeAreaInsets();
+    const bottomPadding = insets.bottom > 0 ? insets.bottom + 12 : 16;
 
     useImperativeHandle(ref, () => ({
       present: () => modalRef.current?.present(),
@@ -52,7 +55,9 @@ export const DropdownMenu = forwardRef<DropdownMenuRef, { trigger: ReactNode; ch
           backgroundStyle={{ borderRadius: 20, backgroundColor: isDark ? '#0b1120' : '#f8fafc' }}
           handleIndicatorStyle={{ width: 40, backgroundColor: isDark ? '#283549' : '#e2e8f0' }}
         >
-          <BottomSheetView className="gap-1 px-2 pb-4">{children}</BottomSheetView>
+          <BottomSheetView style={{ gap: 4, paddingHorizontal: 8, paddingBottom: bottomPadding }}>
+            {children}
+          </BottomSheetView>
         </BottomSheetModal>
       </>
     );

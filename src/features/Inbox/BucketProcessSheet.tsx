@@ -98,8 +98,8 @@ export const BucketProcessSheet = forwardRef<SheetRef, BucketProcessSheetProps>(
           priority: fields.priority,
           energy: fields.energy,
           rollsOver: fields.rollsOver,
-          scheduledFor: fields.scheduledFor ?? undefined,
-          scheduledTime: fields.scheduledTime ?? undefined,
+          scheduledFor: fields.scheduledFor || undefined,
+          scheduledTime: fields.scheduledTime || undefined,
           estimatedMinutes: fields.estimatedMinutes ?? undefined,
           url: fields.url || undefined,
           ...(recurrence && {
