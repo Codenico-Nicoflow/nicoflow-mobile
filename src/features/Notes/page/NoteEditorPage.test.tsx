@@ -35,6 +35,7 @@ jest.mock('@/lib/store', () => ({
   useUpdateNoteMutation: () => mockNoteApi.useUpdateNoteMutation(),
   useDeleteNoteMutation: () => mockNoteApi.useDeleteNoteMutation(),
   useGetBacklinksQuery: (id: string) => mockNoteApi.useGetBacklinksQuery(id),
+  useLazySearchMentionsQuery: () => mockNoteApi.useLazySearchMentionsQuery(),
 }));
 
 jest.mock('expo-router', () => ({
