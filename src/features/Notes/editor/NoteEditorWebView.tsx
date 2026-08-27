@@ -65,6 +65,8 @@ export interface NoteEditorWebViewRef {
   setEditable: (editable: boolean) => void;
   resolveMentionQuery: (results: MentionResult[]) => void;
   insertMention: (noteId: string, titleSnapshot: string) => void;
+  setCalloutIconAt: (pos: number, icon: string) => void;
+  setCalloutColorAt: (pos: number, colorToken: string) => void;
 }
 
 interface NoteEditorWebViewProps {
@@ -76,6 +78,9 @@ interface NoteEditorWebViewProps {
   onStateChange: (state: NoteEditorState) => void;
   onMentionQuery: (query: string) => void;
   onMentionExit: () => void;
+  onMentionTapped: (noteId: string) => void;
+  onCalloutIconTapped: (pos: number) => void;
+  onCalloutColorTapped: (pos: number) => void;
 }
 
 // The RN half of the WebView-Tiptap bridge (NIC-1982 decision). This
@@ -83,7 +88,19 @@ interface NoteEditorWebViewProps {
 // into postMessage commands understood by webview-assets/editorHtml.ts —
 // it never touches Tiptap itself. Content/state flow back via onMessage.
 export const NoteEditorWebView = forwardRef<NoteEditorWebViewRef, NoteEditorWebViewProps>(function NoteEditorWebView(
-  { content, editable, placeholder, onChange, onContentError, onStateChange, onMentionQuery, onMentionExit },
+  {
+    content,
+    editable,
+    placeholder,
+    onChange,
+    onContentError,
+    onStateChange,
+    onMentionQuery,
+    onMentionExit,
+    onMentionTapped,
+    onCalloutIconTapped,
+    onCalloutColorTapped,
+  },
   ref
 ) {
   const isDark = useColorScheme() === 'dark';
@@ -103,6 +120,8 @@ export const NoteEditorWebView = forwardRef<NoteEditorWebViewRef, NoteEditorWebV
       webviewRef.current?.injectJavaScript(
         `window.__insertMention(${JSON.stringify(noteId)}, ${JSON.stringify(titleSnapshot)}); true;`
       ),
+    setCalloutIconAt: (pos, icon) => send({ type: 'setCalloutIconAt', pos, icon }),
+    setCalloutColorAt: (pos, colorToken) => send({ type: 'setCalloutColorAt', pos, colorToken }),
   }));
 
   const html = buildEditorHtml({
@@ -114,7 +133,14 @@ export const NoteEditorWebView = forwardRef<NoteEditorWebViewRef, NoteEditorWebV
   });
 
   const onMessage = (event: WebViewMessageEvent) => {
-    let msg: { type: string; content?: TiptapDoc; state?: NoteEditorState; query?: string };
+    let msg: {
+      type: string;
+      content?: TiptapDoc;
+      state?: NoteEditorState;
+      query?: string;
+      noteId?: string;
+      pos?: number;
+    };
     try {
       msg = JSON.parse(event.nativeEvent.data);
     } catch {
@@ -150,6 +176,18 @@ export const NoteEditorWebView = forwardRef<NoteEditorWebViewRef, NoteEditorWebV
     }
     if (msg.type === 'mentionExit') {
       onMentionExit();
+      return;
+    }
+    if (msg.type === 'mentionTapped' && msg.noteId) {
+      onMentionTapped(msg.noteId);
+      return;
+    }
+    if (msg.type === 'calloutIconTapped' && typeof msg.pos === 'number') {
+      onCalloutIconTapped(msg.pos);
+      return;
+    }
+    if (msg.type === 'calloutColorTapped' && typeof msg.pos === 'number') {
+      onCalloutColorTapped(msg.pos);
     }
   };
 

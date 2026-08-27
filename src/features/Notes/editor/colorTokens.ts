@@ -46,6 +46,21 @@ export const NOTE_TEXT_COLORS = {
   },
 } as const;
 
+// Swatch preview colors for the callout color picker (native RN swatches,
+// not the WebView-rendered mark palette above) — one representative hex per
+// token, matching NoteToolbar's swatch dots for text/highlight color.
+export const CALLOUT_SWATCH: Record<NoteColorToken, string> = {
+  gray: '#94a3b8',
+  brown: '#a8794e',
+  orange: '#fb923c',
+  yellow: '#fde047',
+  green: '#4ade80',
+  blue: '#60a5fa',
+  purple: '#c084fc',
+  pink: '#f9a8d4',
+  red: '#f87171',
+};
+
 export const NOTE_HIGHLIGHT_COLORS = {
   light: {
     gray: '#e2e8f0',

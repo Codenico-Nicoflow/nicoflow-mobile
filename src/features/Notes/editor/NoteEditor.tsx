@@ -4,8 +4,12 @@ import { FlatList, Pressable, Text, View } from 'react-native';
 import { type TiptapDoc } from '@nicoflow/shared/types';
 import { useTranslation } from 'react-i18next';
 
+import { Sheet, SheetHeader, type SheetRef, SheetTitle } from '@/components/ui/sheet';
 import { useLazySearchMentionsQuery } from '@/lib/store';
+import { cn } from '@/lib/utils/cn';
 
+import { CALLOUT_GLYPH, NOTE_CALLOUT_ICONS } from './calloutIcons';
+import { CALLOUT_SWATCH, NOTE_COLOR_TOKENS } from './colorTokens';
 import { type NoteEditorState, NoteEditorWebView, type NoteEditorWebViewRef } from './NoteEditorWebView';
 import { NoteToolbar } from './NoteToolbar';
 
@@ -15,6 +19,7 @@ export interface NoteEditorProps {
   editable?: boolean;
   onContentError?: () => void;
   excludeNoteId?: string;
+  onMentionTapped?: (noteId: string) => void;
 }
 
 // Composite: native toolbar + the WebView-Tiptap surface, matching web's
@@ -27,12 +32,29 @@ export interface NoteEditorProps {
 // keyboard). The WebView posts 'mentionQuery'/'mentionExit' as the user
 // types; this debounces a searchMentions call and renders a native list
 // above the toolbar; tapping a row calls back into the WebView to insert.
-export function NoteEditor({ content, onChange, editable = true, onContentError, excludeNoteId }: NoteEditorProps) {
+export function NoteEditor({
+  content,
+  onChange,
+  editable = true,
+  onContentError,
+  excludeNoteId,
+  onMentionTapped,
+}: NoteEditorProps) {
   const { t } = useTranslation('notes');
   const webviewRef = useRef<NoteEditorWebViewRef>(null);
   const [state, setState] = useState<NoteEditorState | null>(null);
   const [mentionQuery, setMentionQuery] = useState<string | null>(null);
   const [searchMentions, { data: mentionResults }] = useLazySearchMentionsQuery();
+
+  // Editing an ALREADY-INSERTED callout's icon/color — distinct from
+  // NoteToolbar's insert-time sheet. Tapping the icon/color button rendered
+  // on the callout node itself (webview-assets/editorHtml.ts) posts its
+  // ProseMirror position here; the position round-trips back on selection so
+  // the WebView knows exactly which node to update, even if the user has
+  // scrolled or the doc has multiple callouts.
+  const calloutIconSheetRef = useRef<SheetRef>(null);
+  const calloutColorSheetRef = useRef<SheetRef>(null);
+  const [calloutTargetPos, setCalloutTargetPos] = useState<number | null>(null);
 
   useEffect(() => {
     if (mentionQuery === null) return;
@@ -100,7 +122,67 @@ export function NoteEditor({ content, onChange, editable = true, onContentError,
         onStateChange={setState}
         onMentionQuery={query => setMentionQuery(query)}
         onMentionExit={() => setMentionQuery(null)}
+        onMentionTapped={noteId => onMentionTapped?.(noteId)}
+        onCalloutIconTapped={pos => {
+          setCalloutTargetPos(pos);
+          calloutIconSheetRef.current?.present();
+        }}
+        onCalloutColorTapped={pos => {
+          setCalloutTargetPos(pos);
+          calloutColorSheetRef.current?.present();
+        }}
       />
+
+      {/* Edit an existing callout's icon — opened by tapping the icon on the
+          node itself, not the toolbar's insert flow. */}
+      <Sheet ref={calloutIconSheetRef} snapPoints={['45%']}>
+        <SheetHeader>
+          {/* TODO: swap to t('toolbar.calloutIconTitle') once @nicoflow/shared
+              publishes it and this repo bumps its dependency. */}
+          <SheetTitle>Callout icon</SheetTitle>
+        </SheetHeader>
+        <View className="flex-row flex-wrap gap-2">
+          {NOTE_CALLOUT_ICONS.map(icon => (
+            <Pressable
+              key={icon}
+              onPress={() => {
+                if (calloutTargetPos !== null) webviewRef.current?.setCalloutIconAt(calloutTargetPos, icon);
+                calloutIconSheetRef.current?.dismiss();
+              }}
+              accessibilityRole="button"
+              testID={`note-callout-icon-${icon}`}
+              className="size-11 items-center justify-center rounded-md border border-input dark:border-input-dark"
+            >
+              <Text className="text-lg">{CALLOUT_GLYPH[icon]}</Text>
+            </Pressable>
+          ))}
+        </View>
+      </Sheet>
+
+      {/* Edit an existing callout's color — same tap-to-apply pattern. */}
+      <Sheet ref={calloutColorSheetRef} snapPoints={['35%']}>
+        <SheetHeader>
+          {/* TODO: swap to t('toolbar.calloutColorTitle') once @nicoflow/shared
+              publishes it and this repo bumps its dependency. */}
+          <SheetTitle>Callout color</SheetTitle>
+        </SheetHeader>
+        <View className="flex-row flex-wrap gap-2">
+          {NOTE_COLOR_TOKENS.map(token => (
+            <Pressable
+              key={token}
+              onPress={() => {
+                if (calloutTargetPos !== null) webviewRef.current?.setCalloutColorAt(calloutTargetPos, token);
+                calloutColorSheetRef.current?.dismiss();
+              }}
+              accessibilityRole="button"
+              accessibilityLabel={token}
+              testID={`note-callout-color-${token}`}
+              className={cn('size-8 rounded-full border-2 border-transparent')}
+              style={{ backgroundColor: CALLOUT_SWATCH[token] }}
+            />
+          ))}
+        </View>
+      </Sheet>
     </View>
   );
 }

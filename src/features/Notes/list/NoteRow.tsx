@@ -14,6 +14,11 @@ interface NoteRowProps {
 // (fallback "Empty note", 2-line clamp, server-computed — never derived
 // client-side), relative updatedAt. No `content` field exists on this list
 // shape at all, so this row can never be an editor's data source.
+//
+// Shared between the project note list (Project/notes/NotesSection) and the
+// backlinks panel (Notes/page/BacklinksPanel) — both consume the same INote[]
+// shape, same as web's list/NoteRow.tsx is shared between its NotesSection
+// and BacklinksPanel.
 export function NoteRow({ note, onOpen }: NoteRowProps) {
   const { t } = useTranslation('notes');
 
