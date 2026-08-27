@@ -8,7 +8,8 @@ import { Sheet, SheetHeader, type SheetRef, SheetTitle } from '@/components/ui/s
 import { useLazySearchMentionsQuery } from '@/lib/store';
 import { cn } from '@/lib/utils/cn';
 
-import { CALLOUT_GLYPH, NOTE_CALLOUT_ICONS } from './calloutIcons';
+import { CALLOUT_ICON_COMPONENTS } from './calloutIconComponents';
+import { NOTE_CALLOUT_ICONS } from './calloutIcons';
 import { CALLOUT_SWATCH, NOTE_COLOR_TOKENS } from './colorTokens';
 import { type NoteEditorState, NoteEditorWebView, type NoteEditorWebViewRef } from './NoteEditorWebView';
 import { NoteToolbar } from './NoteToolbar';
@@ -142,20 +143,23 @@ export function NoteEditor({
           <SheetTitle>Callout icon</SheetTitle>
         </SheetHeader>
         <View className="flex-row flex-wrap gap-2">
-          {NOTE_CALLOUT_ICONS.map(icon => (
-            <Pressable
-              key={icon}
-              onPress={() => {
-                if (calloutTargetPos !== null) webviewRef.current?.setCalloutIconAt(calloutTargetPos, icon);
-                calloutIconSheetRef.current?.dismiss();
-              }}
-              accessibilityRole="button"
-              testID={`note-callout-icon-${icon}`}
-              className="size-11 items-center justify-center rounded-md border border-input dark:border-input-dark"
-            >
-              <Text className="text-lg">{CALLOUT_GLYPH[icon]}</Text>
-            </Pressable>
-          ))}
+          {NOTE_CALLOUT_ICONS.map(icon => {
+            const Icon = CALLOUT_ICON_COMPONENTS[icon];
+            return (
+              <Pressable
+                key={icon}
+                onPress={() => {
+                  if (calloutTargetPos !== null) webviewRef.current?.setCalloutIconAt(calloutTargetPos, icon);
+                  calloutIconSheetRef.current?.dismiss();
+                }}
+                accessibilityRole="button"
+                testID={`note-callout-icon-${icon}`}
+                className="size-11 items-center justify-center rounded-md border border-input dark:border-input-dark"
+              >
+                <Icon size={20} className="text-foreground dark:text-foreground-dark" />
+              </Pressable>
+            );
+          })}
         </View>
       </Sheet>
 
