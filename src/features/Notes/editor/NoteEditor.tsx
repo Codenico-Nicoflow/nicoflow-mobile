@@ -63,9 +63,7 @@ export function NoteEditor({ content, onChange, editable = true, onContentError,
         >
           {!mentionResults || mentionResults.length === 0 ? (
             <Text className="px-3 py-2 text-sm text-muted-foreground dark:text-muted-foreground-dark">
-              {/* TODO(NIC-1972): swap to t('editor.mentionEmpty') once @nicoflow/shared publishes the
-                  mentionEmpty key (nicoflow-shared PR #70) and this repo bumps its dependency. */}
-              No notes found
+              {t('editor.mentionEmpty')}
             </Text>
           ) : (
             <FlatList
