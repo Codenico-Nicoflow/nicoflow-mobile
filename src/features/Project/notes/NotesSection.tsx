@@ -11,9 +11,8 @@ import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from '@/components/ui/toast';
+import { NoteRow } from '@/features/Notes/list/NoteRow';
 import { useCreateNoteMutation, useGetNotesInfiniteQuery } from '@/lib/store';
-
-import { NoteRow } from './NoteRow';
 
 interface NotesSectionProps {
   projectId: string;

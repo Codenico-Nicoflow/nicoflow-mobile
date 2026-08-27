@@ -92,6 +92,11 @@ export function NoteEditorPage({ noteId }: NoteEditorPageProps) {
     router.back();
   };
 
+  const handleMentionTapped = (mentionedNoteId: string) => {
+    flush();
+    router.push(`/note/${mentionedNoteId}`);
+  };
+
   return (
     <View className="flex-1 px-4 pt-3 gap-3" testID="note-editor-page">
       <View className="flex-row items-center justify-between gap-2">
@@ -137,6 +142,7 @@ export function NoteEditorPage({ noteId }: NoteEditorPageProps) {
         onChange={(content: TiptapDoc) => save({ content })}
         onContentError={() => setContentError(true)}
         excludeNoteId={note.id}
+        onMentionTapped={handleMentionTapped}
       />
 
       {contentError && (

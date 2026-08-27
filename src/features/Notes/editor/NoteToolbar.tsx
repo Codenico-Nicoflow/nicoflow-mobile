@@ -2,13 +2,16 @@ import { useRef, useState } from 'react';
 import { Pressable, ScrollView, Text, TextInput, useColorScheme, View } from 'react-native';
 
 import {
+  Baseline,
   Bold,
   CalendarDays,
   CheckSquare,
+  ChevronDown,
   Code,
   Heading1,
   Heading2,
   Heading3,
+  Highlighter,
   Italic,
   Link2,
   Link2Off,
@@ -16,7 +19,6 @@ import {
   ListOrdered,
   MessageSquareQuote,
   Minus,
-  Palette,
   Table,
 } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
@@ -26,20 +28,9 @@ import { Button } from '@/components/ui/button';
 import { Sheet, SheetDescription, SheetFooter, SheetHeader, type SheetRef, SheetTitle } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils/cn';
 
-import { NOTE_CALLOUT_ICONS } from './calloutIcons';
-import { isNoteColorToken, NOTE_COLOR_TOKENS } from './colorTokens';
+import { CALLOUT_GLYPH, NOTE_CALLOUT_ICONS } from './calloutIcons';
+import { CALLOUT_SWATCH, isNoteColorToken, NOTE_COLOR_TOKENS } from './colorTokens';
 import { type NoteEditorCommand, type NoteEditorState } from './NoteEditorWebView';
-
-const CALLOUT_GLYPH: Record<string, string> = {
-  info: 'ℹ️',
-  warning: '⚠️',
-  success: '✅',
-  idea: '💡',
-  star: '⭐',
-  note: '📝',
-  flag: '🚩',
-  question: '❓',
-};
 
 interface ToolbarButtonProps {
   icon: typeof Bold;
@@ -80,6 +71,30 @@ function ToolbarButton({ icon: Icon, isActive, disabled, onPress, accessibilityL
                 : '#1e293b'
         }
       />
+    </Pressable>
+  );
+}
+
+// Distinct tinted pill (icon + label + chevron) rather than a plain toolbar
+// icon — mirrors web's TableControls trigger. This button only exists while
+// the caret is inside a table, so it needs to read as "options for THIS
+// element" at a glance, not blend into the row of always-present buttons.
+function TableMenuTrigger({ label, onPress }: { label: string; onPress: () => void }) {
+  const isDark = useColorScheme() === 'dark';
+  const tint = isDark ? '#818cf8' : '#4f46e5';
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      testID="note-table-menu"
+      className="h-9 flex-row items-center gap-1 rounded-md border border-primary/30 bg-primary/10 px-2.5 dark:border-primary-dark/40 dark:bg-primary-dark/15"
+    >
+      <Table size={16} color={tint} />
+      <Text className="text-sm font-medium" style={{ color: tint }}>
+        {label}
+      </Text>
+      <ChevronDown size={12} color={tint} style={{ opacity: 0.7 }} />
     </Pressable>
   );
 }
@@ -224,23 +239,19 @@ export function NoteToolbar({ state, onCommand }: NoteToolbarProps) {
             onPress={() => dateSheetRef.current?.present()}
           />
           <ToolbarButton
-            icon={Palette}
+            icon={Baseline}
             isActive={!!state?.textColorToken}
             accessibilityLabel={t('toolbar.textColorGroup')}
             onPress={() => textColorSheetRef.current?.present()}
           />
           <ToolbarButton
-            icon={MessageSquareQuote}
+            icon={Highlighter}
             isActive={!!state?.highlightToken}
             accessibilityLabel={t('toolbar.highlightGroup')}
             onPress={() => highlightSheetRef.current?.present()}
           />
           {state?.isTable && (
-            <ToolbarButton
-              icon={Table}
-              accessibilityLabel={t('toolbar.tableGroup')}
-              onPress={() => tableSheetRef.current?.present()}
-            />
+            <TableMenuTrigger label={t('toolbar.tableGroup')} onPress={() => tableSheetRef.current?.present()} />
           )}
         </ScrollView>
       </View>
@@ -486,15 +497,3 @@ export function NoteToolbar({ state, onCommand }: NoteToolbarProps) {
     </>
   );
 }
-
-const CALLOUT_SWATCH: Record<string, string> = {
-  gray: '#94a3b8',
-  brown: '#a8794e',
-  orange: '#fb923c',
-  yellow: '#fde047',
-  green: '#4ade80',
-  blue: '#60a5fa',
-  purple: '#c084fc',
-  pink: '#f9a8d4',
-  red: '#f87171',
-};

@@ -92,9 +92,9 @@ export function buildEditorHtml(themeColors: {
   .ProseMirror a { color: ${themeColors.link}; text-decoration: underline; }
   ul[data-type="taskList"] { list-style: none; padding-left: 0.2em; }
   ul[data-type="taskList"] li { display: flex; align-items: flex-start; gap: 0.5em; margin: 0.3em 0; }
-  ul[data-type="taskList"] li > label { margin-top: 0.15em; }
+  ul[data-type="taskList"] li > label { align-items: center; display: flex; height: 1lh; }
   ul[data-type="taskList"] li > div { flex: 1; }
-  ul[data-type="taskList"] input[type="checkbox"] { width: 16px; height: 16px; }
+  ul[data-type="taskList"] input[type="checkbox"] { display: block; margin: 0; width: 16px; height: 16px; }
   table { border-collapse: collapse; width: 100%; margin: 0.6em 0; }
   table td, table th {
     border: 1px solid ${themeColors.border};
@@ -105,15 +105,33 @@ export function buildEditorHtml(themeColors: {
   table th { background: ${themeColors.codeBg}; font-weight: 600; }
   div[data-note-callout] {
     display: flex;
-    gap: 8px;
-    border: 1px solid ${themeColors.border};
+    gap: 10px;
+    border-left: 4px solid ${themeColors.border};
     border-radius: 8px;
     padding: 10px 12px;
     margin: 0.5em 0;
     align-items: flex-start;
   }
-  div[data-note-callout] > .callout-icon { flex-shrink: 0; font-size: 1.1em; line-height: 1.5; }
+  div[data-note-callout] > .callout-icon {
+    flex-shrink: 0;
+    font-size: 1.1em;
+    line-height: 1.5;
+    background: none;
+    border: none;
+    padding: 2px;
+    border-radius: 6px;
+  }
   div[data-note-callout] > .callout-body { flex: 1; min-width: 0; }
+  div[data-note-callout] > .callout-color {
+    flex-shrink: 0;
+    align-self: flex-start;
+    width: 16px;
+    height: 16px;
+    margin-top: 3px;
+    border-radius: 999px;
+    border: 1px solid ${themeColors.border};
+    padding: 0;
+  }
   span[data-note-date-mention] {
     display: inline-flex;
     align-items: center;
@@ -126,6 +144,17 @@ export function buildEditorHtml(themeColors: {
   }
   mark[data-note-highlight] { border-radius: 3px; padding: 0 2px; }
   span[data-note-text-color] { color: inherit; }
+  span[data-note-mention] {
+    display: inline-flex;
+    align-items: center;
+    border: 1px solid ${themeColors.border};
+    background: ${themeColors.codeBg};
+    color: ${themeColors.link};
+    border-radius: 999px;
+    padding: 1px 8px;
+    font-size: 0.9em;
+    cursor: pointer;
+  }
 </style>
 </head>
 <body>
@@ -181,11 +210,15 @@ function makeColorMark(name, tag, dataAttr, extraAttr, palette, cssProp) {
   });
 }
 
-// Mirrors web's NoteCallout (CalloutNode.tsx): block node, icon+colorToken
-// attrs from the same fixed allowlists. No React node view here — this is a
-// bare DOM node view (Tiptap core's NodeView interface) rendering the icon
-// glyph + editable body; icon/color changes come from RN via postMessage
-// (native pickers), not an in-WebView popover.
+// Mirrors web's redesigned CalloutNode.tsx: block node, icon+colorToken attrs
+// from the same fixed allowlists, tinted background + colored left accent
+// bar, tap-to-open picker on both the icon and the color swatch (not just at
+// insert time via the toolbar — editing an already-inserted callout needs the
+// same affordance web has). No React node view here — a bare DOM node view
+// (Tiptap core's NodeView interface); icon/color pickers are native RN sheets
+// opened via the 'calloutIconTapped'/'calloutColorTapped' bridge messages,
+// not an in-WebView popover (same reasoning as the mention typeahead: no room
+// next to the keyboard).
 const NoteCallout = Node.create({
   name: 'callout',
   group: 'block',
@@ -217,20 +250,50 @@ const NoteCallout = Node.create({
       Object.entries(mergeAttributes(HTMLAttributes, { 'data-note-callout': '' })).forEach(([k, v]) =>
         dom.setAttribute(k, v)
       );
-      const iconEl = document.createElement('span');
+      const iconEl = document.createElement('button');
+      iconEl.type = 'button';
       iconEl.className = 'callout-icon';
       iconEl.contentEditable = 'false';
+      iconEl.setAttribute('aria-label', 'Callout icon');
       iconEl.textContent = CALLOUT_GLYPH[node.attrs.icon] || CALLOUT_GLYPH.info;
+      iconEl.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const pos = getPos();
+        if (typeof pos === 'number') post({ type: 'calloutIconTapped', pos });
+      });
       const contentEl = document.createElement('div');
       contentEl.className = 'callout-body';
+      const colorEl = document.createElement('button');
+      colorEl.type = 'button';
+      colorEl.className = 'callout-color';
+      colorEl.contentEditable = 'false';
+      colorEl.setAttribute('aria-label', 'Callout color');
+      colorEl.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const pos = getPos();
+        if (typeof pos === 'number') post({ type: 'calloutColorTapped', pos });
+      });
       dom.appendChild(iconEl);
       dom.appendChild(contentEl);
+      dom.appendChild(colorEl);
+
+      const applyColor = (colorToken) => {
+        const token = isToken(colorToken) ? colorToken : 'blue';
+        dom.style.backgroundColor = HIGHLIGHT_PALETTE[token] || '';
+        dom.style.borderLeftColor = TEXT_PALETTE[token] || '';
+        colorEl.style.backgroundColor = TEXT_PALETTE[token] || '';
+      };
+      applyColor(node.attrs.colorToken);
+
       return {
         dom,
         contentDOM: contentEl,
         update(updatedNode) {
           if (updatedNode.type !== node.type) return false;
           iconEl.textContent = CALLOUT_GLYPH[updatedNode.attrs.icon] || CALLOUT_GLYPH.info;
+          applyColor(updatedNode.attrs.colorToken);
           return true;
         },
       };
@@ -366,6 +429,17 @@ const NoteMention = Node.create({
       dom.setAttribute('data-title-snapshot', node.attrs.titleSnapshot || '');
       dom.contentEditable = 'false';
       dom.textContent = '@' + (node.attrs.titleSnapshot || '');
+      // Deep-link tap (NIC mention nav): the chip is atomic/non-editable, so a
+      // plain click listener never fights text selection or ProseMirror's own
+      // click-to-place-cursor handling. RN owns navigation (expo-router isn't
+      // reachable from inside the WebView), so this only posts the id across
+      // the bridge — mirrors web's onClick={() => navigate(...)}.
+      dom.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const id = dom.getAttribute('data-note-id');
+        if (id) post({ type: 'mentionTapped', noteId: id });
+      });
       return {
         dom,
         update(updatedNode) {
@@ -552,6 +626,12 @@ window.__dispatch = function (msg) {
       break;
     case 'setCallout':
       editor.chain().focus().setNoteCallout({ icon: msg.icon, colorToken: msg.colorToken }).run();
+      break;
+    case 'setCalloutIconAt':
+      editor.chain().setNodeSelection(msg.pos).updateNoteCalloutAttrs({ icon: msg.icon }).run();
+      break;
+    case 'setCalloutColorAt':
+      editor.chain().setNodeSelection(msg.pos).updateNoteCalloutAttrs({ colorToken: msg.colorToken }).run();
       break;
     case 'setHorizontalRule':
       editor.chain().focus().setHorizontalRule().run();
