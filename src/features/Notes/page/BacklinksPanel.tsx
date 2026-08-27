@@ -17,7 +17,7 @@ export function BacklinksPanel({ noteId }: BacklinksPanelProps) {
   const notes = backlinks ?? [];
 
   return (
-    <View className="gap-2 border-t border-border dark:border-border-dark pt-3" testID="note-backlinks">
+    <View className="gap-2 border-t border-border dark:border-border-dark pt-3 pb-6" testID="note-backlinks">
       <View className="flex-row items-center gap-2">
         <Link2 size={16} color="#64748b" />
         <Text className="text-sm font-semibold text-foreground dark:text-foreground-dark">

@@ -136,6 +136,7 @@ export function NoteEditorPage({ noteId }: NoteEditorPageProps) {
         editable={!isConflicted && !contentError}
         onChange={(content: TiptapDoc) => save({ content })}
         onContentError={() => setContentError(true)}
+        excludeNoteId={note.id}
       />
 
       {contentError && (

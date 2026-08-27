@@ -19,11 +19,10 @@
 // without updating that allowlist first, same rule web's source comments
 // state.
 //
-// Deliberately absent: the @-mention node (NoteMentionNode). It is not one
-// of the 17 toolbar controls named in NIC-1984's AC7 list — it's a separate
-// "@"-triggered typeahead feature layered on top of the toolbar, wired to a
-// live backend search endpoint. Out of scope for this story; the schema slot
-// for it is additive whenever it lands.
+// noteMention is schema-only here: parses/renders/round-trips a mention
+// authored on web as a read-only chip, so enableContentCheck doesn't reject
+// the whole document. The "@"-triggered typeahead insert flow (live backend
+// search, tap-to-navigate) is a separate story — out of scope here.
 export const TIPTAP_VERSION = '3.29.2';
 
 const NOTE_COLOR_TOKENS = ['gray', 'brown', 'orange', 'yellow', 'green', 'blue', 'purple', 'pink', 'red'];
@@ -138,6 +137,7 @@ import { TableKit } from 'https://esm.sh/@tiptap/extension-table@${TIPTAP_VERSIO
 import TaskItem from 'https://esm.sh/@tiptap/extension-task-item@${TIPTAP_VERSION}?deps=@tiptap/core@${TIPTAP_VERSION}';
 import TaskList from 'https://esm.sh/@tiptap/extension-task-list@${TIPTAP_VERSION}?deps=@tiptap/core@${TIPTAP_VERSION}';
 import Placeholder from 'https://esm.sh/@tiptap/extension-placeholder@${TIPTAP_VERSION}?deps=@tiptap/core@${TIPTAP_VERSION}';
+import Suggestion from 'https://esm.sh/@tiptap/suggestion@${TIPTAP_VERSION}?deps=@tiptap/core@${TIPTAP_VERSION}';
 
 const NOTE_COLOR_TOKENS = ${JSON.stringify(NOTE_COLOR_TOKENS)};
 const NOTE_CALLOUT_ICONS = ${JSON.stringify(NOTE_CALLOUT_ICONS)};
@@ -313,6 +313,122 @@ function formatDateLabel(iso) {
   return new Date(y, m - 1, d).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
+// Mirrors web's NoteMentionNode schema (noteMention: noteId + titleSnapshot)
+// so a note authored on web with an @-mention round-trips instead of tripping
+// enableContentCheck on mobile. The typeahead itself is a bridge round-trip:
+// the RN toolbar/query-list has the live search endpoint and renders the
+// results (a WebView-hosted popover would fight the keyboard for space on a
+// phone), so this Suggestion plugin's items() posts the query out to RN and
+// resolves from whatever RN posts back via window.__resolveMentionQuery,
+// rather than fetching itself. Insertion is also driven from RN — either the
+// Suggestion command (if the list is ever rendered in-WebView) or the
+// 'insertMention' bridge message RN sends on tapping a native list row.
+let pendingMentionQuery = null;
+let activeMentionCommand = null;
+
+window.__resolveMentionQuery = function (results) {
+  if (pendingMentionQuery) {
+    pendingMentionQuery.resolve(results || []);
+    pendingMentionQuery = null;
+  }
+};
+
+const NoteMention = Node.create({
+  name: 'noteMention',
+  group: 'inline',
+  inline: true,
+  atom: true,
+  addAttributes() {
+    return {
+      noteId: {
+        default: null,
+        parseHTML: (el) => el.getAttribute('data-note-id'),
+        renderHTML: (attrs) => ({ 'data-note-id': attrs.noteId }),
+      },
+      titleSnapshot: {
+        default: '',
+        parseHTML: (el) => el.getAttribute('data-title-snapshot') || '',
+        renderHTML: (attrs) => ({ 'data-title-snapshot': attrs.titleSnapshot }),
+      },
+    };
+  },
+  parseHTML() {
+    return [{ tag: 'span[data-note-mention]' }];
+  },
+  renderHTML({ HTMLAttributes }) {
+    return ['span', mergeAttributes(HTMLAttributes, { 'data-note-mention': '' }), HTMLAttributes['data-title-snapshot'] || ''];
+  },
+  addNodeView() {
+    return ({ node }) => {
+      const dom = document.createElement('span');
+      dom.setAttribute('data-note-mention', '');
+      dom.setAttribute('data-note-id', node.attrs.noteId || '');
+      dom.setAttribute('data-title-snapshot', node.attrs.titleSnapshot || '');
+      dom.contentEditable = 'false';
+      dom.textContent = '@' + (node.attrs.titleSnapshot || '');
+      return {
+        dom,
+        update(updatedNode) {
+          if (updatedNode.type !== node.type) return false;
+          dom.setAttribute('data-note-id', updatedNode.attrs.noteId || '');
+          dom.setAttribute('data-title-snapshot', updatedNode.attrs.titleSnapshot || '');
+          dom.textContent = '@' + (updatedNode.attrs.titleSnapshot || '');
+          return true;
+        },
+      };
+    };
+  },
+  addCommands() {
+    return {
+      setNoteMention:
+        (attrs) =>
+        ({ commands }) =>
+          commands.insertContent({ type: this.name, attrs }),
+    };
+  },
+  addProseMirrorPlugins() {
+    return [
+      Suggestion({
+        editor: this.editor,
+        char: '@',
+        allowSpaces: false,
+        items: ({ query }) =>
+          new Promise((resolve) => {
+            pendingMentionQuery = { resolve };
+            post({ type: 'mentionQuery', query });
+          }),
+        command: ({ editor: ed, range, props }) => {
+          ed.chain().focus().deleteRange(range).setNoteMention({ noteId: props.id, titleSnapshot: props.title }).run();
+        },
+        render: () => ({
+          onStart: (props) => {
+            activeMentionCommand = props.command;
+            post({ type: 'mentionStart', query: props.query });
+          },
+          onUpdate: (props) => {
+            activeMentionCommand = props.command;
+            post({ type: 'mentionUpdate', query: props.query });
+          },
+          onExit: () => {
+            activeMentionCommand = null;
+            pendingMentionQuery = null;
+            post({ type: 'mentionExit' });
+          },
+        }),
+      }),
+    ];
+  },
+});
+
+// RN calls this after tapping a native mention-list row. Goes through the
+// Suggestion plugin's own 'command' (captured above) so it deletes the typed
+// '@query' range the same way a WebView-rendered list's row tap would —
+// hand-rolling the range deletion here would drift from Suggestion's own
+// range tracking.
+window.__insertMention = function (noteId, titleSnapshot) {
+  if (activeMentionCommand) activeMentionCommand({ id: noteId, title: titleSnapshot });
+};
+
 const TEXT_PALETTE = {};
 const HIGHLIGHT_PALETTE = {};
 window.__setColorPalettes = (text, highlight) => {
@@ -368,6 +484,7 @@ function createEditor(content, editable, placeholder) {
       NoteHighlight,
       NoteCallout,
       NoteDateMention,
+      NoteMention,
       Placeholder.configure({ placeholder: placeholder || '' }),
     ],
     content: withEditableBody(content),

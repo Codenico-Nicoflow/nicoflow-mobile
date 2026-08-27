@@ -55,9 +55,16 @@ export type NoteEditorCommand =
   | { type: 'mergeOrSplit' }
   | { type: 'deleteTable' };
 
+export interface MentionResult {
+  id: string;
+  title: string;
+}
+
 export interface NoteEditorWebViewRef {
   dispatch: (command: NoteEditorCommand) => void;
   setEditable: (editable: boolean) => void;
+  resolveMentionQuery: (results: MentionResult[]) => void;
+  insertMention: (noteId: string, titleSnapshot: string) => void;
 }
 
 interface NoteEditorWebViewProps {
@@ -67,6 +74,8 @@ interface NoteEditorWebViewProps {
   onChange: (content: TiptapDoc) => void;
   onContentError: () => void;
   onStateChange: (state: NoteEditorState) => void;
+  onMentionQuery: (query: string) => void;
+  onMentionExit: () => void;
 }
 
 // The RN half of the WebView-Tiptap bridge (NIC-1982 decision). This
@@ -74,7 +83,7 @@ interface NoteEditorWebViewProps {
 // into postMessage commands understood by webview-assets/editorHtml.ts —
 // it never touches Tiptap itself. Content/state flow back via onMessage.
 export const NoteEditorWebView = forwardRef<NoteEditorWebViewRef, NoteEditorWebViewProps>(function NoteEditorWebView(
-  { content, editable, placeholder, onChange, onContentError, onStateChange },
+  { content, editable, placeholder, onChange, onContentError, onStateChange, onMentionQuery, onMentionExit },
   ref
 ) {
   const isDark = useColorScheme() === 'dark';
@@ -88,6 +97,12 @@ export const NoteEditorWebView = forwardRef<NoteEditorWebViewRef, NoteEditorWebV
   useImperativeHandle(ref, () => ({
     dispatch: command => send(command),
     setEditable: nextEditable => send({ type: 'setEditable', editable: nextEditable }),
+    resolveMentionQuery: results =>
+      webviewRef.current?.injectJavaScript(`window.__resolveMentionQuery(${JSON.stringify(results)}); true;`),
+    insertMention: (noteId, titleSnapshot) =>
+      webviewRef.current?.injectJavaScript(
+        `window.__insertMention(${JSON.stringify(noteId)}, ${JSON.stringify(titleSnapshot)}); true;`
+      ),
   }));
 
   const html = buildEditorHtml({
@@ -99,7 +114,7 @@ export const NoteEditorWebView = forwardRef<NoteEditorWebViewRef, NoteEditorWebV
   });
 
   const onMessage = (event: WebViewMessageEvent) => {
-    let msg: { type: string; content?: TiptapDoc; state?: NoteEditorState };
+    let msg: { type: string; content?: TiptapDoc; state?: NoteEditorState; query?: string };
     try {
       msg = JSON.parse(event.nativeEvent.data);
     } catch {
@@ -127,6 +142,14 @@ export const NoteEditorWebView = forwardRef<NoteEditorWebViewRef, NoteEditorWebV
     }
     if (msg.type === 'state' && msg.state) {
       onStateChange(msg.state);
+      return;
+    }
+    if (msg.type === 'mentionStart' || msg.type === 'mentionUpdate' || msg.type === 'mentionQuery') {
+      onMentionQuery(msg.query ?? '');
+      return;
+    }
+    if (msg.type === 'mentionExit') {
+      onMentionExit();
     }
   };
 
@@ -136,7 +159,8 @@ export const NoteEditorWebView = forwardRef<NoteEditorWebViewRef, NoteEditorWebV
       source={{ html }}
       onMessage={onMessage}
       originWhitelist={['*']}
-      style={{ backgroundColor: 'transparent' }}
+      style={{ flex: 1, backgroundColor: 'transparent' }}
+      containerStyle={{ flex: 1 }}
       scrollEnabled
       hideKeyboardAccessoryView
       keyboardDisplayRequiresUserAction={false}

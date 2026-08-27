@@ -89,5 +89,6 @@ export const {
   useGetBacklinksQuery,
   useGetNoteQuery,
   useGetNotesInfiniteQuery,
+  useLazySearchMentionsQuery,
   useUpdateNoteMutation,
 } = noteApi;
