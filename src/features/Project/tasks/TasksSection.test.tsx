@@ -31,6 +31,7 @@ const mockRecurrenceApi = createRecurrenceApi(baseQuery, mockTaskApi);
 jest.mock('@/lib/store', () => ({
   useGetTasksInfiniteQuery: (arg: GetTasksRequest) => mockTaskApi.useGetTasksInfiniteQuery(arg),
   useUpdateTaskStatusMutation: () => mockTaskApi.useUpdateTaskStatusMutation(),
+  useReorderTaskMutation: () => mockTaskApi.useReorderTaskMutation(),
   useCreateTaskMutation: () => mockTaskApi.useCreateTaskMutation(),
   useUpdateTaskMutation: () => mockTaskApi.useUpdateTaskMutation(),
   useDeleteTaskMutation: () => mockTaskApi.useDeleteTaskMutation(),

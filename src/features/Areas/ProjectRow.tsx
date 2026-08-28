@@ -2,7 +2,16 @@ import { useRef } from 'react';
 import { Pressable, Text, useColorScheme, View } from 'react-native';
 
 import { type IProject } from '@nicoflow/shared/types';
-import { Calendar, ExternalLink, MoreVertical, Pencil, Star, Trash2 } from 'lucide-react-native';
+import {
+  Calendar,
+  ExternalLink,
+  FolderInput,
+  GripVertical,
+  MoreVertical,
+  Pencil,
+  Star,
+  Trash2,
+} from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 
 import {
@@ -28,13 +37,18 @@ interface ProjectRowProps {
   project: IProject;
   onPress: () => void;
   onEdit: (project: IProject) => void;
+  onMoveToArea: (project: IProject) => void;
+  dragHandleProps?: { onLongPress?: () => void; disabled?: boolean };
 }
 
 // Mirrors web's ProjectRow.tsx: folder icon, name, favorite star (if set),
 // due-date chip (red if overdue + active), status badge, 3-dot actions menu
-// (Open / Favorite toggle / Edit / Delete). Delete matches web's exact copy
-// (bold name via splitTransName — same pattern as AreaCard's delete dialog).
-export function ProjectRow({ project, onPress, onEdit }: ProjectRowProps) {
+// (Open / Favorite toggle / Edit / Move to Area / Delete). Delete matches
+// web's exact copy (bold name via splitTransName — same pattern as
+// AreaCard's delete dialog). "Move to Area" has no web equivalent — web
+// does this by dragging the card across area boundaries; mobile's drag lib
+// only reorders within one list, so cross-area move is this menu action.
+export function ProjectRow({ project, onPress, onEdit, onMoveToArea, dragHandleProps }: ProjectRowProps) {
   const { t } = useTranslation(['project', 'common']);
   const isDark = useColorScheme() === 'dark';
   const Icon = iconComponentFor(project.folderIcon);
@@ -66,12 +80,21 @@ export function ProjectRow({ project, onPress, onEdit }: ProjectRowProps) {
   return (
     <View className="flex-row items-center">
       <Pressable
+        onLongPress={dragHandleProps?.onLongPress}
+        disabled={dragHandleProps?.disabled}
+        accessibilityLabel={t('project:row.dragHandle')}
+        hitSlop={8}
+        className="px-1"
+      >
+        <GripVertical size={14} color={mutedColor} />
+      </Pressable>
+      <Pressable
         className="flex-1 flex-row items-center gap-2.5 rounded-md px-2 py-2.5 active:bg-accent dark:active:bg-accent-dark"
         onPress={onPress}
         accessibilityRole="button"
         accessibilityLabel={project.name}
       >
-        <Icon size={16} color={mutedColor} />
+        <Icon size={16} color={isDark ? '#6366f1' : '#4f46e5'} />
         <Text
           className="flex-1 text-sm text-foreground dark:text-foreground-dark"
           numberOfLines={1}
@@ -133,6 +156,15 @@ export function ProjectRow({ project, onPress, onEdit }: ProjectRowProps) {
           }}
         >
           {t('project:row.edit')}
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          icon={<FolderInput size={16} color={isDark ? '#e2e8f0' : '#1e293b'} />}
+          onPress={() => {
+            menuRef.current?.dismiss();
+            onMoveToArea(project);
+          }}
+        >
+          Move to Area
         </DropdownMenuItem>
         <DropdownMenuItem
           icon={<Trash2 size={16} color={isDark ? '#f87171' : '#ef4444'} />}

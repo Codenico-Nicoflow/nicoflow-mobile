@@ -41,6 +41,7 @@ export function ProjectHeader({ project, onToggleFavorite, onEdit, onDelete }: P
           className="flex-1 text-xl font-bold text-foreground dark:text-foreground-dark"
           numberOfLines={1}
           ellipsizeMode="tail"
+          testID="project-header-name"
         >
           {project.name}
         </Text>

@@ -2,7 +2,7 @@ import { forwardRef, useImperativeHandle, useRef, useState } from 'react';
 import { useColorScheme, View } from 'react-native';
 
 import { type IArea, type IconId } from '@nicoflow/shared/types';
-import { Layers } from 'lucide-react-native';
+import { Layers, Tag } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 
 import { ColorField } from '@/components/fields/ColorField';
@@ -161,6 +161,7 @@ export const AreaDialog = forwardRef<AreaDialogRef, AreaDialogProps>(function Ar
           label={t('area:dialog.nameLabel')}
           placeholder={t('area:dialog.namePlaceholder')}
           error={nameError}
+          icon={Tag}
         />
 
         <ColorField value={fields.color} onChange={v => setField('color', v)} label={t('area:dialog.colorLabel')} />

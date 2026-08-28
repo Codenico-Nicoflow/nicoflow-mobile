@@ -2,7 +2,7 @@ import { useRef, useState } from 'react';
 import { Pressable, Text, useColorScheme, View } from 'react-native';
 
 import { type ITask, TaskStatus } from '@nicoflow/shared/types';
-import { Ban, CalendarX, Check, MoreVertical, Pencil, Trash2 } from 'lucide-react-native';
+import { Ban, CalendarX, Check, GripVertical, MoreVertical, Pencil, Trash2 } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import Reanimated from 'react-native-reanimated';
 
@@ -34,6 +34,7 @@ interface TaskListItemProps {
   task: ITask;
   onEdit: (task: ITask) => void;
   onToggleStatus: (task: ITask) => void;
+  dragHandleProps?: { onLongPress?: () => void; disabled?: boolean };
 }
 
 // Mirrors web's TaskItem.tsx: whole row taps to edit, checkbox flips
@@ -50,7 +51,7 @@ interface TaskListItemProps {
 // inline style). Colors/borders/radius via className still work fine — only
 // gap is affected — so only spacing moved to inline style here, not the
 // whole file.
-export function TaskListItem({ task, onEdit, onToggleStatus }: TaskListItemProps) {
+export function TaskListItem({ task, onEdit, onToggleStatus, dragHandleProps }: TaskListItemProps) {
   const { t } = useTranslation('task');
   const isDark = useColorScheme() === 'dark';
   const mutedColor = isDark ? '#94a3b8' : '#64748b';
@@ -173,6 +174,16 @@ export function TaskListItem({ task, onEdit, onToggleStatus }: TaskListItemProps
           </View>
 
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+            <Pressable
+              onLongPress={dragHandleProps?.onLongPress}
+              disabled={dragHandleProps?.disabled}
+              accessibilityLabel="Drag to reorder"
+              hitSlop={8}
+              className="p-1"
+            >
+              <GripVertical size={16} color={mutedColor} />
+            </Pressable>
+
             <DropdownMenu
               ref={menuRef}
               trigger={
