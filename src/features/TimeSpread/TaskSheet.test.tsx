@@ -34,6 +34,11 @@ jest.mock('@/lib/store', () => ({
   useUpdateTaskMutation: () => mockTaskApi.useUpdateTaskMutation(),
   useGetProjectsQuery: () => mockProjectApi.useGetProjectsQuery(),
   useCreateRecurrenceRuleMutation: () => mockRecurrenceApi.useCreateRecurrenceRuleMutation(),
+  useConvertTaskToRecurringMutation: () => mockRecurrenceApi.useConvertTaskToRecurringMutation(),
+  useUpdateRecurrenceRuleMutation: () => mockRecurrenceApi.useUpdateRecurrenceRuleMutation(),
+  useDeleteRecurrenceRuleMutation: () => mockRecurrenceApi.useDeleteRecurrenceRuleMutation(),
+  useGetRecurrenceRuleQuery: (id: string, opts?: { skip?: boolean }) =>
+    mockRecurrenceApi.useGetRecurrenceRuleQuery(id, opts),
 }));
 
 const projects = [
@@ -173,17 +178,17 @@ describe('TaskSheet', () => {
     expect(capturedBody).toMatchObject({ projectId: 'p2' });
   });
 
-  it('setting recurrence on an existing task creates a NEW rule rather than updating the task', async () => {
+  it('setting recurrence on a plain task converts it IN PLACE rather than creating a duplicate', async () => {
+    let convertCalled = false;
     let ruleCreated = false;
-    let taskPatched = false;
     server.use(
-      http.post(`${API}/projects/:projectId/recurrence-rules`, () => {
-        ruleCreated = true;
+      http.post(`${API}/tasks/:taskId/convert-to-recurring`, () => {
+        convertCalled = true;
         return HttpResponse.json({ data: { id: 'r1' }, error: null });
       }),
-      http.patch(`${API}/tasks/:id`, () => {
-        taskPatched = true;
-        return HttpResponse.json({ data: task(), error: null });
+      http.post(`${API}/projects/:projectId/recurrence-rules`, () => {
+        ruleCreated = true;
+        return HttpResponse.json({ data: { id: 'r2' }, error: null });
       })
     );
     const { ref, onSaved } = await renderSheet();
@@ -196,7 +201,89 @@ describe('TaskSheet', () => {
     await fireEvent.press(screen.getByLabelText('Save Changes'));
 
     await waitFor(() => expect(onSaved).toHaveBeenCalled());
-    expect(ruleCreated).toBe(true);
+    expect(convertCalled).toBe(true);
+    expect(ruleCreated).toBe(false);
+  });
+
+  const existingRule = {
+    id: 'r1',
+    projectId: 'p1',
+    title: 'Write report',
+    priority: 'medium',
+    energy: 'medium',
+    freq: 'weekly',
+    interval: 1,
+    byWeekday: [1],
+    byMonthday: null,
+    startDate: '2026-08-19',
+    endDate: null,
+    nextOccurrence: '2026-08-26',
+    scheduledTime: null,
+    paused: false,
+    createdAt: '',
+    updatedAt: '',
+  };
+
+  it('editing a task with an existing rule loads it and PATCHes the rule, never creating a duplicate', async () => {
+    let ruleCreated = false;
+    let rulePatched = false;
+    server.use(
+      http.get(`${API}/recurrence-rules/:id`, () => HttpResponse.json({ data: existingRule, error: null })),
+      http.post(`${API}/projects/:projectId/recurrence-rules`, () => {
+        ruleCreated = true;
+        return HttpResponse.json({ data: { id: 'r2' }, error: null });
+      }),
+      http.patch(`${API}/recurrence-rules/:id`, () => {
+        rulePatched = true;
+        return HttpResponse.json({ data: existingRule, error: null });
+      })
+    );
+    const { ref, onSaved } = await renderSheet();
+    await waitFor(() => ref.current?.present({ task: task({ recurrenceRuleId: 'r1' }) }));
+    await waitFor(() => expect(screen.getByText('Edit Task')).toBeTruthy());
+
+    // The field must load as "on" and weekly (matching existingRule), not the
+    // default closed state — otherwise reopening the switch here would itself
+    // create a second rule.
+    await waitFor(() => expect(screen.getByText('On')).toBeTruthy());
+
+    // Touch the schedule itself (Mon -> also Tue) so recurrenceDirty flips —
+    // editing an unrelated field must NOT route through the rule mutation at
+    // all, so the schedule is what actually has to change here.
+    await fireEvent.press(screen.getByText('Tue'));
+    await waitFor(() => expect(screen.getByLabelText('Save Changes').props.accessibilityState.disabled).toBe(false));
+    await fireEvent.press(screen.getByLabelText('Save Changes'));
+
+    await waitFor(() => expect(onSaved).toHaveBeenCalled());
+    expect(rulePatched).toBe(true);
+    expect(ruleCreated).toBe(false);
+  });
+
+  it('turning recurrence off on a task with an existing rule DELETEs the rule, leaving the task itself untouched', async () => {
+    let ruleDeleted = false;
+    let taskPatched = false;
+    server.use(
+      http.get(`${API}/recurrence-rules/:id`, () => HttpResponse.json({ data: existingRule, error: null })),
+      http.delete(`${API}/recurrence-rules/:id`, () => {
+        ruleDeleted = true;
+        return new HttpResponse(null, { status: 204 });
+      }),
+      http.patch(`${API}/tasks/:id`, () => {
+        taskPatched = true;
+        return HttpResponse.json({ data: task(), error: null });
+      })
+    );
+    const { ref, onSaved } = await renderSheet();
+    await waitFor(() => ref.current?.present({ task: task({ recurrenceRuleId: 'r1' }) }));
+    await waitFor(() => expect(screen.getByText('On')).toBeTruthy());
+
+    await fireEvent.press(screen.getByText('On'));
+
+    await waitFor(() => expect(screen.getByLabelText('Save Changes').props.accessibilityState.disabled).toBe(false));
+    await fireEvent.press(screen.getByLabelText('Save Changes'));
+
+    await waitFor(() => expect(onSaved).toHaveBeenCalled());
+    expect(ruleDeleted).toBe(true);
     expect(taskPatched).toBe(false);
   });
 

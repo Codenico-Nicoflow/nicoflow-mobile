@@ -29,13 +29,20 @@ interface TaskFieldsFormProps {
   value: TaskFieldsValue;
   onChange: <K extends keyof TaskFieldsValue>(key: K, value: TaskFieldsValue[K]) => void;
   titleError?: string;
+  /**
+   * Hides the time-of-day input. Set by the caller while recurrence is on —
+   * the rule's own scheduledTime is what's stamped onto every occurrence, and
+   * showing both this and the rule's time field invited setting one and
+   * submitting the other. Matches web's TaskDialog.
+   */
+  hideScheduledTime?: boolean;
 }
 
 // The full task field set, shared by TaskCreateSheet (Today tab FAB) and
 // BucketProcessSheet (Inbox process-to-task) — both create a task from
 // scratch and need identical fields, matching web's TaskDialog/
 // BucketProcessDialog task path field-for-field.
-export function TaskFieldsForm({ value, onChange, titleError }: TaskFieldsFormProps) {
+export function TaskFieldsForm({ value, onChange, titleError, hideScheduledTime = false }: TaskFieldsFormProps) {
   const { t } = useTranslation('task');
   const isDark = useColorScheme() === 'dark';
 
@@ -62,11 +69,13 @@ export function TaskFieldsForm({ value, onChange, titleError }: TaskFieldsFormPr
 
       <View className="gap-3 rounded-lg border border-border dark:border-border-dark p-3">
         <ScheduledForField value={value.scheduledFor} onChange={v => onChange('scheduledFor', v)} />
-        <ScheduledTimeField
-          value={value.scheduledTime}
-          onChange={v => onChange('scheduledTime', v)}
-          disabled={!value.scheduledFor}
-        />
+        {!hideScheduledTime && (
+          <ScheduledTimeField
+            value={value.scheduledTime}
+            onChange={v => onChange('scheduledTime', v)}
+            disabled={!value.scheduledFor}
+          />
+        )}
         <RollOverField value={value.rollsOver} onChange={v => onChange('rollsOver', v)} />
       </View>
 

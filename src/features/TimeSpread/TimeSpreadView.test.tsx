@@ -29,6 +29,11 @@ jest.mock('@/lib/store', () => ({
   useCreateTaskMutation: () => mockTaskApi.useCreateTaskMutation(),
   useGetProjectsQuery: () => mockProjectApi.useGetProjectsQuery(),
   useCreateRecurrenceRuleMutation: () => mockRecurrenceApi.useCreateRecurrenceRuleMutation(),
+  useConvertTaskToRecurringMutation: () => mockRecurrenceApi.useConvertTaskToRecurringMutation(),
+  useUpdateRecurrenceRuleMutation: () => mockRecurrenceApi.useUpdateRecurrenceRuleMutation(),
+  useDeleteRecurrenceRuleMutation: () => mockRecurrenceApi.useDeleteRecurrenceRuleMutation(),
+  useGetRecurrenceRuleQuery: (id: string, opts?: { skip?: boolean }) =>
+    mockRecurrenceApi.useGetRecurrenceRuleQuery(id, opts),
 }));
 
 beforeEach(() => {
