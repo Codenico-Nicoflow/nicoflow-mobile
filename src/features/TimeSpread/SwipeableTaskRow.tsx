@@ -1,8 +1,9 @@
 import { useRef, useState } from 'react';
 
-import { type ITask } from '@nicoflow/shared/types';
+import { type ITask, TaskStatus } from '@nicoflow/shared/types';
 import { Check, Trash2 } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
+import Reanimated from 'react-native-reanimated';
 
 import {
   AlertDialog,
@@ -15,6 +16,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { SwipeableRow, type SwipeableRowHandle } from '@/components/ui/swipeable-row';
+import { useCompletionCelebration } from '@/hooks/useCompletionCelebration';
 import { PRIORITY_BORDER_COLOR } from '@/lib/constants/priority';
 import { cn } from '@/lib/utils/cn';
 
@@ -51,13 +53,31 @@ export function SwipeableTaskRow({
   const alertRef = useRef<AlertDialogRef>(null);
   const [pendingDelete, setPendingDelete] = useState(false);
 
+  // Completing holds the row visible with a celebration before onToggleStatus
+  // actually fires; un-completing (or any non-DONE transition) is instant.
+  const {
+    trigger: celebrateComplete,
+    celebrationStyle,
+    flashStyle,
+  } = useCompletionCelebration(() => {
+    onToggleStatus(task);
+  });
+
+  const handleToggle = () => {
+    if (task.status === TaskStatus.DONE) {
+      onToggleStatus(task);
+      return;
+    }
+    celebrateComplete();
+  };
+
   const openDeleteConfirm = () => {
     setPendingDelete(true);
     alertRef.current?.present();
   };
 
   return (
-    <>
+    <Reanimated.View style={celebrationStyle}>
       <SwipeableRow
         ref={swipeableRef}
         className={cn(
@@ -67,8 +87,8 @@ export function SwipeableTaskRow({
         left={{
           tone: 'success',
           icon: <Check size={20} color="#ffffff" />,
-          onPress: () => onToggleStatus(task),
-          onOpen: () => onToggleStatus(task),
+          onPress: handleToggle,
+          onOpen: handleToggle,
         }}
         right={{
           tone: 'destructive',
@@ -83,12 +103,16 @@ export function SwipeableTaskRow({
         <TaskRow
           task={task}
           segment={segment}
-          onToggleStatus={onToggleStatus}
+          onToggleStatus={handleToggle}
           onEdit={onEdit}
           onScheduleToday={onScheduleToday}
           onScheduleTomorrow={onScheduleTomorrow}
           onUnschedule={onUnschedule}
           onDelete={openDeleteConfirm}
+        />
+        <Reanimated.View
+          pointerEvents="none"
+          style={[{ position: 'absolute', inset: 0, borderRadius: 12, backgroundColor: '#22c55e' }, flashStyle]}
         />
       </SwipeableRow>
 
@@ -119,6 +143,6 @@ export function SwipeableTaskRow({
           </AlertDialogCancel>
         </AlertDialogFooter>
       </AlertDialog>
-    </>
+    </Reanimated.View>
   );
 }

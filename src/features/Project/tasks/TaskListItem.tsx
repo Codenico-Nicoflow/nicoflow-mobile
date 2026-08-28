@@ -1,9 +1,10 @@
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import { Pressable, Text, useColorScheme, View } from 'react-native';
 
 import { type ITask, TaskStatus } from '@nicoflow/shared/types';
-import { Ban, CalendarX, MoreVertical, Pencil, Trash2 } from 'lucide-react-native';
+import { Ban, CalendarX, Check, MoreVertical, Pencil, Trash2 } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
+import Reanimated from 'react-native-reanimated';
 
 import {
   AlertDialog,
@@ -17,7 +18,9 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Checkbox } from '@/components/ui/checkbox';
 import { DropdownMenu, DropdownMenuItem, type DropdownMenuRef } from '@/components/ui/dropdown-menu';
+import { SwipeableRow, type SwipeableRowHandle } from '@/components/ui/swipeable-row';
 import { toast } from '@/components/ui/toast';
+import { useCompletionCelebration } from '@/hooks/useCompletionCelebration';
 import { PRIORITY_BORDER_COLOR } from '@/lib/constants/priority';
 import { useDeleteTaskMutation, useMarkTaskMissedMutation, useUpdateTaskStatusMutation } from '@/lib/store';
 import { showSuccessToast, ToastMessages } from '@/lib/toast';
@@ -57,6 +60,33 @@ export function TaskListItem({ task, onEdit, onToggleStatus }: TaskListItemProps
   const [deleteTask, { isLoading: isDeleting }] = useDeleteTaskMutation();
   const menuRef = useRef<DropdownMenuRef>(null);
   const alertRef = useRef<AlertDialogRef>(null);
+  const swipeRef = useRef<SwipeableRowHandle>(null);
+  const [pendingDelete, setPendingDelete] = useState(false);
+
+  // Completing holds the row visible with a celebration before the parent's
+  // onToggleStatus (which owns the open-subtask completion guard) actually
+  // fires; un-completing is instant, no hold — mirrors web's one-directional
+  // completion guard.
+  const {
+    trigger: celebrateComplete,
+    celebrationStyle,
+    flashStyle,
+  } = useCompletionCelebration(() => {
+    onToggleStatus(task);
+  });
+
+  const handleToggle = () => {
+    if (isDone) {
+      onToggleStatus(task);
+      return;
+    }
+    celebrateComplete();
+  };
+
+  const openDeleteConfirm = () => {
+    setPendingDelete(true);
+    alertRef.current?.present();
+  };
 
   // Mirrors the backend's own mark-missed guard (today-or-past, active,
   // recurring, unreaped) so the menu doesn't offer an action the server
@@ -89,95 +119,126 @@ export function TaskListItem({ task, onEdit, onToggleStatus }: TaskListItemProps
       });
       return;
     }
+    setPendingDelete(false);
     alertRef.current?.dismiss();
+    swipeRef.current?.close();
   };
 
   return (
-    <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
-      <Pressable
-        onPress={() => onEdit(task)}
-        accessibilityRole="button"
-        testID={`task-item-${task.id}`}
-        style={{ flex: 1, flexDirection: 'row', alignItems: 'flex-start', gap: 12, padding: 12, minHeight: 56 }}
-        className={cn(
-          'rounded-xl border-s-4 border border-border dark:border-border-dark bg-card dark:bg-card-dark shadow-sm',
-          PRIORITY_BORDER_COLOR[task.priority]
-        )}
+    <Reanimated.View style={celebrationStyle}>
+      <SwipeableRow
+        ref={swipeRef}
+        left={{
+          tone: 'success',
+          icon: <Check size={20} color="#ffffff" />,
+          onPress: handleToggle,
+          onOpen: handleToggle,
+        }}
+        right={{
+          tone: 'destructive',
+          icon: <Trash2 size={20} color="#ffffff" />,
+          onPress: openDeleteConfirm,
+          onOpen: openDeleteConfirm,
+        }}
       >
-        <View style={{ flex: 1, minWidth: 0, minHeight: 32, gap: 6 }}>
-          <Text
-            style={{
-              fontSize: 14,
-              lineHeight: 18,
-              minHeight: 18,
-              fontWeight: '500',
-              color: isDone ? mutedColor : isDark ? '#e2e8f0' : '#0f172a',
-              textDecorationLine: isDone ? 'line-through' : 'none',
-            }}
-          >
-            {task.title}
-          </Text>
-
-          {!!task.notes && (
-            <Text style={{ fontSize: 12, lineHeight: 16, minHeight: 16, color: mutedColor }}>{task.notes}</Text>
+        <Pressable
+          onPress={() => onEdit(task)}
+          accessibilityRole="button"
+          testID={`task-item-${task.id}`}
+          style={{ flex: 1, flexDirection: 'row', alignItems: 'flex-start', gap: 12, padding: 12, minHeight: 56 }}
+          className={cn(
+            'rounded-xl border-s-4 border border-border dark:border-border-dark bg-card dark:bg-card-dark shadow-sm',
+            PRIORITY_BORDER_COLOR[task.priority]
           )}
-
-          <TaskChips task={task} />
-        </View>
-
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-          <DropdownMenu
-            ref={menuRef}
-            trigger={
-              <View accessibilityLabel={t('actions.menuLabel')} className="p-1">
-                <MoreVertical size={16} color={mutedColor} />
-              </View>
-            }
-          >
-            <DropdownMenuItem
-              icon={<Pencil size={16} color={isDark ? '#e2e8f0' : '#1e293b'} />}
-              onPress={() => {
-                menuRef.current?.dismiss();
-                onEdit(task);
+        >
+          <View style={{ flex: 1, minWidth: 0, minHeight: 32, gap: 6 }}>
+            <Text
+              style={{
+                fontSize: 14,
+                lineHeight: 18,
+                minHeight: 18,
+                fontWeight: '500',
+                color: isDone ? mutedColor : isDark ? '#e2e8f0' : '#0f172a',
+                textDecorationLine: isDone ? 'line-through' : 'none',
               }}
             >
-              {t('actions.edit')}
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              icon={<Ban size={16} color={isDark ? '#e2e8f0' : '#1e293b'} />}
-              onPress={() => {
-                menuRef.current?.dismiss();
-                onCancel();
-              }}
+              {task.title}
+            </Text>
+
+            {!!task.notes && (
+              <Text style={{ fontSize: 12, lineHeight: 16, minHeight: 16, color: mutedColor }}>{task.notes}</Text>
+            )}
+
+            <TaskChips task={task} />
+          </View>
+
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+            <DropdownMenu
+              ref={menuRef}
+              trigger={
+                <View accessibilityLabel={t('actions.menuLabel')} className="p-1">
+                  <MoreVertical size={16} color={mutedColor} />
+                </View>
+              }
             >
-              {t('actions.cancel')}
-            </DropdownMenuItem>
-            {canMarkMissed && (
               <DropdownMenuItem
-                icon={<CalendarX size={16} color={isDark ? '#e2e8f0' : '#1e293b'} />}
+                icon={<Pencil size={16} color={isDark ? '#e2e8f0' : '#1e293b'} />}
                 onPress={() => {
                   menuRef.current?.dismiss();
-                  onMarkMissed();
+                  onEdit(task);
                 }}
               >
-                {t('actions.markMissed')}
+                {t('actions.edit')}
               </DropdownMenuItem>
-            )}
-            <DropdownMenuItem
-              icon={<Trash2 size={16} color={isDark ? '#f87171' : '#ef4444'} />}
-              variant="destructive"
-              onPress={() => {
-                menuRef.current?.dismiss();
-                alertRef.current?.present();
-              }}
-            >
-              {t('actions.delete')}
-            </DropdownMenuItem>
-          </DropdownMenu>
+              <DropdownMenuItem
+                icon={<Ban size={16} color={isDark ? '#e2e8f0' : '#1e293b'} />}
+                onPress={() => {
+                  menuRef.current?.dismiss();
+                  onCancel();
+                }}
+              >
+                {t('actions.cancel')}
+              </DropdownMenuItem>
+              {canMarkMissed && (
+                <DropdownMenuItem
+                  icon={<CalendarX size={16} color={isDark ? '#e2e8f0' : '#1e293b'} />}
+                  onPress={() => {
+                    menuRef.current?.dismiss();
+                    onMarkMissed();
+                  }}
+                >
+                  {t('actions.markMissed')}
+                </DropdownMenuItem>
+              )}
+              <DropdownMenuItem
+                icon={<Trash2 size={16} color={isDark ? '#f87171' : '#ef4444'} />}
+                variant="destructive"
+                onPress={() => {
+                  menuRef.current?.dismiss();
+                  openDeleteConfirm();
+                }}
+              >
+                {t('actions.delete')}
+              </DropdownMenuItem>
+            </DropdownMenu>
 
-          <Checkbox checked={isDone} onCheckedChange={() => onToggleStatus(task)} />
-        </View>
-      </Pressable>
+            <Checkbox checked={isDone} onCheckedChange={handleToggle} />
+          </View>
+        </Pressable>
+
+        <Reanimated.View
+          pointerEvents="none"
+          style={[
+            {
+              position: 'absolute',
+              inset: 0,
+              borderRadius: 12,
+              backgroundColor: '#22c55e',
+            },
+            flashStyle,
+          ]}
+        />
+      </SwipeableRow>
 
       <AlertDialog ref={alertRef}>
         <AlertDialogHeader>
@@ -185,14 +246,24 @@ export function TaskListItem({ task, onEdit, onToggleStatus }: TaskListItemProps
           <AlertDialogDescription>{t('deleteDialog.description', { name: task.title })}</AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogAction onPress={() => void onConfirmDelete()}>
+          <AlertDialogAction
+            onPress={() => {
+              if (pendingDelete) void onConfirmDelete();
+            }}
+          >
             {isDeleting ? `${t('deleteDialog.confirmLabel')}...` : t('deleteDialog.confirmLabel')}
           </AlertDialogAction>
-          <AlertDialogCancel onPress={() => alertRef.current?.dismiss()}>
+          <AlertDialogCancel
+            onPress={() => {
+              setPendingDelete(false);
+              alertRef.current?.dismiss();
+              swipeRef.current?.close();
+            }}
+          >
             {t('common:actions.cancel')}
           </AlertDialogCancel>
         </AlertDialogFooter>
       </AlertDialog>
-    </View>
+    </Reanimated.View>
   );
 }

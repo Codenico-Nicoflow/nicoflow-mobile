@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Sheet, SheetDescription, SheetFooter, SheetHeader, type SheetRef, SheetTitle } from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
 import { TaskSheet, type TaskSheetRef } from '@/features/TimeSpread/TaskSheet';
+import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { useGetTasksInfiniteQuery, useUpdateTaskStatusMutation } from '@/lib/store';
 
 import { needsCompletionConfirm } from './completionGuard';
@@ -22,6 +23,7 @@ import {
 import { TaskFilters } from './TaskFilters';
 import { TaskListItem } from './TaskListItem';
 import { TaskQuickAdd } from './TaskQuickAdd';
+import { TaskSearch } from './TaskSearch';
 import { TasksEmptyState } from './TasksEmptyState';
 import { TasksHeader } from './TasksHeader';
 
@@ -46,7 +48,9 @@ function TasksLoadingState() {
 // whatever's loaded.
 export function TasksSection({ projectId }: TasksSectionProps) {
   const { t } = useTranslation('task');
-  const { data, isLoading } = useGetTasksInfiniteQuery({ projectId });
+  const { data, isLoading, hasNextPage, isFetchingNextPage, fetchNextPage } = useGetTasksInfiniteQuery({
+    projectId,
+  });
   const [updateTaskStatus] = useUpdateTaskStatusMutation();
   const sheetRef = useRef<TaskSheetRef>(null);
   const completeConfirmRef = useRef<SheetRef>(null);
@@ -59,6 +63,8 @@ export function TasksSection({ projectId }: TasksSectionProps) {
     ScheduleFilter.ALL
   );
   const [activeEnergy, setActiveEnergy] = useState<TaskEnergy | 'all'>('all');
+  const [searchQuery, setSearchQuery] = useState('');
+  const debouncedSearch = useDebouncedValue(searchQuery, 300);
 
   const activeFilter = pickedFilter ?? defaultTaskFilter();
 
@@ -77,8 +83,14 @@ export function TasksSection({ projectId }: TasksSectionProps) {
     if (activeEnergy !== 'all') {
       filtered = filtered.filter(task => task.energy === activeEnergy);
     }
+    if (debouncedSearch.trim()) {
+      const query = debouncedSearch.toLowerCase();
+      filtered = filtered.filter(
+        task => task.title.toLowerCase().includes(query) || (task.notes ?? '').toLowerCase().includes(query)
+      );
+    }
     return [...filtered].sort((a, b) => a.displayOrder - b.displayOrder);
-  }, [tasks, activeFilter, scheduleFilter, activeEnergy]);
+  }, [tasks, activeFilter, scheduleFilter, activeEnergy, debouncedSearch]);
 
   const runToggle = (task: ITask, next: TaskStatus) => {
     void updateTaskStatus({ id: task.id, status: next });
@@ -123,9 +135,21 @@ export function TasksSection({ projectId }: TasksSectionProps) {
             />
           )}
           ItemSeparatorComponent={() => <View style={{ height: 12 }} />}
+          onEndReached={() => {
+            if (hasNextPage && !isFetchingNextPage) void fetchNextPage();
+          }}
+          onEndReachedThreshold={0.5}
+          ListFooterComponent={
+            isFetchingNextPage ? (
+              <View style={{ paddingVertical: 16 }}>
+                <Skeleton className="h-20 w-full rounded-xl" />
+              </View>
+            ) : null
+          }
           ListHeaderComponent={
             <View style={{ gap: 12, marginBottom: 16 }}>
               <TaskQuickAdd projectId={projectId} />
+              <TaskSearch value={searchQuery} onChange={setSearchQuery} />
               <TaskFilters
                 activeFilter={activeFilter}
                 onFilterChange={changeFilter}
@@ -142,7 +166,7 @@ export function TasksSection({ projectId }: TasksSectionProps) {
               className="py-12 text-center text-muted-foreground dark:text-muted-foreground-dark"
               testID="task-no-results"
             >
-              {t('noResults.filter')}
+              {debouncedSearch ? t('noResults.search') : t('noResults.filter')}
             </Text>
           }
           showsVerticalScrollIndicator={false}

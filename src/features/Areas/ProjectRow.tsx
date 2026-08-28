@@ -19,15 +19,10 @@ import { Badge } from '@/components/ui/badge';
 import { DropdownMenu, DropdownMenuItem, type DropdownMenuRef } from '@/components/ui/dropdown-menu';
 import { toast } from '@/components/ui/toast';
 import { iconComponentFor } from '@/lib/constants/icons';
+import { projectStatusBadgeStyle } from '@/lib/constants/projectStatus';
 import { useDeleteProjectMutation, useUpdateProjectMutation } from '@/lib/store';
 import { showSuccessToast, ToastMessages } from '@/lib/toast';
 import { splitTransName } from '@/lib/utils/transName';
-
-const STATUS_BADGE_VARIANT = {
-  active: 'default',
-  completed: 'secondary',
-  archived: 'outline',
-} as const;
 
 interface ProjectRowProps {
   project: IProject;
@@ -50,6 +45,7 @@ export function ProjectRow({ project, onPress, onEdit }: ProjectRowProps) {
   const alertRef = useRef<AlertDialogRef>(null);
 
   const isOverdue = !!project.dueDate && new Date(project.dueDate) < new Date() && project.status === 'active';
+  const statusBadge = projectStatusBadgeStyle(project.status, isDark);
 
   const onConfirmDelete = async () => {
     try {
@@ -98,7 +94,9 @@ export function ProjectRow({ project, onPress, onEdit }: ProjectRowProps) {
             </Text>
           </View>
         )}
-        <Badge variant={STATUS_BADGE_VARIANT[project.status]}>{t(`project:status.${project.status}`)}</Badge>
+        <Badge style={{ backgroundColor: statusBadge.backgroundColor }} textStyle={{ color: statusBadge.color }}>
+          {t(`project:status.${project.status}`)}
+        </Badge>
       </Pressable>
 
       <DropdownMenu

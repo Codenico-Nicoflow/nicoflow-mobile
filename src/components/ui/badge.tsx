@@ -1,4 +1,4 @@
-import { Text, View } from 'react-native';
+import { type StyleProp, Text, type TextStyle, View, type ViewStyle } from 'react-native';
 
 import { cva, type VariantProps } from 'class-variance-authority';
 import type { ReactNode } from 'react';
@@ -34,13 +34,18 @@ export interface BadgeProps extends VariantProps<typeof badgeVariants> {
   icon?: ReactNode;
   className?: string;
   textClassName?: string;
+  /** Overrides the variant's background — for semantic per-item colors (e.g. project status) that don't map to a fixed variant. */
+  style?: StyleProp<ViewStyle>;
+  textStyle?: StyleProp<TextStyle>;
 }
 
-export function Badge({ children, icon, variant, className, textClassName }: BadgeProps) {
+export function Badge({ children, icon, variant, className, textClassName, style, textStyle }: BadgeProps) {
   return (
-    <View className={cn(badgeVariants({ variant }), className)}>
+    <View className={cn(badgeVariants({ variant }), className)} style={style}>
       {icon}
-      <Text className={cn(badgeTextVariants({ variant }), textClassName)}>{children}</Text>
+      <Text className={cn(badgeTextVariants({ variant }), textClassName)} style={textStyle}>
+        {children}
+      </Text>
     </View>
   );
 }
