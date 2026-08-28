@@ -70,8 +70,16 @@ export const {
   useUpdateProjectMutation,
 } = projectApi;
 
-// Recurrence exports — a repeating task is created as a rule, not a task field
-export const { useCreateRecurrenceRuleMutation } = recurrenceApi;
+// Recurrence exports — a repeating task is created as a rule, not a task field.
+// Update/Delete/Get let TaskSheet load and edit a task's EXISTING rule in place
+// instead of always creating a new one on every edit.
+export const {
+  useConvertTaskToRecurringMutation,
+  useCreateRecurrenceRuleMutation,
+  useDeleteRecurrenceRuleMutation,
+  useGetRecurrenceRuleQuery,
+  useUpdateRecurrenceRuleMutation,
+} = recurrenceApi;
 
 // Bucket exports — hooks are generated on the instance constructed in store.ts
 export const {

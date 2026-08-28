@@ -1,4 +1,4 @@
-import { forwardRef, useImperativeHandle, useRef, useState } from 'react';
+import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import { useColorScheme, View } from 'react-native';
 
 import { type ITask, TaskEnergy, TaskPriority, TaskStatus } from '@nicoflow/shared/types';
@@ -15,7 +15,15 @@ import { Button } from '@/components/ui/button';
 import { PlanLimitAlert } from '@/components/ui/plan-limit-alert';
 import { Sheet, SheetDescription, SheetHeader, type SheetRef, SheetTitle } from '@/components/ui/sheet';
 import { toast } from '@/components/ui/toast';
-import { useCreateRecurrenceRuleMutation, useCreateTaskMutation, useUpdateTaskMutation } from '@/lib/store';
+import {
+  useConvertTaskToRecurringMutation,
+  useCreateRecurrenceRuleMutation,
+  useCreateTaskMutation,
+  useDeleteRecurrenceRuleMutation,
+  useGetRecurrenceRuleQuery,
+  useUpdateRecurrenceRuleMutation,
+  useUpdateTaskMutation,
+} from '@/lib/store';
 import { showSuccessToast, ToastMessages } from '@/lib/toast';
 
 // present(task?, scheduledFor?) instead of a plain SheetRef — the caller hands
@@ -114,16 +122,32 @@ export const TaskSheet = forwardRef<TaskSheetRef, TaskSheetProps>(function TaskS
   const [createTask, { isLoading: isCreatingTask }] = useCreateTaskMutation();
   const [updateTask, { isLoading: isUpdatingTask }] = useUpdateTaskMutation();
   const [createRule, { isLoading: isCreatingRule }] = useCreateRecurrenceRuleMutation();
+  const [convertTask, { isLoading: isConvertingTask }] = useConvertTaskToRecurringMutation();
+  const [updateRule, { isLoading: isUpdatingRule }] = useUpdateRecurrenceRuleMutation();
+  const [deleteRule, { isLoading: isDeletingRule }] = useDeleteRecurrenceRuleMutation();
   const sheetRef = useRef<SheetRef>(null);
 
   const [task, setTask] = useState<ITask | null>(null);
   const isEditMode = !!task;
+  // The task's own rule, if it has one — loaded so edit mode can show the real
+  // schedule instead of always opening with "not repeating".
+  const existingRuleId = task?.recurrenceRuleId ?? undefined;
+  const { data: existingRule, isFetching: isLoadingRule } = useGetRecurrenceRuleQuery(existingRuleId as string, {
+    skip: !existingRuleId,
+  });
 
   const [fields, setFields] = useState<TaskFieldsValue>(() => emptyFields(''));
   const [initialFields, setInitialFields] = useState<TaskFieldsValue>(() => emptyFields(''));
   const [projectId, setProjectId] = useState('');
   const [initialProjectId, setInitialProjectId] = useState('');
+  // null = not repeating. In edit mode this is seeded from the task's own rule
+  // (see the effect below) so the field reflects reality instead of always
+  // opening closed. Whether saving this creates a new rule or updates the
+  // existing one is decided at submit time by whether `existingRuleId` is set.
   const [recurrence, setRecurrence] = useState<RecurrenceValue | null>(null);
+  // Whether the user actually touched the recurrence field this session — as
+  // opposed to it merely being pre-filled from the task's existing rule.
+  const [recurrenceDirty, setRecurrenceDirty] = useState(false);
   const [status, setStatus] = useState<TaskStatus>(TaskStatus.ACTIVE);
   const [initialStatus, setInitialStatus] = useState<TaskStatus>(TaskStatus.ACTIVE);
   const [titleError, setTitleError] = useState<string | undefined>();
@@ -143,6 +167,7 @@ export const TaskSheet = forwardRef<TaskSheetRef, TaskSheetProps>(function TaskS
     setProjectId(nextProjectId);
     setInitialProjectId(nextProjectId);
     setRecurrence(null);
+    setRecurrenceDirty(false);
     setStatus(nextStatus);
     setInitialStatus(nextStatus);
     setTitleError(undefined);
@@ -158,6 +183,49 @@ export const TaskSheet = forwardRef<TaskSheetRef, TaskSheetProps>(function TaskS
     dismiss: () => sheetRef.current?.dismiss(),
   }));
 
+  // Seed the field from the task's own rule once it loads. Guarded by
+  // recurrenceDirty so a background refetch never clobbers an edit the user
+  // is mid-way through making.
+  //
+  // Two staleness traps this used to fall into, both from the sheet never
+  // being unmounted between present() calls:
+  //  1. existingRuleId truthy but existingRule not loaded yet (still fetching,
+  //     or the rule was just deleted and this is a stale 404) used to do
+  //     NOTHING — leaving whatever `recurrence` was in state from the PREVIOUS
+  //     present() on the screen. Reopening a task right after deleting its
+  //     rule showed the old recurring schedule.
+  //  2. existingRule could be a different rule's cached data than the one
+  //     existingRuleId now points at, if the query result lagged one render
+  //     behind its own `skip` flag.
+  // Both are closed by only accepting existingRule once its id actually
+  // matches existingRuleId, and defaulting to null otherwise (fetching or
+  // gone) rather than leaving the prior value untouched.
+  useEffect(() => {
+    if (!isEditMode || recurrenceDirty) return;
+    if (existingRuleId && existingRule && existingRule.id === existingRuleId) {
+      setRecurrence({
+        freq: existingRule.freq,
+        interval: existingRule.interval,
+        byWeekday: existingRule.byWeekday,
+        byMonthday: existingRule.byMonthday ?? null,
+        startDate: existingRule.startDate,
+        endDate: existingRule.endDate ?? null,
+        scheduledTime: existingRule.scheduledTime ?? null,
+      });
+    } else {
+      setRecurrence(null);
+    }
+  }, [isEditMode, existingRule, existingRuleId, recurrenceDirty]);
+
+  // Recurrence owns the time-of-day once it's on — clear the task-level one so
+  // it can't ride along stale into an update payload.
+  useEffect(() => {
+    if (recurrence && fields.scheduledTime) {
+      setField('scheduledTime', null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- setField/fields intentionally excluded: this only reacts to recurrence turning on, not every field edit
+  }, [recurrence]);
+
   const setField = <K extends keyof TaskFieldsValue>(key: K, value: TaskFieldsValue[K]) =>
     setFields(prev => ({ ...prev, [key]: value }));
 
@@ -169,7 +237,7 @@ export const TaskSheet = forwardRef<TaskSheetRef, TaskSheetProps>(function TaskS
   // itself the change even if nothing else on the form moved.
   const projectChanged = isEditMode && projectId !== initialProjectId;
   const statusChanged = isEditMode && status !== initialStatus;
-  const hasChanges = !fieldsEqual(fields, initialFields) || !!recurrence || projectChanged || statusChanged;
+  const hasChanges = !fieldsEqual(fields, initialFields) || recurrenceDirty || projectChanged || statusChanged;
 
   const onSubmit = async () => {
     setFormError(null);
@@ -185,12 +253,11 @@ export const TaskSheet = forwardRef<TaskSheetRef, TaskSheetProps>(function TaskS
     }
 
     try {
-      if (isEditMode && recurrence) {
-        // A repeating edit starts a NEW rule from this task forward rather than
-        // mutating any rule the task already belongs to — same createRule call
-        // as create-mode, just reachable from here too.
-        await createRule({
-          projectId,
+      if (isEditMode && recurrenceDirty && recurrence && existingRuleId) {
+        // Task already belongs to a rule and the user changed the schedule —
+        // update that rule in place rather than creating a duplicate.
+        await updateRule({
+          id: existingRuleId,
           title: fields.title,
           notes: fields.notes || undefined,
           priority: fields.priority,
@@ -198,7 +265,27 @@ export const TaskSheet = forwardRef<TaskSheetRef, TaskSheetProps>(function TaskS
           estimatedMinutes: fields.estimatedMinutes ?? undefined,
           ...normalizeScheduleForFreq(recurrence),
         }).unwrap();
-        showSuccessToast(ToastMessages.TASK_CREATED_SUCCESSFULLY, toast);
+        showSuccessToast(ToastMessages.TASK_UPDATED_SUCCESSFULLY, toast);
+      } else if (isEditMode && recurrenceDirty && recurrence && !existingRuleId) {
+        // Turning a plain task into a repeating one: the SAME task becomes
+        // instance #1, in place — never a second task. Template fields are
+        // sent for type parity with createRule, but the server ignores them
+        // and reads the task's own current values instead.
+        await convertTask({
+          taskId: task.id,
+          title: fields.title,
+          notes: fields.notes || undefined,
+          priority: fields.priority,
+          energy: fields.energy,
+          estimatedMinutes: fields.estimatedMinutes ?? undefined,
+          ...normalizeScheduleForFreq(recurrence),
+        }).unwrap();
+        showSuccessToast(ToastMessages.TASK_UPDATED_SUCCESSFULLY, toast);
+      } else if (isEditMode && recurrenceDirty && !recurrence && existingRuleId) {
+        // Toggled recurrence off on a task that had a rule — end the series.
+        // The current task instance and its history are untouched.
+        await deleteRule(existingRuleId).unwrap();
+        showSuccessToast(ToastMessages.TASK_UPDATED_SUCCESSFULLY, toast);
       } else if (isEditMode && task) {
         const updatePayload: Parameters<ReturnType<typeof useUpdateTaskMutation>[0]>[0] = {
           id: task.id,
@@ -277,7 +364,8 @@ export const TaskSheet = forwardRef<TaskSheetRef, TaskSheetProps>(function TaskS
     }
   };
 
-  const isLoading = isCreatingTask || isUpdatingTask || isCreatingRule;
+  const isLoading =
+    isCreatingTask || isUpdatingTask || isCreatingRule || isConvertingTask || isUpdatingRule || isDeletingRule;
 
   return (
     <Sheet ref={sheetRef} snapPoints={['75%']}>
@@ -315,22 +403,29 @@ export const TaskSheet = forwardRef<TaskSheetRef, TaskSheetProps>(function TaskS
           error={projectError}
         />
 
-        <TaskFieldsForm value={fields} onChange={setField} titleError={titleError} />
+        <TaskFieldsForm value={fields} onChange={setField} titleError={titleError} hideScheduledTime={!!recurrence} />
 
         {isEditMode && <TaskStatusField value={status} onChange={setStatus} />}
 
-        {/* Turning this on for an existing task starts a NEW series from here
-            forward — it never edits the rule the task already belongs to.
-            Managing/pausing an existing rule stays in Settings. On a delegated
-            create, the value is handed to onCreateSubmit instead of resolved
-            here (see its call site above). */}
-        <RecurrenceField value={recurrence} onChange={setRecurrence} />
+        {/* Editing an already-repeating task loads its real rule (see the
+            effect above) rather than always opening closed. Turning it off
+            ends that rule; turning it on for a plain task starts a new one —
+            see the submit branches for exactly which mutation each case
+            fires. On a delegated create, the value is handed to
+            onCreateSubmit instead of resolved here (see its call site above). */}
+        <RecurrenceField
+          value={recurrence}
+          onChange={next => {
+            setRecurrence(next);
+            setRecurrenceDirty(true);
+          }}
+        />
 
         <Button
           label={isEditMode ? t('common:actions.save') : t('common:actions.create')}
           onPress={onSubmit}
           loading={isLoading}
-          disabled={(isEditMode && !hasChanges) || isLoading}
+          disabled={(isEditMode && !hasChanges) || isLoading || isLoadingRule}
         />
       </View>
     </Sheet>

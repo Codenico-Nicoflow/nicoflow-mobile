@@ -38,6 +38,10 @@ jest.mock('@/lib/store', () => ({
   useCreateTaskMutation: () => [jest.fn(), { isLoading: false }],
   useUpdateTaskMutation: () => [jest.fn(), { isLoading: false }],
   useCreateRecurrenceRuleMutation: () => [jest.fn(), { isLoading: false }],
+  useConvertTaskToRecurringMutation: () => [jest.fn(), { isLoading: false }],
+  useUpdateRecurrenceRuleMutation: () => [jest.fn(), { isLoading: false }],
+  useDeleteRecurrenceRuleMutation: () => [jest.fn(), { isLoading: false }],
+  useGetRecurrenceRuleQuery: () => ({ data: undefined, isFetching: false }),
 }));
 
 const projects = [
