@@ -33,6 +33,7 @@ interface TaskListItemProps {
   onEdit: (task: ITask) => void;
   onToggleStatus: (task: ITask) => void;
   dragHandleProps?: { onLongPress?: () => void; disabled?: boolean };
+  isDragging?: boolean;
 }
 
 // Mirrors web's TaskItem.tsx: whole row taps to edit, checkbox flips
@@ -49,7 +50,7 @@ interface TaskListItemProps {
 // inline style). Colors/borders/radius via className still work fine — only
 // gap is affected — so only spacing moved to inline style here, not the
 // whole file.
-export function TaskListItem({ task, onEdit, onToggleStatus, dragHandleProps }: TaskListItemProps) {
+export function TaskListItem({ task, onEdit, onToggleStatus, dragHandleProps, isDragging }: TaskListItemProps) {
   const { t } = useTranslation('task');
   const isDark = useColorScheme() === 'dark';
   const mutedColor = isDark ? '#94a3b8' : '#64748b';
@@ -127,6 +128,7 @@ export function TaskListItem({ task, onEdit, onToggleStatus, dragHandleProps }: 
     <Reanimated.View style={celebrationStyle}>
       <SwipeableRow
         ref={swipeRef}
+        isDragging={isDragging}
         className="rounded-xl border-s-4 border-s-primary dark:border-s-primary-dark border border-border dark:border-border-dark shadow-sm"
         left={{
           tone: 'success',

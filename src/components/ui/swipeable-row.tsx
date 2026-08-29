@@ -141,6 +141,8 @@ export interface SwipeableRowProps {
   left?: SwipeSideConfig;
   /** Swipe left to reveal — conventionally the destructive action (e.g. delete). */
   right?: SwipeSideConfig;
+  /** True while a drag-reorder is holding this row — overrides the swipe tint with a vivid primary fill. */
+  isDragging?: boolean;
 }
 
 export interface SwipeableRowHandle {
@@ -151,7 +153,7 @@ export interface SwipeableRowHandle {
 // left-vs-right-active flag is enough to drive one shared tint — no need to
 // track two independent colors simultaneously.
 export const SwipeableRow = forwardRef<SwipeableRowHandle, SwipeableRowProps>(function SwipeableRow(
-  { children, className, testID, left, right },
+  { children, className, testID, left, right, isDragging },
   ref
 ) {
   const isDark = useColorScheme() === 'dark';
@@ -195,11 +197,13 @@ export const SwipeableRow = forwardRef<SwipeableRowHandle, SwipeableRowProps>(fu
       )
     : undefined;
 
+  const dragTint = isDark ? 'rgba(99,102,241,0.3)' : 'rgba(79,70,229,0.25)';
   const rowTintStyle = useAnimatedStyle(() => {
+    if (isDragging) return { backgroundColor: dragTint };
     const tone = activeTone.value;
     const [from, to] = isDark ? TONE_TINT_RGBA[tone].dark : TONE_TINT_RGBA[tone].light;
     return { backgroundColor: interpolateColor(rowProgress.value, [0, 1], [from, to]) };
-  });
+  }, [isDragging, isDark]);
 
   return (
     <ReanimatedSwipeable

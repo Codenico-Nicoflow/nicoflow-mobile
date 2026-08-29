@@ -143,6 +143,7 @@ export function TasksSection({ projectId }: TasksSectionProps) {
                 onEdit={editTask => sheetRef.current?.present({ task: editTask })}
                 onToggleStatus={onToggleStatus}
                 dragHandleProps={{ onLongPress: drag, disabled: isActive }}
+                isDragging={isActive}
               />
             </ScaleDecorator>
           )}
