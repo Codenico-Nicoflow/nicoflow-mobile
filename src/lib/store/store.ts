@@ -7,6 +7,7 @@ import {
   createNoteApi,
   createProjectApi,
   createRecurrenceApi,
+  createSubtaskApi,
   createTaskApi,
 } from '@nicoflow/shared/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -48,6 +49,7 @@ export const projectApi = createProjectApi(baseQueryWithReauth, areaApi);
 export const recurrenceApi = createRecurrenceApi(baseQueryWithReauth, taskApi);
 export const bucketApi = createBucketApi(baseQueryWithReauth);
 export const noteApi = createNoteApi(baseQueryWithReauth);
+export const subtaskApi = createSubtaskApi(baseQueryWithReauth);
 
 const apiReducerPaths = [
   authApi.reducerPath,
@@ -57,6 +59,7 @@ const apiReducerPaths = [
   recurrenceApi.reducerPath,
   bucketApi.reducerPath,
   noteApi.reducerPath,
+  subtaskApi.reducerPath,
 ] as const;
 
 const combinedReducer = combineReducers({
@@ -68,6 +71,7 @@ const combinedReducer = combineReducers({
   [recurrenceApi.reducerPath]: recurrenceApi.reducer,
   [bucketApi.reducerPath]: bucketApi.reducer,
   [noteApi.reducerPath]: noteApi.reducer,
+  [subtaskApi.reducerPath]: subtaskApi.reducer,
 });
 
 type CombinedState = ReturnType<typeof combinedReducer>;
@@ -111,7 +115,8 @@ export const store = configureStore({
       projectApi.middleware,
       recurrenceApi.middleware,
       bucketApi.middleware,
-      noteApi.middleware
+      noteApi.middleware,
+      subtaskApi.middleware
     ),
   enhancers: getDefaultEnhancers =>
     __DEV__ ? getDefaultEnhancers().concat(devToolsEnhancer()) : getDefaultEnhancers(),

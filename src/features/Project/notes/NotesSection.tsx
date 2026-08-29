@@ -91,7 +91,7 @@ export function NotesSection({ projectId }: NotesSectionProps) {
           style={{ flex: 1 }}
           data={notes}
           keyExtractor={note => note.id}
-          renderItem={({ item: note }) => <NoteRow note={note} onOpen={id => router.push(`/note/${id}`)} />}
+          renderItem={({ item: note }) => <NoteRow note={note} onOpen={id => router.push(`/note/${id}`)} deletable />}
           ItemSeparatorComponent={() => <View style={{ height: 8 }} />}
           showsVerticalScrollIndicator={false}
         />

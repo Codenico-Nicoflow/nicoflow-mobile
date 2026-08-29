@@ -9,6 +9,7 @@ import { useTranslation } from 'react-i18next';
 import { ProjectPicker } from '@/components/fields/ProjectPicker';
 import { type RecurrenceValue } from '@/components/fields/recurrence';
 import { RecurrenceField } from '@/components/fields/RecurrenceField';
+import { SubtaskSection } from '@/components/fields/SubtaskSection';
 import { TaskFieldsForm, type TaskFieldsValue } from '@/components/fields/TaskFieldsForm';
 import { TaskStatusField } from '@/components/fields/TaskStatusField';
 import { Button } from '@/components/ui/button';
@@ -403,23 +404,30 @@ export const TaskSheet = forwardRef<TaskSheetRef, TaskSheetProps>(function TaskS
           error={projectError}
         />
 
-        <TaskFieldsForm value={fields} onChange={setField} titleError={titleError} hideScheduledTime={!!recurrence} />
-
-        {isEditMode && <TaskStatusField value={status} onChange={setStatus} />}
-
-        {/* Editing an already-repeating task loads its real rule (see the
-            effect above) rather than always opening closed. Turning it off
-            ends that rule; turning it on for a plain task starts a new one —
-            see the submit branches for exactly which mutation each case
-            fires. On a delegated create, the value is handed to
-            onCreateSubmit instead of resolved here (see its call site above). */}
-        <RecurrenceField
-          value={recurrence}
-          onChange={next => {
-            setRecurrence(next);
-            setRecurrenceDirty(true);
-          }}
+        <TaskFieldsForm
+          value={fields}
+          onChange={setField}
+          titleError={titleError}
+          hideScheduledTime={!!recurrence}
+          statusSlot={isEditMode && <TaskStatusField value={status} onChange={setStatus} />}
+          recurrenceSlot={
+            // Editing an already-repeating task loads its real rule (see the
+            // effect above) rather than always opening closed. Turning it off
+            // ends that rule; turning it on for a plain task starts a new one —
+            // see the submit branches for exactly which mutation each case
+            // fires. On a delegated create, the value is handed to
+            // onCreateSubmit instead of resolved here (see its call site above).
+            <RecurrenceField
+              value={recurrence}
+              onChange={next => {
+                setRecurrence(next);
+                setRecurrenceDirty(true);
+              }}
+            />
+          }
         />
+
+        {isEditMode && task && <SubtaskSection taskId={task.id} />}
 
         <Button
           label={isEditMode ? t('common:actions.save') : t('common:actions.create')}

@@ -1,15 +1,16 @@
 import { useMemo, useRef, useState } from 'react';
-import { FlatList, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
 import { type ITask, ScheduleFilter, type TaskEnergy, TaskStatus } from '@nicoflow/shared/types';
 import { useTranslation } from 'react-i18next';
+import DraggableFlatList, { type RenderItemParams, ScaleDecorator } from 'react-native-draggable-flatlist';
 
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetDescription, SheetFooter, SheetHeader, type SheetRef, SheetTitle } from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
 import { TaskSheet, type TaskSheetRef } from '@/features/TimeSpread/TaskSheet';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
-import { useGetTasksInfiniteQuery, useUpdateTaskStatusMutation } from '@/lib/store';
+import { useGetTasksInfiniteQuery, useReorderTaskMutation, useUpdateTaskStatusMutation } from '@/lib/store';
 
 import { needsCompletionConfirm } from './completionGuard';
 import {
@@ -52,6 +53,7 @@ export function TasksSection({ projectId }: TasksSectionProps) {
     projectId,
   });
   const [updateTaskStatus] = useUpdateTaskStatusMutation();
+  const [reorderTask] = useReorderTaskMutation();
   const sheetRef = useRef<TaskSheetRef>(null);
   const completeConfirmRef = useRef<SheetRef>(null);
   const [pendingComplete, setPendingComplete] = useState<ITask | null>(null);
@@ -115,6 +117,13 @@ export function TasksSection({ projectId }: TasksSectionProps) {
     setPendingComplete(null);
   };
 
+  const onTasksDragEnd = ({ data, to }: { data: ITask[]; from: number; to: number }) => {
+    const movedTask = data[to];
+    const targetDisplayOrder = filteredTasks[to]?.displayOrder;
+    if (!movedTask || targetDisplayOrder === undefined) return;
+    void reorderTask({ id: movedTask.id, displayOrder: targetDisplayOrder });
+  };
+
   return (
     <View className="flex-1 px-4 pt-3">
       <TasksHeader taskCount={tasks.length} onAddTask={() => sheetRef.current?.present({ projectId })} />
@@ -122,17 +131,20 @@ export function TasksSection({ projectId }: TasksSectionProps) {
       {isLoading ? (
         <TasksLoadingState />
       ) : tasks.length > 0 ? (
-        <FlatList
+        <DraggableFlatList
           testID="tasks-list"
-          style={{ flex: 1 }}
           data={filteredTasks}
           keyExtractor={task => task.id}
-          renderItem={({ item: task }) => (
-            <TaskListItem
-              task={task}
-              onEdit={editTask => sheetRef.current?.present({ task: editTask })}
-              onToggleStatus={onToggleStatus}
-            />
+          onDragEnd={onTasksDragEnd}
+          renderItem={({ item: task, drag, isActive }: RenderItemParams<ITask>) => (
+            <ScaleDecorator>
+              <TaskListItem
+                task={task}
+                onEdit={editTask => sheetRef.current?.present({ task: editTask })}
+                onToggleStatus={onToggleStatus}
+                dragHandleProps={{ onLongPress: drag, disabled: isActive }}
+              />
+            </ScaleDecorator>
           )}
           ItemSeparatorComponent={() => <View style={{ height: 12 }} />}
           onEndReached={() => {

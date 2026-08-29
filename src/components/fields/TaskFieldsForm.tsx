@@ -1,3 +1,4 @@
+import { type ReactNode } from 'react';
 import { useColorScheme, View } from 'react-native';
 
 import { type TaskEnergy, type TaskPriority } from '@nicoflow/shared/types';
@@ -36,13 +37,24 @@ interface TaskFieldsFormProps {
    * submitting the other. Matches web's TaskDialog.
    */
   hideScheduledTime?: boolean;
+  /** Rendered right after Description, before Priority — edit-mode-only StatusField from the caller. */
+  statusSlot?: ReactNode;
+  /** Rendered right after the scheduling block, before EstimatedTime — RecurrenceField from the caller. */
+  recurrenceSlot?: ReactNode;
 }
 
 // The full task field set, shared by TaskCreateSheet (Today tab FAB) and
 // BucketProcessSheet (Inbox process-to-task) — both create a task from
 // scratch and need identical fields, matching web's TaskDialog/
 // BucketProcessDialog task path field-for-field.
-export function TaskFieldsForm({ value, onChange, titleError, hideScheduledTime = false }: TaskFieldsFormProps) {
+export function TaskFieldsForm({
+  value,
+  onChange,
+  titleError,
+  hideScheduledTime = false,
+  statusSlot,
+  recurrenceSlot,
+}: TaskFieldsFormProps) {
   const { t } = useTranslation('task');
   const isDark = useColorScheme() === 'dark';
 
@@ -63,6 +75,8 @@ export function TaskFieldsForm({ value, onChange, titleError, hideScheduledTime 
         placeholder={t('dialog.descriptionPlaceholder')}
       />
 
+      {statusSlot}
+
       <PriorityField value={value.priority} onChange={v => onChange('priority', v)} />
 
       <EnergyField value={value.energy} onChange={v => onChange('energy', v)} isDark={isDark} />
@@ -78,6 +92,8 @@ export function TaskFieldsForm({ value, onChange, titleError, hideScheduledTime 
         )}
         <RollOverField value={value.rollsOver} onChange={v => onChange('rollsOver', v)} />
       </View>
+
+      {recurrenceSlot}
 
       <EstimatedTimeField value={value.estimatedMinutes} onChange={v => onChange('estimatedMinutes', v)} />
 

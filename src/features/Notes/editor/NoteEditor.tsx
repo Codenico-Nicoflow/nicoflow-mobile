@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { FlatList, Pressable, Text, View } from 'react-native';
+import { FlatList, Pressable, Text, useColorScheme, View } from 'react-native';
 
 import { type TiptapDoc } from '@nicoflow/shared/types';
 import { useTranslation } from 'react-i18next';
@@ -8,7 +8,8 @@ import { Sheet, SheetHeader, type SheetRef, SheetTitle } from '@/components/ui/s
 import { useLazySearchMentionsQuery } from '@/lib/store';
 import { cn } from '@/lib/utils/cn';
 
-import { CALLOUT_GLYPH, NOTE_CALLOUT_ICONS } from './calloutIcons';
+import { CALLOUT_ICON_COMPONENTS } from './calloutIconComponents';
+import { NOTE_CALLOUT_ICONS } from './calloutIcons';
 import { CALLOUT_SWATCH, NOTE_COLOR_TOKENS } from './colorTokens';
 import { type NoteEditorState, NoteEditorWebView, type NoteEditorWebViewRef } from './NoteEditorWebView';
 import { NoteToolbar } from './NoteToolbar';
@@ -41,6 +42,7 @@ export function NoteEditor({
   onMentionTapped,
 }: NoteEditorProps) {
   const { t } = useTranslation('notes');
+  const isDark = useColorScheme() === 'dark';
   const webviewRef = useRef<NoteEditorWebViewRef>(null);
   const [state, setState] = useState<NoteEditorState | null>(null);
   const [mentionQuery, setMentionQuery] = useState<string | null>(null);
@@ -142,20 +144,23 @@ export function NoteEditor({
           <SheetTitle>Callout icon</SheetTitle>
         </SheetHeader>
         <View className="flex-row flex-wrap gap-2">
-          {NOTE_CALLOUT_ICONS.map(icon => (
-            <Pressable
-              key={icon}
-              onPress={() => {
-                if (calloutTargetPos !== null) webviewRef.current?.setCalloutIconAt(calloutTargetPos, icon);
-                calloutIconSheetRef.current?.dismiss();
-              }}
-              accessibilityRole="button"
-              testID={`note-callout-icon-${icon}`}
-              className="size-11 items-center justify-center rounded-md border border-input dark:border-input-dark"
-            >
-              <Text className="text-lg">{CALLOUT_GLYPH[icon]}</Text>
-            </Pressable>
-          ))}
+          {NOTE_CALLOUT_ICONS.map(icon => {
+            const Icon = CALLOUT_ICON_COMPONENTS[icon];
+            return (
+              <Pressable
+                key={icon}
+                onPress={() => {
+                  if (calloutTargetPos !== null) webviewRef.current?.setCalloutIconAt(calloutTargetPos, icon);
+                  calloutIconSheetRef.current?.dismiss();
+                }}
+                accessibilityRole="button"
+                testID={`note-callout-icon-${icon}`}
+                className="size-11 items-center justify-center rounded-md border border-input dark:border-input-dark"
+              >
+                <Icon size={20} color={isDark ? '#e2e8f0' : '#1e293b'} />
+              </Pressable>
+            );
+          })}
         </View>
       </Sheet>
 
