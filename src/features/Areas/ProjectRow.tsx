@@ -39,6 +39,7 @@ interface ProjectRowProps {
   onEdit: (project: IProject) => void;
   onMoveToArea: (project: IProject) => void;
   dragHandleProps?: { onLongPress?: () => void; disabled?: boolean };
+  isDragging?: boolean;
 }
 
 // Mirrors web's ProjectRow.tsx: folder icon, name, favorite star (if set),
@@ -48,7 +49,7 @@ interface ProjectRowProps {
 // AreaCard's delete dialog). "Move to Area" has no web equivalent — web
 // does this by dragging the card across area boundaries; mobile's drag lib
 // only reorders within one list, so cross-area move is this menu action.
-export function ProjectRow({ project, onPress, onEdit, onMoveToArea, dragHandleProps }: ProjectRowProps) {
+export function ProjectRow({ project, onPress, onEdit, onMoveToArea, dragHandleProps, isDragging }: ProjectRowProps) {
   const { t } = useTranslation(['project', 'common']);
   const isDark = useColorScheme() === 'dark';
   const Icon = iconComponentFor(project.folderIcon);
@@ -78,7 +79,7 @@ export function ProjectRow({ project, onPress, onEdit, onMoveToArea, dragHandleP
   };
 
   return (
-    <View className="flex-row items-center">
+    <View className={`flex-row items-center rounded-md ${isDragging ? 'bg-primary/25 dark:bg-primary-dark/25' : ''}`}>
       <Pressable
         onLongPress={dragHandleProps?.onLongPress}
         disabled={dragHandleProps?.disabled}

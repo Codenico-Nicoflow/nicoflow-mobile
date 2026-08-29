@@ -25,6 +25,8 @@ export interface SelectOption {
   label: string;
   value: string;
   icon?: LucideIcon;
+  /** Overrides the default muted icon tint — e.g. a status's semantic color for a dot-style icon. */
+  iconColor?: string;
 }
 
 interface SelectContextValue {
@@ -114,7 +116,9 @@ export const Select = forwardRef<SelectRef, SelectProps>(function Select(
                 className="flex-row items-center justify-between rounded-md px-2 py-3"
               >
                 <View className="flex-row items-center gap-2">
-                  {Icon && <Icon size={16} color={isDark ? '#94a3b8' : '#64748b'} />}
+                  {Icon && (
+                    <Icon size={16} color={item.iconColor ?? (isDark ? '#94a3b8' : '#64748b')} fill={item.iconColor} />
+                  )}
                   <Text className="text-sm text-foreground dark:text-foreground-dark">{item.label}</Text>
                 </View>
                 {selected && <Check size={16} color={isDark ? '#6366f1' : '#4f46e5'} />}

@@ -1,7 +1,13 @@
 import { createRef } from 'react';
 
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
-import { createAreaApi, createProjectApi, createRecurrenceApi, createTaskApi } from '@nicoflow/shared/api';
+import {
+  createAreaApi,
+  createProjectApi,
+  createRecurrenceApi,
+  createSubtaskApi,
+  createTaskApi,
+} from '@nicoflow/shared/api';
 import { type ITask, TaskEnergy, TaskPriority, TaskStatus } from '@nicoflow/shared/types';
 import { configureStore } from '@reduxjs/toolkit';
 import { fetchBaseQuery } from '@reduxjs/toolkit/query';
@@ -28,6 +34,7 @@ const mockTaskApi = createTaskApi(baseQuery);
 const mockAreaApi = createAreaApi(baseQuery);
 const mockProjectApi = createProjectApi(baseQuery, mockAreaApi);
 const mockRecurrenceApi = createRecurrenceApi(baseQuery, mockTaskApi);
+const mockSubtaskApi = createSubtaskApi(baseQuery);
 
 jest.mock('@/lib/store', () => ({
   useCreateTaskMutation: () => mockTaskApi.useCreateTaskMutation(),
@@ -39,6 +46,10 @@ jest.mock('@/lib/store', () => ({
   useDeleteRecurrenceRuleMutation: () => mockRecurrenceApi.useDeleteRecurrenceRuleMutation(),
   useGetRecurrenceRuleQuery: (id: string, opts?: { skip?: boolean }) =>
     mockRecurrenceApi.useGetRecurrenceRuleQuery(id, opts),
+  useGetSubtasksQuery: (taskId: string) => mockSubtaskApi.useGetSubtasksQuery(taskId),
+  useCreateSubtaskMutation: () => mockSubtaskApi.useCreateSubtaskMutation(),
+  useUpdateSubtaskMutation: () => mockSubtaskApi.useUpdateSubtaskMutation(),
+  useDeleteSubtaskMutation: () => mockSubtaskApi.useDeleteSubtaskMutation(),
 }));
 
 const projects = [
@@ -64,7 +75,8 @@ const projects = [
 
 beforeEach(() => {
   server.use(
-    http.get(`${API}/projects`, () => HttpResponse.json({ data: { items: projects, nextCursor: '' }, error: null }))
+    http.get(`${API}/projects`, () => HttpResponse.json({ data: { items: projects, nextCursor: '' }, error: null })),
+    http.get(`${API}/tasks/:taskId/subtasks`, () => HttpResponse.json({ data: { items: [] }, error: null }))
   );
 });
 
@@ -75,13 +87,15 @@ const makeStore = () =>
       [mockProjectApi.reducerPath]: mockProjectApi.reducer,
       [mockAreaApi.reducerPath]: mockAreaApi.reducer,
       [mockRecurrenceApi.reducerPath]: mockRecurrenceApi.reducer,
+      [mockSubtaskApi.reducerPath]: mockSubtaskApi.reducer,
     },
     middleware: gDM =>
       gDM().concat(
         mockTaskApi.middleware,
         mockProjectApi.middleware,
         mockAreaApi.middleware,
-        mockRecurrenceApi.middleware
+        mockRecurrenceApi.middleware,
+        mockSubtaskApi.middleware
       ),
   });
 

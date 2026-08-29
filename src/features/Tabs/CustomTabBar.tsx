@@ -6,9 +6,20 @@ import type { BottomTabBarProps } from 'expo-router/build/react-navigation/botto
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { useGetBucketsQuery, useGetTimeSpreadQuery } from '@/lib/store';
 import { cn } from '@/lib/utils/cn';
 
 import { MOBILE_NAV_DESTINATIONS } from './data';
+
+// Matches web's Rail badge exactly: pill, 9+ cap, primary bg/white text,
+// only rendered when count > 0 (see Rail/components/RailItem.tsx's Badge).
+function TabBadge({ count }: { count: number }) {
+  return (
+    <View className="absolute -right-2.5 -top-1 h-4 min-w-4 items-center justify-center rounded-full bg-primary dark:bg-primary-dark px-1">
+      <Text className="text-[10px] font-semibold text-primary-foreground">{count > 9 ? '9+' : count}</Text>
+    </View>
+  );
+}
 
 export function CustomTabBar({ state, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
@@ -17,6 +28,19 @@ export function CustomTabBar({ state, navigation }: BottomTabBarProps) {
   const indicatorX = useSharedValue(0);
   const [barWidth, setBarWidth] = useState(0);
   const tabWidth = barWidth / MOBILE_NAV_DESTINATIONS.length;
+
+  // Same source as web's Rail: Today's count is what's scheduled for today,
+  // Inbox's is unprocessed captures.
+  const { data: timeSpread } = useGetTimeSpreadQuery();
+  const todayCount = timeSpread?.today.length ?? 0;
+  const { data: buckets } = useGetBucketsQuery();
+  const inboxCount = buckets?.items.filter(b => !b.processedAt).length ?? 0;
+
+  const badgeFor = (id: string) => {
+    if (id === 'today') return todayCount;
+    if (id === 'inbox') return inboxCount;
+    return 0;
+  };
 
   useEffect(() => {
     if (!tabWidth) return;
@@ -64,11 +88,14 @@ export function CustomTabBar({ state, navigation }: BottomTabBarProps) {
             accessibilityLabel={destination.label}
             className="flex-1 items-center gap-1 py-2"
           >
-            <Icon
-              size={22}
-              strokeWidth={isFocused ? 2.5 : 2}
-              color={isFocused ? (isDark ? '#6366f1' : '#4f46e5') : isDark ? '#94a3b8' : '#64748b'}
-            />
+            <View>
+              <Icon
+                size={22}
+                strokeWidth={isFocused ? 2.5 : 2}
+                color={isFocused ? (isDark ? '#6366f1' : '#4f46e5') : isDark ? '#94a3b8' : '#64748b'}
+              />
+              {badgeFor(destination.id) > 0 && <TabBadge count={badgeFor(destination.id)} />}
+            </View>
             <Text
               className={cn(
                 'text-[11px]',

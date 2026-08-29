@@ -21,10 +21,8 @@ import { DropdownMenu, DropdownMenuItem, type DropdownMenuRef } from '@/componen
 import { SwipeableRow, type SwipeableRowHandle } from '@/components/ui/swipeable-row';
 import { toast } from '@/components/ui/toast';
 import { useCompletionCelebration } from '@/hooks/useCompletionCelebration';
-import { PRIORITY_BORDER_COLOR } from '@/lib/constants/priority';
 import { useDeleteTaskMutation, useMarkTaskMissedMutation, useUpdateTaskStatusMutation } from '@/lib/store';
 import { showSuccessToast, ToastMessages } from '@/lib/toast';
-import { cn } from '@/lib/utils/cn';
 
 import { TaskChips } from '../../TimeSpread/TaskChips';
 
@@ -35,6 +33,7 @@ interface TaskListItemProps {
   onEdit: (task: ITask) => void;
   onToggleStatus: (task: ITask) => void;
   dragHandleProps?: { onLongPress?: () => void; disabled?: boolean };
+  isDragging?: boolean;
 }
 
 // Mirrors web's TaskItem.tsx: whole row taps to edit, checkbox flips
@@ -51,7 +50,7 @@ interface TaskListItemProps {
 // inline style). Colors/borders/radius via className still work fine — only
 // gap is affected — so only spacing moved to inline style here, not the
 // whole file.
-export function TaskListItem({ task, onEdit, onToggleStatus, dragHandleProps }: TaskListItemProps) {
+export function TaskListItem({ task, onEdit, onToggleStatus, dragHandleProps, isDragging }: TaskListItemProps) {
   const { t } = useTranslation('task');
   const isDark = useColorScheme() === 'dark';
   const mutedColor = isDark ? '#94a3b8' : '#64748b';
@@ -129,6 +128,8 @@ export function TaskListItem({ task, onEdit, onToggleStatus, dragHandleProps }: 
     <Reanimated.View style={celebrationStyle}>
       <SwipeableRow
         ref={swipeRef}
+        isDragging={isDragging}
+        className="rounded-xl border-s-4 border-s-primary dark:border-s-primary-dark border border-border dark:border-border-dark shadow-sm"
         left={{
           tone: 'success',
           icon: <Check size={20} color="#ffffff" />,
@@ -147,10 +148,6 @@ export function TaskListItem({ task, onEdit, onToggleStatus, dragHandleProps }: 
           accessibilityRole="button"
           testID={`task-item-${task.id}`}
           style={{ flex: 1, flexDirection: 'row', alignItems: 'flex-start', gap: 12, padding: 12, minHeight: 56 }}
-          className={cn(
-            'rounded-xl border-s-4 border border-border dark:border-border-dark bg-card dark:bg-card-dark shadow-sm',
-            PRIORITY_BORDER_COLOR[task.priority]
-          )}
         >
           <View style={{ flex: 1, minWidth: 0, minHeight: 32, gap: 6 }}>
             <Text

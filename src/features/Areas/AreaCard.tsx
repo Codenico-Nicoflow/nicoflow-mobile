@@ -97,7 +97,9 @@ export function AreaCard({
 
   return (
     <View
-      className={`relative rounded-lg border border-border dark:border-border-dark bg-card dark:bg-card-dark ${isDragging ? 'opacity-70' : ''}`}
+      className={`relative rounded-lg border border-border dark:border-border-dark ${
+        isDragging ? 'bg-primary/25 dark:bg-primary-dark/25' : 'bg-card dark:bg-card-dark'
+      }`}
       testID={`area-card-${area.id}`}
     >
       <View className="flex-row items-center gap-3 p-3 pr-11">
@@ -179,6 +181,7 @@ export function AreaCard({
                   onEdit={onEditProject}
                   onMoveToArea={onMoveProjectToArea}
                   dragHandleProps={{ onLongPress: drag, disabled: isActive }}
+                  isDragging={isActive}
                 />
               </ScaleDecorator>
             )}

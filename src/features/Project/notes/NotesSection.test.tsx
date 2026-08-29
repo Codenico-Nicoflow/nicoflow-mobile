@@ -1,14 +1,18 @@
+import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { createNoteApi, type ListNotesRequest } from '@nicoflow/shared/api';
 import { type INote } from '@nicoflow/shared/types';
 import { configureStore } from '@reduxjs/toolkit';
 import { fetchBaseQuery } from '@reduxjs/toolkit/query';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import { http, HttpResponse } from 'msw';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Provider } from 'react-redux';
 
 import { server } from '../../../../test/server';
 
 import { NotesSection } from './NotesSection';
+
+jest.mock('@gorhom/bottom-sheet', () => require('@gorhom/bottom-sheet/mock'));
 
 const API = 'http://localhost:8080/v1';
 const mockRouterPush = jest.fn();
@@ -20,6 +24,7 @@ jest.mock('@/lib/store', () => ({
   useGetNotesInfiniteQuery: (arg: ListNotesRequest, opts: { skip?: boolean }) =>
     mockNoteApi.useGetNotesInfiniteQuery(arg, opts),
   useCreateNoteMutation: () => mockNoteApi.useCreateNoteMutation(),
+  useDeleteNoteMutation: () => mockNoteApi.useDeleteNoteMutation(),
 }));
 
 jest.mock('expo-router', () => ({ router: { push: (...args: unknown[]) => mockRouterPush(...args) } }));
@@ -43,9 +48,13 @@ const note = (overrides: Partial<INote> = {}): INote => ({
 
 const renderSection = () =>
   render(
-    <Provider store={makeStore()}>
-      <NotesSection projectId="p1" />
-    </Provider>
+    <GestureHandlerRootView>
+      <BottomSheetModalProvider>
+        <Provider store={makeStore()}>
+          <NotesSection projectId="p1" />
+        </Provider>
+      </BottomSheetModalProvider>
+    </GestureHandlerRootView>
   );
 
 beforeEach(() => {

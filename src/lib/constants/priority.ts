@@ -25,10 +25,14 @@ export const PRIORITY_BORDER_COLOR: Record<TaskPriority, string> = {
   [TaskPriority.HIGH]: 'border-s-destructive dark:border-s-destructive-dark',
 };
 
+// Matches web's formatTaskPriority chip spec: colored border + light
+// background fill + colored text, not just an outline. bg-*/10 approximates
+// web's bg-green-50/bg-yellow-50/bg-red-50 light tint using this app's
+// existing success/warning/destructive tokens rather than new raw hex.
 export const PRIORITY_CHIP_CLASS: Record<TaskPriority, string> = {
-  [TaskPriority.LOW]: 'border-success dark:border-success-dark',
-  [TaskPriority.MEDIUM]: 'border-warning dark:border-warning-dark',
-  [TaskPriority.HIGH]: 'border-destructive dark:border-destructive-dark',
+  [TaskPriority.LOW]: 'border-success dark:border-success-dark bg-success/10 dark:bg-success-dark/10',
+  [TaskPriority.MEDIUM]: 'border-warning dark:border-warning-dark bg-warning/10 dark:bg-warning-dark/10',
+  [TaskPriority.HIGH]: 'border-destructive dark:border-destructive-dark bg-destructive/10 dark:bg-destructive-dark/10',
 };
 
 export const PRIORITY_TEXT_CLASS: Record<TaskPriority, string> = {

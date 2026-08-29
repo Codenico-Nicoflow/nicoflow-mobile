@@ -28,7 +28,8 @@ import { Button } from '@/components/ui/button';
 import { Sheet, SheetDescription, SheetFooter, SheetHeader, type SheetRef, SheetTitle } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils/cn';
 
-import { CALLOUT_GLYPH, NOTE_CALLOUT_ICONS } from './calloutIcons';
+import { CALLOUT_ICON_COMPONENTS } from './calloutIconComponents';
+import { NOTE_CALLOUT_ICONS } from './calloutIcons';
 import { CALLOUT_SWATCH, isNoteColorToken, NOTE_COLOR_TOKENS } from './colorTokens';
 import { type NoteEditorCommand, type NoteEditorState } from './NoteEditorWebView';
 
@@ -302,22 +303,29 @@ export function NoteToolbar({ state, onCommand }: NoteToolbarProps) {
         </SheetHeader>
         <View className="gap-3">
           <View className="flex-row flex-wrap gap-2">
-            {NOTE_CALLOUT_ICONS.map(icon => (
-              <Pressable
-                key={icon}
-                onPress={() => setCalloutIcon(icon)}
-                accessibilityRole="button"
-                accessibilityState={{ selected: calloutIcon === icon }}
-                className={cn(
-                  'size-11 items-center justify-center rounded-md border',
-                  calloutIcon === icon
-                    ? 'border-primary dark:border-primary-dark bg-primary/10 dark:bg-primary-dark/10'
-                    : 'border-input dark:border-input-dark'
-                )}
-              >
-                <Text className="text-lg">{CALLOUT_GLYPH[icon]}</Text>
-              </Pressable>
-            ))}
+            {NOTE_CALLOUT_ICONS.map(icon => {
+              const Icon = CALLOUT_ICON_COMPONENTS[icon];
+              const selected = calloutIcon === icon;
+              return (
+                <Pressable
+                  key={icon}
+                  onPress={() => setCalloutIcon(icon)}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected }}
+                  className={cn(
+                    'size-11 items-center justify-center rounded-md border',
+                    selected
+                      ? 'border-primary dark:border-primary-dark bg-primary/10 dark:bg-primary-dark/10'
+                      : 'border-input dark:border-input-dark'
+                  )}
+                >
+                  <Icon
+                    size={20}
+                    color={selected ? (isDark ? '#6366f1' : '#4f46e5') : isDark ? '#e2e8f0' : '#1e293b'}
+                  />
+                </Pressable>
+              );
+            })}
           </View>
           <View className="flex-row flex-wrap gap-2">
             {NOTE_COLOR_TOKENS.map(token => (
