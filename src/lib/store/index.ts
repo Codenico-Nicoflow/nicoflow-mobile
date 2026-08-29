@@ -1,4 +1,4 @@
-import { areaApi, authApi, bucketApi, noteApi, projectApi, recurrenceApi, taskApi } from './store';
+import { areaApi, authApi, bucketApi, noteApi, projectApi, recurrenceApi, subtaskApi, taskApi } from './store';
 
 // Store exports
 export type { AppDispatch, RootState } from './store';
@@ -13,6 +13,7 @@ export {
   projectApi,
   recurrenceApi,
   store,
+  subtaskApi,
   taskApi,
 } from './store';
 
@@ -100,3 +101,7 @@ export const {
   useLazySearchMentionsQuery,
   useUpdateNoteMutation,
 } = noteApi;
+
+// Subtask exports — hooks are generated on the instance constructed in store.ts
+export const { useCreateSubtaskMutation, useDeleteSubtaskMutation, useGetSubtasksQuery, useUpdateSubtaskMutation } =
+  subtaskApi;

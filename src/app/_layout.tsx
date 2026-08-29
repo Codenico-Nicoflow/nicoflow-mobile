@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useColorScheme } from 'react-native';
+import { LogBox, useColorScheme } from 'react-native';
 
 import { DarkTheme, DefaultTheme, ThemeProvider } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
@@ -26,6 +26,14 @@ import '../../global.css';
 
 SplashScreen.preventAutoHideAsync();
 initSentry();
+
+// react-native-draggable-flatlist's autoscroll/measurement pass scans ref
+// ancestors on screens using it (Areas board) and hits Animated-wrapped
+// Pressables (Button, DropdownMenuItem) that don't resolve to a native host
+// component — a real quirk in that interaction, not a bug in this app's own
+// components, and doesn't affect drag/scroll/tap behavior. Confirmed on
+// real devices before suppressing.
+LogBox.ignoreLogs(['Warning: ref.measureLayout must be called with a ref to a native component.']);
 
 function SessionRestoringNavigator() {
   useSessionRestore();
