@@ -1,6 +1,6 @@
 import { Text, TextInput, useColorScheme, View } from 'react-native';
 
-import { CheckSquare } from 'lucide-react-native';
+import { CheckSquare, type LucideIcon } from 'lucide-react-native';
 
 import { cn } from '@/lib/utils/cn';
 
@@ -12,14 +12,16 @@ interface NameFieldProps {
   label: string;
   placeholder: string;
   error?: string;
+  /** Defaults to CheckSquare (task name) — pass web's per-form icon (Tag for area, FolderOpen for project) elsewhere. */
+  icon?: LucideIcon;
 }
 
-export function NameField({ value, onChange, label, placeholder, error }: NameFieldProps) {
+export function NameField({ value, onChange, label, placeholder, error, icon = CheckSquare }: NameFieldProps) {
   const isDark = useColorScheme() === 'dark';
 
   return (
     <View className="gap-1.5">
-      <FieldLabel icon={CheckSquare} label={label} />
+      <FieldLabel icon={icon} label={label} />
       <TextInput
         value={value}
         onChangeText={onChange}

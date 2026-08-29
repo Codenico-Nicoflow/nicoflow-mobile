@@ -8,7 +8,7 @@ import {
   useMemo,
   useRef,
 } from 'react';
-import { Pressable, Text, useColorScheme } from 'react-native';
+import { Pressable, Text, useColorScheme, View } from 'react-native';
 
 import {
   BottomSheetBackdrop,
@@ -16,7 +16,7 @@ import {
   BottomSheetFlatList,
   BottomSheetModal,
 } from '@gorhom/bottom-sheet';
-import { Check, ChevronDown } from 'lucide-react-native';
+import { Check, ChevronDown, type LucideIcon } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { cn } from '@/lib/utils/cn';
@@ -24,6 +24,7 @@ import { cn } from '@/lib/utils/cn';
 export interface SelectOption {
   label: string;
   value: string;
+  icon?: LucideIcon;
 }
 
 interface SelectContextValue {
@@ -101,6 +102,7 @@ export const Select = forwardRef<SelectRef, SelectProps>(function Select(
           contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: bottomPadding }}
           renderItem={({ item }) => {
             const selected = item.value === value;
+            const Icon = item.icon;
             return (
               <Pressable
                 onPress={() => {
@@ -111,7 +113,10 @@ export const Select = forwardRef<SelectRef, SelectProps>(function Select(
                 accessibilityState={{ selected }}
                 className="flex-row items-center justify-between rounded-md px-2 py-3"
               >
-                <Text className="text-sm text-foreground dark:text-foreground-dark">{item.label}</Text>
+                <View className="flex-row items-center gap-2">
+                  {Icon && <Icon size={16} color={isDark ? '#94a3b8' : '#64748b'} />}
+                  <Text className="text-sm text-foreground dark:text-foreground-dark">{item.label}</Text>
+                </View>
                 {selected && <Check size={16} color={isDark ? '#6366f1' : '#4f46e5'} />}
               </Pressable>
             );

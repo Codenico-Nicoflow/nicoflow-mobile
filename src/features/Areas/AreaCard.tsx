@@ -1,10 +1,11 @@
-import { useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Pressable, Text, useColorScheme, View } from 'react-native';
 
 import { type AreaWithProjects } from '@nicoflow/shared/api';
 import { type IProject } from '@nicoflow/shared/types';
 import { GripVertical, MoreVertical, Pencil, Plus, Trash2 } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
+import { NestableDraggableFlatList, type RenderItemParams, ScaleDecorator } from 'react-native-draggable-flatlist';
 
 import {
   AlertDialog,
@@ -20,7 +21,7 @@ import { Badge } from '@/components/ui/badge';
 import { DropdownMenu, DropdownMenuItem, type DropdownMenuRef } from '@/components/ui/dropdown-menu';
 import { toast } from '@/components/ui/toast';
 import { iconComponentFor } from '@/lib/constants/icons';
-import { useDeleteAreaMutation } from '@/lib/store';
+import { useDeleteAreaMutation, useReorderProjectsMutation } from '@/lib/store';
 import { showSuccessToast, ToastMessages } from '@/lib/toast';
 import { splitTransName } from '@/lib/utils/transName';
 
@@ -32,6 +33,7 @@ interface AreaCardProps {
   onEdit: (area: AreaWithProjects) => void;
   onEditProject: (project: IProject) => void;
   onAddProject: (areaId: string) => void;
+  onMoveProjectToArea: (project: IProject) => void;
   dragHandleProps?: { onLongPress?: () => void; disabled?: boolean };
   isDragging?: boolean;
 }
@@ -49,17 +51,33 @@ export function AreaCard({
   onEdit,
   onEditProject,
   onAddProject,
+  onMoveProjectToArea,
   dragHandleProps,
   isDragging,
 }: AreaCardProps) {
   const { t } = useTranslation(['area', 'common']);
   const isDark = useColorScheme() === 'dark';
   const [deleteArea, { isLoading: isDeleting }] = useDeleteAreaMutation();
+  const [reorderProjects] = useReorderProjectsMutation();
   const menuRef = useRef<DropdownMenuRef>(null);
   const alertRef = useRef<AlertDialogRef>(null);
   const Icon = iconComponentFor(area.icon);
-  const projects = area.projects ?? [];
   const chevronColor = isDark ? '#94a3b8' : '#64748b';
+
+  // Local state so NestableDraggableFlatList has something to animate
+  // against mid-drag, same rationale as AreasList's own localOrder — server
+  // data (area.projects) is the source of truth once a drag settles.
+  const [localProjects, setLocalProjects] = useState<IProject[]>(area.projects ?? []);
+  useEffect(() => {
+    setLocalProjects(area.projects ?? []);
+  }, [area.projects]);
+
+  const onProjectsDragEnd = ({ data }: { data: IProject[] }) => {
+    setLocalProjects(data);
+    void reorderProjects({
+      items: data.map((project, index) => ({ id: project.id, displayOrder: index })),
+    });
+  };
 
   const onConfirmDelete = async () => {
     try {
@@ -105,8 +123,8 @@ export function AreaCard({
         </Text>
 
         <Badge variant="secondary">
-          {t(projects.length === 1 ? 'area:board.projectCount_one' : 'area:board.projectCount_other', {
-            count: projects.length,
+          {t(localProjects.length === 1 ? 'area:board.projectCount_one' : 'area:board.projectCount_other', {
+            count: localProjects.length,
           })}
         </Badge>
       </View>
@@ -143,19 +161,28 @@ export function AreaCard({
       </View>
 
       <View className="gap-0.5 px-2 pb-3">
-        {projects.length === 0 ? (
+        {localProjects.length === 0 ? (
           <Text className="px-2 py-2 text-sm text-muted-foreground dark:text-muted-foreground-dark">
             {t('area:card.noProjects')}
           </Text>
         ) : (
-          projects.map(project => (
-            <ProjectRow
-              key={project.id}
-              project={project}
-              onPress={() => onPressProject(project.id)}
-              onEdit={onEditProject}
-            />
-          ))
+          <NestableDraggableFlatList
+            data={localProjects}
+            onDragEnd={onProjectsDragEnd}
+            keyExtractor={project => project.id}
+            scrollEnabled={false}
+            renderItem={({ item: project, drag, isActive }: RenderItemParams<IProject>) => (
+              <ScaleDecorator>
+                <ProjectRow
+                  project={project}
+                  onPress={() => onPressProject(project.id)}
+                  onEdit={onEditProject}
+                  onMoveToArea={onMoveProjectToArea}
+                  dragHandleProps={{ onLongPress: drag, disabled: isActive }}
+                />
+              </ScaleDecorator>
+            )}
+          />
         )}
         <Pressable
           onPress={() => onAddProject(area.id)}

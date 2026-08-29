@@ -45,16 +45,17 @@ const project = (overrides: Partial<IProject> = {}): IProject => ({
 const renderRow = async (props: Partial<Parameters<typeof ProjectRow>[0]> = {}) => {
   const onPress = jest.fn();
   const onEdit = jest.fn();
+  const onMoveToArea = jest.fn();
   await render(
     <GestureHandlerRootView>
       <BottomSheetModalProvider>
         <Provider store={makeStore()}>
-          <ProjectRow project={project()} onPress={onPress} onEdit={onEdit} {...props} />
+          <ProjectRow project={project()} onPress={onPress} onEdit={onEdit} onMoveToArea={onMoveToArea} {...props} />
         </Provider>
       </BottomSheetModalProvider>
     </GestureHandlerRootView>
   );
-  return { onPress, onEdit };
+  return { onPress, onEdit, onMoveToArea };
 };
 
 describe('ProjectRow', () => {

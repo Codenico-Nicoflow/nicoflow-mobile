@@ -2,7 +2,7 @@ import { useRef } from 'react';
 import { Pressable, useColorScheme, View } from 'react-native';
 
 import { ICON_IDS, type IconId } from '@nicoflow/shared/types';
-import { Check } from 'lucide-react-native';
+import { Check, Sparkles } from 'lucide-react-native';
 
 import { Sheet, SheetHeader, type SheetRef, SheetTitle } from '@/components/ui/sheet';
 import { iconComponentFor } from '@/lib/constants/icons';
@@ -15,11 +15,13 @@ interface IconFieldProps {
   label: string;
 }
 
-// Mirrors web's IconField/index.tsx: trigger button showing the selected
-// icon, opens a 5-col grid of the same 30-icon set (ICON_IDS), selected icon
-// gets a Check badge overlay. Web renders the grid inline in a Popover;
-// mobile uses a nested Sheet (this app's sole modal primitive, see sheet.tsx)
-// stacked on top of the parent Area/Project form sheet.
+// Mirrors web's IconField/index.tsx: label glyph is always Sparkles (NOT the
+// currently-selected icon — that was a mobile-only divergence), trigger
+// button shows the selected icon, opens a 5-col grid of the same 30-icon set
+// (ICON_IDS), selected icon gets a Check badge overlay. Web renders the grid
+// inline in a Popover; mobile uses a nested Sheet (this app's sole modal
+// primitive, see sheet.tsx) stacked on top of the parent Area/Project form
+// sheet.
 export function IconField({ value, onChange, label }: IconFieldProps) {
   const isDark = useColorScheme() === 'dark';
   const sheetRef = useRef<SheetRef>(null);
@@ -28,7 +30,7 @@ export function IconField({ value, onChange, label }: IconFieldProps) {
 
   return (
     <View className="gap-1.5">
-      <FieldLabel icon={SelectedIcon} label={label} />
+      <FieldLabel icon={Sparkles} label={label} />
       <Pressable
         onPress={() => sheetRef.current?.present()}
         accessibilityRole="button"

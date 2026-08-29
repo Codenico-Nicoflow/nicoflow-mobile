@@ -34,13 +34,19 @@ const mockNoteApi = createNoteApi(baseQuery);
 
 jest.mock('@/lib/store', () => ({
   useGetProjectQuery: (id: string) => mockProjectApi.useGetProjectQuery(id),
+  useCreateProjectMutation: () => mockProjectApi.useCreateProjectMutation(),
   useUpdateProjectMutation: () => mockProjectApi.useUpdateProjectMutation(),
+  useDeleteProjectMutation: () => mockProjectApi.useDeleteProjectMutation(),
   useGetProjectsQuery: () => mockProjectApi.useGetProjectsQuery(),
-  useGetTasksInfiniteQuery: (arg: GetTasksRequest) => mockTaskApi.useGetTasksInfiniteQuery(arg),
+  useGetAreasWithProjectsQuery: () => mockAreaApi.useGetAreasWithProjectsQuery(),
+  useGetAreasQuery: () => mockAreaApi.useGetAreasQuery(),
+  useGetTasksInfiniteQuery: (arg: GetTasksRequest, opts?: { skip?: boolean }) =>
+    mockTaskApi.useGetTasksInfiniteQuery(arg, opts),
   useUpdateTaskStatusMutation: () => mockTaskApi.useUpdateTaskStatusMutation(),
   useCreateTaskMutation: () => mockTaskApi.useCreateTaskMutation(),
   useUpdateTaskMutation: () => mockTaskApi.useUpdateTaskMutation(),
   useDeleteTaskMutation: () => mockTaskApi.useDeleteTaskMutation(),
+  useReorderTaskMutation: () => mockTaskApi.useReorderTaskMutation(),
   useMarkTaskMissedMutation: () => mockTaskApi.useMarkTaskMissedMutation(),
   useCreateRecurrenceRuleMutation: () => mockRecurrenceApi.useCreateRecurrenceRuleMutation(),
   useConvertTaskToRecurringMutation: () => mockRecurrenceApi.useConvertTaskToRecurringMutation(),
@@ -63,6 +69,7 @@ jest.mock('expo-router', () => ({
 const makeStore = () =>
   configureStore({
     reducer: {
+      [mockAreaApi.reducerPath]: mockAreaApi.reducer,
       [mockProjectApi.reducerPath]: mockProjectApi.reducer,
       [mockTaskApi.reducerPath]: mockTaskApi.reducer,
       [mockRecurrenceApi.reducerPath]: mockRecurrenceApi.reducer,
@@ -70,6 +77,7 @@ const makeStore = () =>
     },
     middleware: gDM =>
       gDM().concat(
+        mockAreaApi.middleware,
         mockProjectApi.middleware,
         mockTaskApi.middleware,
         mockRecurrenceApi.middleware,
@@ -106,7 +114,9 @@ beforeEach(() => {
       HttpResponse.json({ data: { items: [], nextCursor: '' }, error: null })
     ),
     http.get(`${API}/projects`, () => HttpResponse.json({ data: { items: [], nextCursor: '' }, error: null })),
-    http.get(`${API}/notes`, () => HttpResponse.json({ data: { items: [], nextCursor: '' }, error: null }))
+    http.get(`${API}/notes`, () => HttpResponse.json({ data: { items: [], nextCursor: '' }, error: null })),
+    http.get(`${API}/areas/with-projects`, () => HttpResponse.json({ data: [], error: null })),
+    http.get(`${API}/areas`, () => HttpResponse.json({ data: { items: [], nextCursor: '' }, error: null }))
   );
 });
 
@@ -123,7 +133,7 @@ describe('ProjectView', () => {
 
     await renderView();
 
-    await waitFor(() => expect(screen.getByText('Website Redesign')).toBeTruthy());
+    await waitFor(() => expect(screen.getByTestId('project-header-name')).toBeTruthy());
     expect(screen.getByText('Active')).toBeTruthy();
   });
 
@@ -191,7 +201,7 @@ describe('ProjectView', () => {
 
     await renderView();
 
-    await waitFor(() => expect(screen.getByText('Website Redesign')).toBeTruthy());
+    await waitFor(() => expect(screen.getByTestId('project-header-name')).toBeTruthy());
     await fireEvent.press(screen.getByLabelText('Add to favorites'));
 
     await waitFor(() => expect(capturedBody).toMatchObject({ isFavorite: true }));

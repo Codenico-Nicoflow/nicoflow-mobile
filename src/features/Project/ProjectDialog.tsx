@@ -2,13 +2,14 @@ import { forwardRef, useImperativeHandle, useRef, useState } from 'react';
 import { useColorScheme, View } from 'react-native';
 
 import { type IconId, type IProject } from '@nicoflow/shared/types';
-import { FolderPlus, Star } from 'lucide-react-native';
+import { Calendar as CalendarIcon, FolderOpen, FolderPlus, Star } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 
 import { AreaPicker } from '@/components/fields/AreaPicker';
 import { CheckboxField } from '@/components/fields/CheckboxField';
 import { DateField } from '@/components/fields/DateField';
 import { DescriptionField } from '@/components/fields/DescriptionField';
+import { FieldLabel } from '@/components/fields/FieldLabel';
 import { IconField } from '@/components/fields/IconField';
 import { NameField } from '@/components/fields/NameField';
 import { type ProjectStatus, ProjectStatusField } from '@/components/fields/ProjectStatusField';
@@ -224,6 +225,7 @@ export const ProjectDialog = forwardRef<ProjectDialogRef, ProjectDialogProps>(fu
             label={t('project:dialog.nameLabel')}
             placeholder={t('project:dialog.namePlaceholder')}
             error={nameError}
+            icon={FolderOpen}
           />
 
           <AreaPicker
@@ -254,6 +256,7 @@ export const ProjectDialog = forwardRef<ProjectDialogRef, ProjectDialogProps>(fu
           />
 
           <View className="gap-1.5">
+            <FieldLabel icon={CalendarIcon} label={t('project:dialog.dueDateLabel')} optional />
             <DateField
               value={fields.dueDate}
               onChange={v => setField('dueDate', v)}
@@ -267,7 +270,7 @@ export const ProjectDialog = forwardRef<ProjectDialogRef, ProjectDialogProps>(fu
             label={t('project:dialog.favoriteLabel')}
             description={t('project:dialog.favoriteDescription')}
             icon={Star}
-            iconColor="#eab308"
+            iconColor={isDark ? '#6366f1' : '#4f46e5'}
           />
 
           <Button

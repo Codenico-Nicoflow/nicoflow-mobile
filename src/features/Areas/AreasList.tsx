@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Text, View } from 'react-native';
+import { Text, useColorScheme, View } from 'react-native';
 
 import { router } from 'expo-router';
 
@@ -7,7 +7,12 @@ import { type AreaWithProjects } from '@nicoflow/shared/api';
 import { FREE_PLAN_AREA_LIMIT, FREE_PLAN_PROJECT_LIMIT, type IProject } from '@nicoflow/shared/types';
 import { Layers, Plus } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
-import DraggableFlatList, { type RenderItemParams, ScaleDecorator } from 'react-native-draggable-flatlist';
+import {
+  NestableDraggableFlatList,
+  NestableScrollContainer,
+  type RenderItemParams,
+  ScaleDecorator,
+} from 'react-native-draggable-flatlist';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { Button } from '@/components/ui/button';
@@ -19,6 +24,7 @@ import { ProjectDialog, type ProjectDialogRef } from '../Project/ProjectDialog';
 
 import { AreaCard } from './AreaCard';
 import { AreaDialog, type AreaDialogRef } from './AreaDialog';
+import { MoveToAreaSheet, type MoveToAreaSheetRef } from './MoveToAreaSheet';
 
 function AreasListSkeleton() {
   return (
@@ -37,11 +43,13 @@ function AreasListSkeleton() {
 // via reorderAreas.
 export function AreasList() {
   const { t } = useTranslation(['area']);
+  const isDark = useColorScheme() === 'dark';
   const { data: areas, isLoading, isFetching } = useGetAreasWithProjectsQuery();
   const [reorderAreas] = useReorderAreasMutation();
   const [localOrder, setLocalOrder] = useState<AreaWithProjects[]>([]);
   const areaDialogRef = useRef<AreaDialogRef>(null);
   const projectDialogRef = useRef<ProjectDialogRef>(null);
+  const moveToAreaSheetRef = useRef<MoveToAreaSheetRef>(null);
 
   // Server data is the source of truth; local state only exists so
   // DraggableFlatList has something to animate against mid-drag without
@@ -90,6 +98,7 @@ export function AreasList() {
           onEdit={editArea => areaDialogRef.current?.present(editArea)}
           onEditProject={editProject => projectDialogRef.current?.present(editProject)}
           onAddProject={areaId => projectDialogRef.current?.present(undefined, areaId)}
+          onMoveProjectToArea={project => moveToAreaSheetRef.current?.present(project)}
           dragHandleProps={{ onLongPress: drag, disabled: isActive }}
           isDragging={isActive}
         />
@@ -122,6 +131,7 @@ export function AreasList() {
             accessibilityLabel={atProjectLimit ? t('area:board.planLimitTooltip') : t('area:board.newProject')}
             onPress={() => projectDialogRef.current?.present()}
           >
+            <Plus size={16} color={isDark ? '#e2e8f0' : '#1e293b'} />
             <Text className="text-sm font-medium text-foreground dark:text-foreground-dark">
               {t('area:board.newProject')}
             </Text>
@@ -137,13 +147,14 @@ export function AreasList() {
           </Button>
         </View>
       </View>
-      <DraggableFlatList
-        data={localOrder}
-        onDragEnd={onDragEnd}
-        keyExtractor={item => item.id}
-        renderItem={renderItem}
-        contentContainerStyle={{ paddingBottom: 24 }}
-      />
+      <NestableScrollContainer contentContainerStyle={{ paddingBottom: 24 }}>
+        <NestableDraggableFlatList
+          data={localOrder}
+          onDragEnd={onDragEnd}
+          keyExtractor={item => item.id}
+          renderItem={renderItem}
+        />
+      </NestableScrollContainer>
       <AreaDialog ref={areaDialogRef} onSaved={() => {}} />
       <ProjectDialog
         ref={projectDialogRef}
@@ -151,6 +162,7 @@ export function AreasList() {
         onCreateAreaRequested={() => areaDialogRef.current?.present()}
         favoriteCount={favoriteCount}
       />
+      <MoveToAreaSheet ref={moveToAreaSheetRef} />
     </GestureHandlerRootView>
   );
 }
