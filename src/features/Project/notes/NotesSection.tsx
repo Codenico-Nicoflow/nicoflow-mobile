@@ -4,7 +4,7 @@ import { FlatList, Text, View } from 'react-native';
 import { router } from 'expo-router';
 
 import { EMPTY_TIPTAP_DOC } from '@nicoflow/shared/types';
-import { AlertTriangle, NotebookPen } from 'lucide-react-native';
+import { AlertTriangle, NotebookPen, Plus } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 
 import { Button } from '@/components/ui/button';
@@ -65,7 +65,10 @@ export function NotesSection({ projectId }: NotesSectionProps) {
           <NotebookPen size={16} color="#64748b" />
           <Text className="text-sm font-semibold text-foreground dark:text-foreground-dark">{t('list.heading')}</Text>
         </View>
-        <Button label={t('list.new')} onPress={() => void handleCreate()} disabled={isCreating} testID="notes-create" />
+        <Button size="sm" onPress={() => void handleCreate()} disabled={isCreating} testID="notes-create">
+          <Plus size={16} color="#ffffff" />
+          <Text className="text-sm font-medium text-primary-foreground">{t('list.new')}</Text>
+        </Button>
       </View>
 
       {isLoading ? (
