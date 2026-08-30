@@ -1,5 +1,5 @@
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
-import { createTaskApi } from '@nicoflow/shared/api';
+import { createRecurrenceApi, createTaskApi } from '@nicoflow/shared/api';
 import { type ITask, TaskEnergy, TaskPriority, TaskStatus } from '@nicoflow/shared/types';
 import { configureStore } from '@reduxjs/toolkit';
 import { fetchBaseQuery } from '@reduxjs/toolkit/query';
@@ -18,17 +18,34 @@ const API = 'http://localhost:8080/v1';
 
 const baseQuery = fetchBaseQuery({ baseUrl: API });
 const mockTaskApi = createTaskApi(baseQuery);
+const mockRecurrenceApi = createRecurrenceApi(baseQuery, mockTaskApi);
+
+// Inject skipTaskOccurrence onto the local mockTaskApi so tests can hit the
+// MSW handler without touching the real store module's singleton.
+const { useSkipTaskOccurrenceMutation: mockUseSkipTaskOccurrenceMutation } = mockTaskApi.injectEndpoints({
+  endpoints: build => ({
+    skipTaskOccurrence: build.mutation<ITask, string>({
+      query: id => ({ url: `/tasks/${id}/skip`, method: 'POST' }),
+      transformResponse: (raw: { data: ITask }) => raw.data,
+    }),
+  }),
+});
 
 jest.mock('@/lib/store', () => ({
   useUpdateTaskStatusMutation: () => mockTaskApi.useUpdateTaskStatusMutation(),
   useMarkTaskMissedMutation: () => mockTaskApi.useMarkTaskMissedMutation(),
   useDeleteTaskMutation: () => mockTaskApi.useDeleteTaskMutation(),
+  useDeleteRecurrenceRuleMutation: () => mockRecurrenceApi.useDeleteRecurrenceRuleMutation(),
+  useSkipTaskOccurrenceMutation: () => mockUseSkipTaskOccurrenceMutation(),
 }));
 
 const makeStore = () =>
   configureStore({
-    reducer: { [mockTaskApi.reducerPath]: mockTaskApi.reducer },
-    middleware: gDM => gDM().concat(mockTaskApi.middleware),
+    reducer: {
+      [mockTaskApi.reducerPath]: mockTaskApi.reducer,
+      [mockRecurrenceApi.reducerPath]: mockRecurrenceApi.reducer,
+    },
+    middleware: gDM => gDM().concat(mockTaskApi.middleware, mockRecurrenceApi.middleware),
   });
 
 const todayISO = () => new Date().toISOString().slice(0, 10);
@@ -144,5 +161,67 @@ describe('TaskListItem', () => {
     await fireEvent.press(screen.getByText('Cancel Task'));
 
     await waitFor(() => expect(capturedStatus).toBe(TaskStatus.CANCELLED));
+  });
+
+  it('shows Skip and End-series for recurring tasks in the dropdown menu', async () => {
+    await renderItem({ task: task({ recurrenceRuleId: 'r1' }) });
+
+    await fireEvent.press(screen.getByLabelText('Task actions'));
+    await waitFor(() => expect(screen.getByText('Skip this occurrence')).toBeTruthy());
+    expect(screen.getByText('End series…')).toBeTruthy();
+  });
+
+  it('shows Delete for non-recurring tasks, no Skip/End-series', async () => {
+    await renderItem({ task: task({ recurrenceRuleId: null }) });
+
+    await fireEvent.press(screen.getByLabelText('Task actions'));
+    // gorhom mock renders the delete confirmation dialog simultaneously with
+    // the menu, so "Delete Task" may appear in both — use getAllByText.
+    await waitFor(() => expect(screen.getAllByText('Delete Task').length).toBeGreaterThan(0));
+    expect(screen.queryByText('Skip this occurrence')).toBeNull();
+    expect(screen.queryByText('End series…')).toBeNull();
+  });
+
+  it('Skip shows the confirm dialog and POSTs /tasks/:id/skip on confirm', async () => {
+    let skipCalled = false;
+    server.use(
+      http.post(`${API}/tasks/t1/skip`, () => {
+        skipCalled = true;
+        return HttpResponse.json({
+          data: task({ occurrenceStatus: 'skipped' }),
+          error: null,
+        });
+      })
+    );
+    await renderItem({ task: task({ recurrenceRuleId: 'r1' }) });
+
+    await fireEvent.press(screen.getByLabelText('Task actions'));
+    await waitFor(() => expect(screen.getByText('Skip this occurrence')).toBeTruthy());
+    await fireEvent.press(screen.getByText('Skip this occurrence'));
+
+    await waitFor(() => expect(screen.getByText('Skip this occurrence?')).toBeTruthy());
+    await fireEvent.press(screen.getByText('Skip'));
+
+    await waitFor(() => expect(skipCalled).toBe(true));
+  });
+
+  it('End-series shows the confirm dialog and DELETEs the rule on confirm', async () => {
+    let deletedRuleId: string | null = null;
+    server.use(
+      http.delete(`${API}/recurrence-rules/:id`, ({ params }) => {
+        deletedRuleId = params.id as string;
+        return new HttpResponse(null, { status: 204 });
+      })
+    );
+    await renderItem({ task: task({ recurrenceRuleId: 'r1' }) });
+
+    await fireEvent.press(screen.getByLabelText('Task actions'));
+    await waitFor(() => expect(screen.getByText('End series…')).toBeTruthy());
+    await fireEvent.press(screen.getByText('End series…'));
+
+    await waitFor(() => expect(screen.getByText('End this recurring series?')).toBeTruthy());
+    await fireEvent.press(screen.getByText('End series'));
+
+    await waitFor(() => expect(deletedRuleId).toBe('r1'));
   });
 });

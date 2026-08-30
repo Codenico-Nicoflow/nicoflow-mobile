@@ -44,6 +44,25 @@ const baseQueryWithReauth = createBaseQueryWithReauth(mobileTokenStorage, () => 
 
 export const authApi = createAuthApi(baseQueryWithReauth, { clearAuth, setToken, setUser }, resolveTimeZone);
 export const taskApi = createTaskApi(baseQueryWithReauth);
+
+// skipTaskOccurrence is not yet in @nicoflow/shared — injected locally until
+// the next shared package release includes it (mirrors PR #226 on web).
+export const { useSkipTaskOccurrenceMutation } = taskApi.injectEndpoints({
+  endpoints: build => ({
+    skipTaskOccurrence: build.mutation<import('@nicoflow/shared/types').ITask, string>({
+      query: id => ({ url: `/tasks/${id}/skip`, method: 'POST' }),
+      transformResponse: (raw: { data: import('@nicoflow/shared/types').ITask }) => raw.data,
+      // Skip changes the task's occurrenceStatus and cancels its reminder —
+      // invalide the task entry and the TimeSpread cache. Notification cache
+      // is in a separate api (notificationApi) so it can't be tagged here.
+      invalidatesTags: (_result, _error, id) => [
+        { type: 'Task' as const, id },
+        { type: 'Task' as const, id: 'LIST' },
+        { type: 'TimeSpread' as const },
+      ],
+    }),
+  }),
+});
 export const areaApi = createAreaApi(baseQueryWithReauth);
 export const projectApi = createProjectApi(baseQueryWithReauth, areaApi);
 export const recurrenceApi = createRecurrenceApi(baseQueryWithReauth, taskApi);

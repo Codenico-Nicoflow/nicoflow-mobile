@@ -2,7 +2,7 @@ import { useRef } from 'react';
 import { Pressable, Text, useColorScheme, View } from 'react-native';
 
 import { type ITask, TaskStatus } from '@nicoflow/shared/types';
-import { CalendarClock, CalendarX, MoreVertical, Trash2 } from 'lucide-react-native';
+import { CalendarClock, CalendarX, MoreVertical, SkipForward, Trash2, XCircle } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 
 import { Checkbox } from '@/components/ui/checkbox';
@@ -21,16 +21,15 @@ interface TaskRowProps {
   onScheduleTomorrow: (task: ITask) => void;
   onUnschedule: (task: ITask) => void;
   onDelete: (task: ITask) => void;
+  onSkip: (task: ITask) => void;
+  onEndSeries: (task: ITask) => void;
 }
 
-// Mirrors web's TimeSpreadRow (nicoflow-frontend/src/features/TimeSpread/components/TimeSpreadRow.tsx):
-// the actions menu here is reschedule shortcuts, not the project-view
-// Edit/Cancel/Mark-missed/Delete set — this is a scheduling surface, not the
-// task's home. Editing other fields happens by tapping the card.
-//
-// No outer card container here on purpose — SwipeableTaskRow wraps this in
-// SwipeableRow, which owns the card's border/background/tint via its own
-// className. This component only renders the content inside that card.
+// Mirrors web's TimeSpreadRow — actions menu is reschedule shortcuts, not the
+// project-view Edit/Cancel/Delete set. For recurring tasks the destructive
+// action is replaced by Skip + End-series (no plain Delete — the UI routes
+// recurring instances through these instead). No outer card container here —
+// SwipeableTaskRow owns that.
 export function TaskRow({
   task,
   segment,
@@ -40,11 +39,14 @@ export function TaskRow({
   onScheduleTomorrow,
   onUnschedule,
   onDelete,
+  onSkip,
+  onEndSeries,
 }: TaskRowProps) {
   const { t } = useTranslation('task');
   const isDone = task.status === TaskStatus.DONE;
   const isDark = useColorScheme() === 'dark';
   const mutedColor = isDark ? '#94a3b8' : '#64748b';
+  const isRecurring = !!task.recurrenceRuleId;
   const menuRef = useRef<DropdownMenuRef>(null);
 
   return (
@@ -114,16 +116,40 @@ export function TaskRow({
           >
             {t('timeSpread.actions.remove')}
           </DropdownMenuItem>
-          <DropdownMenuItem
-            icon={<Trash2 size={16} color={isDark ? '#ef4444' : '#dc2626'} />}
-            variant="destructive"
-            onPress={() => {
-              menuRef.current?.dismiss();
-              onDelete(task);
-            }}
-          >
-            {t('actions.delete')}
-          </DropdownMenuItem>
+          {isRecurring ? (
+            <>
+              <DropdownMenuItem
+                icon={<SkipForward size={16} color={isDark ? '#e2e8f0' : '#1e293b'} />}
+                onPress={() => {
+                  menuRef.current?.dismiss();
+                  onSkip(task);
+                }}
+              >
+                Skip this occurrence
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                icon={<XCircle size={16} color={isDark ? '#ef4444' : '#dc2626'} />}
+                variant="destructive"
+                onPress={() => {
+                  menuRef.current?.dismiss();
+                  onEndSeries(task);
+                }}
+              >
+                End series…
+              </DropdownMenuItem>
+            </>
+          ) : (
+            <DropdownMenuItem
+              icon={<Trash2 size={16} color={isDark ? '#ef4444' : '#dc2626'} />}
+              variant="destructive"
+              onPress={() => {
+                menuRef.current?.dismiss();
+                onDelete(task);
+              }}
+            >
+              {t('actions.delete')}
+            </DropdownMenuItem>
+          )}
         </DropdownMenu>
 
         <Checkbox checked={isDone} onCheckedChange={() => onToggleStatus(task)} />

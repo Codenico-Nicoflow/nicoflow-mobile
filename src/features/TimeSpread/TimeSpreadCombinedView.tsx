@@ -19,6 +19,8 @@ interface Props {
   onScheduleTomorrow: (task: ITask) => void;
   onUnschedule: (task: ITask) => void;
   onDelete: (task: ITask) => void;
+  onSkip: (task: ITask) => void;
+  onEndSeries: (task: ITask) => void;
 }
 
 // Every section renders even when empty — an empty section reads as "clear",
@@ -35,6 +37,8 @@ export function TimeSpreadCombinedView({
   onScheduleTomorrow,
   onUnschedule,
   onDelete,
+  onSkip,
+  onEndSeries,
 }: Props) {
   const { t } = useTranslation('task');
 
@@ -49,6 +53,8 @@ export function TimeSpreadCombinedView({
       onScheduleTomorrow={onScheduleTomorrow}
       onUnschedule={onUnschedule}
       onDelete={onDelete}
+      onSkip={onSkip}
+      onEndSeries={onEndSeries}
     />
   );
 

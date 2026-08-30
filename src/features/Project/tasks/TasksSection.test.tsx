@@ -43,6 +43,7 @@ jest.mock('@/lib/store', () => ({
   useGetRecurrenceRuleQuery: (id: string, opts?: { skip?: boolean }) =>
     mockRecurrenceApi.useGetRecurrenceRuleQuery(id, opts),
   useGetProjectsQuery: () => mockProjectApi.useGetProjectsQuery(),
+  useSkipTaskOccurrenceMutation: () => [jest.fn().mockResolvedValue(undefined), { isLoading: false }] as const,
 }));
 
 const makeStore = () =>

@@ -1,5 +1,7 @@
 import { areaApi, authApi, bucketApi, noteApi, projectApi, recurrenceApi, subtaskApi, taskApi } from './store';
 
+export { useSkipTaskOccurrenceMutation } from './store';
+
 // Store exports
 export type { AppDispatch, RootState } from './store';
 export {
