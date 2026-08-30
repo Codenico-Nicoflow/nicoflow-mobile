@@ -56,6 +56,8 @@ export interface TaskSheetRef {
 
 interface TaskSheetProps {
   onSaved: () => void;
+  /** Fires on ANY close — save, backdrop tap, or swipe-down — unlike onSaved. */
+  onDismiss?: () => void;
   /**
    * Create-mode only. When supplied, replaces the normal `useCreateTaskMutation`
    * call — the caller owns the request, success toast, and error handling.
@@ -117,7 +119,10 @@ const isApiErrorCode = (error: unknown, code: string): boolean =>
 // TaskDialog.tsx. Replaces the former TaskCreateSheet/TaskEditSheet split —
 // both modes now share the project picker and recurrence field, which used
 // to be create-only.
-export const TaskSheet = forwardRef<TaskSheetRef, TaskSheetProps>(function TaskSheet({ onSaved, onCreateSubmit }, ref) {
+export const TaskSheet = forwardRef<TaskSheetRef, TaskSheetProps>(function TaskSheet(
+  { onSaved, onDismiss, onCreateSubmit },
+  ref
+) {
   const { t } = useTranslation(['task', 'common']);
   const isDark = useColorScheme() === 'dark';
   const [createTask, { isLoading: isCreatingTask }] = useCreateTaskMutation();
@@ -369,7 +374,7 @@ export const TaskSheet = forwardRef<TaskSheetRef, TaskSheetProps>(function TaskS
     isCreatingTask || isUpdatingTask || isCreatingRule || isConvertingTask || isUpdatingRule || isDeletingRule;
 
   return (
-    <Sheet ref={sheetRef} snapPoints={['75%']}>
+    <Sheet ref={sheetRef} snapPoints={['75%']} onDismiss={onDismiss}>
       <View className="gap-4">
         <SheetHeader>
           <View className="flex-row items-center gap-3">

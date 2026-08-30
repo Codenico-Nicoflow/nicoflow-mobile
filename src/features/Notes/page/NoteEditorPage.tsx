@@ -4,7 +4,7 @@ import { Text, TextInput, useColorScheme, View } from 'react-native';
 import { router } from 'expo-router';
 
 import { type TiptapDoc } from '@nicoflow/shared/types';
-import { ArrowLeft, FileX, Trash2 } from 'lucide-react-native';
+import { ArrowLeft, FileX, Pencil, Trash2 } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 
 import {
@@ -48,6 +48,7 @@ export function NoteEditorPage({ noteId }: NoteEditorPageProps) {
 
   const [title, setTitle] = useState('');
   const [contentError, setContentError] = useState(false);
+  const [titleFocused, setTitleFocused] = useState(false);
 
   const { status, save, flush, isConflicted } = useNoteAutosave({
     noteId,
@@ -121,20 +122,39 @@ export function NoteEditorPage({ noteId }: NoteEditorPageProps) {
 
       {isConflicted && <ConflictNotice onReload={() => router.replace(`/note/${noteId}`)} />}
 
-      <TextInput
-        value={title}
-        accessibilityLabel={t('notes:page.titleLabel')}
-        placeholder={t('notes:page.titlePlaceholder')}
-        placeholderTextColor={mutedColor}
-        maxLength={255}
-        editable={!isConflicted && !contentError}
-        onChangeText={next => {
-          setTitle(next);
-          if (next.trim() !== '') save({ title: next });
-        }}
-        testID="note-title"
-        className="text-2xl font-semibold text-foreground dark:text-foreground-dark"
-      />
+      {/* Faint always-on pencil, brightening on focus — matches web. A
+          hover-only cue doesn't exist as a concept on touch, so the icon has
+          to be visible before the first tap for the field to read as
+          editable at all. flex-row + alignSelf:'flex-start' makes the row hug
+          the text width instead of stretching full-width — an absolutely
+          positioned pencil pinned to the container's far edge reads as a
+          stray icon when the title is short (it isn't visually attached to
+          the word at all). */}
+      <View
+        className={`-mx-2 max-w-full flex-row items-center gap-1 self-start rounded-md border-b-2 px-2 py-1 ${
+          titleFocused
+            ? 'bg-accent/40 dark:bg-accent-dark/40 border-primary dark:border-primary-dark'
+            : 'border-transparent'
+        }`}
+      >
+        <TextInput
+          value={title}
+          accessibilityLabel={t('notes:page.titleLabel')}
+          placeholder={t('notes:page.titlePlaceholder')}
+          placeholderTextColor={mutedColor}
+          maxLength={255}
+          editable={!isConflicted && !contentError}
+          onChangeText={next => {
+            setTitle(next);
+            if (next.trim() !== '') save({ title: next });
+          }}
+          onFocus={() => setTitleFocused(true)}
+          onBlur={() => setTitleFocused(false)}
+          testID="note-title"
+          className="min-w-8 shrink text-3xl font-bold text-foreground dark:text-foreground-dark"
+        />
+        <Pencil size={16} color={titleFocused ? (isDark ? '#e2e8f0' : '#334155') : mutedColor} className="shrink-0" />
+      </View>
 
       <NoteEditor
         content={note.content}

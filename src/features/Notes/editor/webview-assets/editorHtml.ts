@@ -28,15 +28,21 @@ export const TIPTAP_VERSION = '3.29.2';
 const NOTE_COLOR_TOKENS = ['gray', 'brown', 'orange', 'yellow', 'green', 'blue', 'purple', 'pink', 'red'];
 const NOTE_CALLOUT_ICONS = ['info', 'warning', 'success', 'idea', 'star', 'note', 'flag', 'question'];
 
-const CALLOUT_GLYPH: Record<string, string> = {
-  info: 'ℹ️',
-  warning: '⚠️',
-  success: '✅',
-  idea: '💡',
-  star: '⭐',
-  note: '📝',
-  flag: '🚩',
-  question: '❓',
+// Path data lifted from lucide-react (Info/AlertTriangle/CheckCircle2/
+// Lightbulb/Star/StickyNote/Flag/HelpCircle) so the WebView draws the SAME
+// icons web does — raw SVG runs fine in a DOM, no React needed. Emoji glyphs
+// were a placeholder that shipped by accident; keep this in sync with
+// calloutIconComponents.ts's Lucide set if that ever changes.
+const CALLOUT_ICON_SVG: Record<string, string> = {
+  info: '<circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>',
+  warning:
+    '<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/>',
+  success: '<path d="M21.801 10A10 10 0 1 1 17 3.335"/><path d="m9 11 3 3L22 4"/>',
+  idea: '<path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/>',
+  star: '<path d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z"/>',
+  note: '<path d="M16 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V8Z"/><path d="M15 3v4a2 2 0 0 0 2 2h4"/>',
+  flag: '<path d="M4 22V4a1 1 0 0 1 .4-.8A6 6 0 0 1 8 2c3 0 5 2 7.333 2q2 0 3.067-.8A1 1 0 0 1 20 4v10a1 1 0 0 1-.4.8A6 6 0 0 1 16 16c-3 0-5-2-8-2a6 6 0 0 0-4 1.528"/>',
+  question: '<circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/>',
 };
 
 export function buildEditorHtml(themeColors: {
@@ -114,12 +120,16 @@ export function buildEditorHtml(themeColors: {
   }
   div[data-note-callout] > .callout-icon {
     flex-shrink: 0;
-    font-size: 1.1em;
-    line-height: 1.5;
+    color: ${themeColors.fg};
     background: none;
     border: none;
     padding: 2px;
     border-radius: 6px;
+  }
+  div[data-note-callout] > .callout-icon svg {
+    width: 20px;
+    height: 20px;
+    display: block;
   }
   div[data-note-callout] > .callout-body { flex: 1; min-width: 0; }
   div[data-note-callout] > .callout-color {
@@ -170,7 +180,13 @@ import Suggestion from 'https://esm.sh/@tiptap/suggestion@${TIPTAP_VERSION}?deps
 
 const NOTE_COLOR_TOKENS = ${JSON.stringify(NOTE_COLOR_TOKENS)};
 const NOTE_CALLOUT_ICONS = ${JSON.stringify(NOTE_CALLOUT_ICONS)};
-const CALLOUT_GLYPH = ${JSON.stringify(CALLOUT_GLYPH)};
+const CALLOUT_ICON_SVG = ${JSON.stringify(CALLOUT_ICON_SVG)};
+
+function calloutIconMarkup(icon) {
+  const inner = CALLOUT_ICON_SVG[icon] || CALLOUT_ICON_SVG.info;
+  return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" ' +
+    'stroke-linecap="round" stroke-linejoin="round">' + inner + '</svg>';
+}
 const ALLOWED_LINK_PROTOCOLS = ['http', 'https', 'mailto'];
 
 const isToken = (v) => typeof v === 'string' && NOTE_COLOR_TOKENS.includes(v);
@@ -255,7 +271,7 @@ const NoteCallout = Node.create({
       iconEl.className = 'callout-icon';
       iconEl.contentEditable = 'false';
       iconEl.setAttribute('aria-label', 'Callout icon');
-      iconEl.textContent = CALLOUT_GLYPH[node.attrs.icon] || CALLOUT_GLYPH.info;
+      iconEl.innerHTML = calloutIconMarkup(node.attrs.icon);
       iconEl.addEventListener('click', (e) => {
         e.preventDefault();
         e.stopPropagation();
@@ -292,7 +308,7 @@ const NoteCallout = Node.create({
         contentDOM: contentEl,
         update(updatedNode) {
           if (updatedNode.type !== node.type) return false;
-          iconEl.textContent = CALLOUT_GLYPH[updatedNode.attrs.icon] || CALLOUT_GLYPH.info;
+          iconEl.innerHTML = calloutIconMarkup(updatedNode.attrs.icon);
           applyColor(updatedNode.attrs.colorToken);
           return true;
         },
