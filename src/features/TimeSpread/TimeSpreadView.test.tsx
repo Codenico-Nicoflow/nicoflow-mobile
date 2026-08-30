@@ -34,6 +34,7 @@ jest.mock('@/lib/store', () => ({
   useDeleteRecurrenceRuleMutation: () => mockRecurrenceApi.useDeleteRecurrenceRuleMutation(),
   useGetRecurrenceRuleQuery: (id: string, opts?: { skip?: boolean }) =>
     mockRecurrenceApi.useGetRecurrenceRuleQuery(id, opts),
+  useSkipTaskOccurrenceMutation: () => [jest.fn().mockResolvedValue(undefined), { isLoading: false }] as const,
 }));
 
 beforeEach(() => {

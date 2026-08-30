@@ -2,10 +2,21 @@ import { useRef, useState } from 'react';
 import { Pressable, Text, useColorScheme, View } from 'react-native';
 
 import { type ITask, TaskStatus } from '@nicoflow/shared/types';
-import { Ban, CalendarX, Check, GripVertical, MoreVertical, Pencil, Trash2 } from 'lucide-react-native';
+import {
+  Ban,
+  CalendarX,
+  Check,
+  GripVertical,
+  MoreVertical,
+  Pencil,
+  SkipForward,
+  Trash2,
+  XCircle,
+} from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import Reanimated from 'react-native-reanimated';
 
+import { EndSeriesDialog, SkipOccurrenceDialog } from '@/components/recurrence/RecurrenceConfirmDialogs';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -21,7 +32,13 @@ import { DropdownMenu, DropdownMenuItem, type DropdownMenuRef } from '@/componen
 import { SwipeableRow, type SwipeableRowHandle } from '@/components/ui/swipeable-row';
 import { toast } from '@/components/ui/toast';
 import { useCompletionCelebration } from '@/hooks/useCompletionCelebration';
-import { useDeleteTaskMutation, useMarkTaskMissedMutation, useUpdateTaskStatusMutation } from '@/lib/store';
+import {
+  useDeleteRecurrenceRuleMutation,
+  useDeleteTaskMutation,
+  useMarkTaskMissedMutation,
+  useSkipTaskOccurrenceMutation,
+  useUpdateTaskStatusMutation,
+} from '@/lib/store';
 import { showSuccessToast, ToastMessages } from '@/lib/toast';
 
 import { TaskChips } from '../../TimeSpread/TaskChips';
@@ -39,7 +56,7 @@ interface TaskListItemProps {
 // Mirrors web's TaskItem.tsx: whole row taps to edit, checkbox flips
 // active<->done (completion guard for open subtasks lives in TasksSection,
 // shared across all rows), 3-dot menu Edit/Cancel/Mark-Missed(conditional)/
-// Delete, delete via a confirm dialog matching web's exact copy.
+// Skip+End-series (recurring) or Delete (non-recurring).
 //
 // Layout/spacing here is deliberately inline `style`, not className `gap-*`:
 // this NativeWind build (v5 preview + react-native-css) silently drops `gap`
@@ -55,18 +72,23 @@ export function TaskListItem({ task, onEdit, onToggleStatus, dragHandleProps, is
   const isDark = useColorScheme() === 'dark';
   const mutedColor = isDark ? '#94a3b8' : '#64748b';
   const isDone = task.status === TaskStatus.DONE;
+  const isRecurring = !!task.recurrenceRuleId;
+
   const [updateTaskStatus] = useUpdateTaskStatusMutation();
   const [markTaskMissed] = useMarkTaskMissedMutation();
   const [deleteTask, { isLoading: isDeleting }] = useDeleteTaskMutation();
+  const [skipOccurrence] = useSkipTaskOccurrenceMutation();
+  const [deleteRule] = useDeleteRecurrenceRuleMutation();
+
   const menuRef = useRef<DropdownMenuRef>(null);
-  const alertRef = useRef<AlertDialogRef>(null);
+  const deleteAlertRef = useRef<AlertDialogRef>(null);
+  const skipAlertRef = useRef<AlertDialogRef>(null);
+  const endSeriesAlertRef = useRef<AlertDialogRef>(null);
   const swipeRef = useRef<SwipeableRowHandle>(null);
   const [pendingDelete, setPendingDelete] = useState(false);
+  const [pendingSkip, setPendingSkip] = useState(false);
+  const [pendingEndSeries, setPendingEndSeries] = useState(false);
 
-  // Completing holds the row visible with a celebration before the parent's
-  // onToggleStatus (which owns the open-subtask completion guard) actually
-  // fires; un-completing is instant, no hold — mirrors web's one-directional
-  // completion guard.
   const {
     trigger: celebrateComplete,
     celebrationStyle,
@@ -85,12 +107,19 @@ export function TaskListItem({ task, onEdit, onToggleStatus, dragHandleProps, is
 
   const openDeleteConfirm = () => {
     setPendingDelete(true);
-    alertRef.current?.present();
+    deleteAlertRef.current?.present();
   };
 
-  // Mirrors the backend's own mark-missed guard (today-or-past, active,
-  // recurring, unreaped) so the menu doesn't offer an action the server
-  // would reject.
+  const openSkipConfirm = () => {
+    setPendingSkip(true);
+    skipAlertRef.current?.present();
+  };
+
+  const openEndSeriesConfirm = () => {
+    setPendingEndSeries(true);
+    endSeriesAlertRef.current?.present();
+  };
+
   const canMarkMissed =
     task.status === TaskStatus.ACTIVE &&
     !!task.recurrenceRuleId &&
@@ -120,8 +149,43 @@ export function TaskListItem({ task, onEdit, onToggleStatus, dragHandleProps, is
       return;
     }
     setPendingDelete(false);
-    alertRef.current?.dismiss();
+    deleteAlertRef.current?.dismiss();
     swipeRef.current?.close();
+  };
+
+  const onConfirmSkip = async () => {
+    try {
+      await skipOccurrence(task.id).unwrap();
+      showSuccessToast('Occurrence skipped.', toast);
+    } catch {
+      toast.errorWithRetry(t('common:mutationError'), {
+        label: t('common:actions.retry'),
+        onPress: () => {
+          void onConfirmSkip();
+        },
+      });
+      return;
+    }
+    setPendingSkip(false);
+    skipAlertRef.current?.dismiss();
+  };
+
+  const onConfirmEndSeries = async () => {
+    if (!task.recurrenceRuleId) return;
+    try {
+      await deleteRule(task.recurrenceRuleId).unwrap();
+      showSuccessToast('Series ended. Past occurrences kept.', toast);
+    } catch {
+      toast.errorWithRetry(t('common:mutationError'), {
+        label: t('common:actions.retry'),
+        onPress: () => {
+          void onConfirmEndSeries();
+        },
+      });
+      return;
+    }
+    setPendingEndSeries(false);
+    endSeriesAlertRef.current?.dismiss();
   };
 
   return (
@@ -138,9 +202,9 @@ export function TaskListItem({ task, onEdit, onToggleStatus, dragHandleProps, is
         }}
         right={{
           tone: 'destructive',
-          icon: <Trash2 size={20} color="#ffffff" />,
-          onPress: openDeleteConfirm,
-          onOpen: openDeleteConfirm,
+          icon: isRecurring ? <SkipForward size={20} color="#ffffff" /> : <Trash2 size={20} color="#ffffff" />,
+          onPress: isRecurring ? openSkipConfirm : openDeleteConfirm,
+          onOpen: isRecurring ? openSkipConfirm : openDeleteConfirm,
         }}
       >
         <Pressable
@@ -218,16 +282,40 @@ export function TaskListItem({ task, onEdit, onToggleStatus, dragHandleProps, is
                   {t('actions.markMissed')}
                 </DropdownMenuItem>
               )}
-              <DropdownMenuItem
-                icon={<Trash2 size={16} color={isDark ? '#f87171' : '#ef4444'} />}
-                variant="destructive"
-                onPress={() => {
-                  menuRef.current?.dismiss();
-                  openDeleteConfirm();
-                }}
-              >
-                {t('actions.delete')}
-              </DropdownMenuItem>
+              {isRecurring ? (
+                <>
+                  <DropdownMenuItem
+                    icon={<SkipForward size={16} color={isDark ? '#e2e8f0' : '#1e293b'} />}
+                    onPress={() => {
+                      menuRef.current?.dismiss();
+                      openSkipConfirm();
+                    }}
+                  >
+                    Skip this occurrence
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    icon={<XCircle size={16} color={isDark ? '#f87171' : '#ef4444'} />}
+                    variant="destructive"
+                    onPress={() => {
+                      menuRef.current?.dismiss();
+                      openEndSeriesConfirm();
+                    }}
+                  >
+                    End series…
+                  </DropdownMenuItem>
+                </>
+              ) : (
+                <DropdownMenuItem
+                  icon={<Trash2 size={16} color={isDark ? '#f87171' : '#ef4444'} />}
+                  variant="destructive"
+                  onPress={() => {
+                    menuRef.current?.dismiss();
+                    openDeleteConfirm();
+                  }}
+                >
+                  {t('actions.delete')}
+                </DropdownMenuItem>
+              )}
             </DropdownMenu>
 
             <Checkbox checked={isDone} onCheckedChange={handleToggle} />
@@ -248,7 +336,8 @@ export function TaskListItem({ task, onEdit, onToggleStatus, dragHandleProps, is
         />
       </SwipeableRow>
 
-      <AlertDialog ref={alertRef}>
+      {/* Non-recurring delete confirm */}
+      <AlertDialog ref={deleteAlertRef}>
         <AlertDialogHeader>
           <AlertDialogTitle>{t('deleteDialog.title')}</AlertDialogTitle>
           <AlertDialogDescription>{t('deleteDialog.description', { name: task.title })}</AlertDialogDescription>
@@ -264,7 +353,7 @@ export function TaskListItem({ task, onEdit, onToggleStatus, dragHandleProps, is
           <AlertDialogCancel
             onPress={() => {
               setPendingDelete(false);
-              alertRef.current?.dismiss();
+              deleteAlertRef.current?.dismiss();
               swipeRef.current?.close();
             }}
           >
@@ -272,6 +361,31 @@ export function TaskListItem({ task, onEdit, onToggleStatus, dragHandleProps, is
           </AlertDialogCancel>
         </AlertDialogFooter>
       </AlertDialog>
+
+      {/* Skip occurrence confirm */}
+      <SkipOccurrenceDialog
+        ref={skipAlertRef}
+        onConfirm={() => {
+          if (pendingSkip) void onConfirmSkip();
+        }}
+        onCancel={() => {
+          setPendingSkip(false);
+          skipAlertRef.current?.dismiss();
+          swipeRef.current?.close();
+        }}
+      />
+
+      {/* End series confirm */}
+      <EndSeriesDialog
+        ref={endSeriesAlertRef}
+        onConfirm={() => {
+          if (pendingEndSeries) void onConfirmEndSeries();
+        }}
+        onCancel={() => {
+          setPendingEndSeries(false);
+          endSeriesAlertRef.current?.dismiss();
+        }}
+      />
     </Reanimated.View>
   );
 }

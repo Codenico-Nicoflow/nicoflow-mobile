@@ -10,9 +10,11 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from '@/components/ui/toast';
 import {
+  useDeleteRecurrenceRuleMutation,
   useDeleteTaskMutation,
   useGetTimeSpreadQuery,
   useScheduleTaskMutation,
+  useSkipTaskOccurrenceMutation,
   useUpdateTaskStatusMutation,
 } from '@/lib/store';
 import { showErrorToast, showSuccessToast, ToastMessages } from '@/lib/toast';
@@ -50,6 +52,8 @@ export function TimeSpreadView() {
   const [updateStatus] = useUpdateTaskStatusMutation();
   const [scheduleTask] = useScheduleTaskMutation();
   const [deleteTask] = useDeleteTaskMutation();
+  const [skipOccurrence] = useSkipTaskOccurrenceMutation();
+  const [deleteRule] = useDeleteRecurrenceRuleMutation();
   const taskSheetRef = useRef<TaskSheetRef>(null);
 
   useEffect(() => {
@@ -121,6 +125,21 @@ export function TimeSpreadView() {
       .catch(error => showErrorToast(error, toast));
   };
 
+  const handleSkip = (task: ITask) => {
+    void skipOccurrence(task.id)
+      .unwrap()
+      .then(() => showSuccessToast('Occurrence skipped.', toast))
+      .catch(error => showErrorToast(error, toast));
+  };
+
+  const handleEndSeries = (task: ITask) => {
+    if (!task.recurrenceRuleId) return;
+    void deleteRule(task.recurrenceRuleId)
+      .unwrap()
+      .then(() => showSuccessToast('Series ended. Past occurrences kept.', toast))
+      .catch(error => showErrorToast(error, toast));
+  };
+
   const renderRow = (item: ITask) => (
     <SwipeableTaskRow
       task={item}
@@ -131,6 +150,8 @@ export function TimeSpreadView() {
       onScheduleTomorrow={handleScheduleTomorrow}
       onUnschedule={handleUnschedule}
       onDelete={handleDelete}
+      onSkip={handleSkip}
+      onEndSeries={handleEndSeries}
     />
   );
 
@@ -183,6 +204,8 @@ export function TimeSpreadView() {
               onScheduleTomorrow={handleScheduleTomorrow}
               onUnschedule={handleUnschedule}
               onDelete={handleDelete}
+              onSkip={handleSkip}
+              onEndSeries={handleEndSeries}
             />
           </ScrollView>
         ) : segment === 'week' ? (

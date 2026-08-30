@@ -1,5 +1,5 @@
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
-import { useColorScheme, View } from 'react-native';
+import { Pressable, Text, useColorScheme, View } from 'react-native';
 
 import { type ITask, TaskEnergy, TaskPriority, TaskStatus } from '@nicoflow/shared/types';
 import { normalizeScheduleForFreq } from '@nicoflow/shared/utils';
@@ -159,6 +159,18 @@ export const TaskSheet = forwardRef<TaskSheetRef, TaskSheetProps>(function TaskS
   const [titleError, setTitleError] = useState<string | undefined>();
   const [projectError, setProjectError] = useState<string | undefined>();
   const [formError, setFormError] = useState<'planLimit' | 'timedScheduling' | null>(null);
+  // When editing a recurring task's non-recurrence fields, we need the user to
+  // pick scope before firing the mutation. Rather than a nested modal (which
+  // the gorhom mock doesn't render in tests), we toggle an inline view inside
+  // this same sheet and store the pending mutation payload until the user picks.
+  const [showScopeChooser, setShowScopeChooser] = useState(false);
+  const pendingScopePayload = useRef<{
+    ruleId: string;
+    taskId: string;
+    updateFields: TaskFieldsValue;
+    currentStatus: TaskStatus;
+    statusChanged: boolean;
+  } | null>(null);
 
   const resetForm = (arg: TaskSheetPresentArg | undefined) => {
     const nextTask = arg?.task ?? null;
@@ -179,6 +191,8 @@ export const TaskSheet = forwardRef<TaskSheetRef, TaskSheetProps>(function TaskS
     setTitleError(undefined);
     setProjectError(undefined);
     setFormError(null);
+    setShowScopeChooser(false);
+    pendingScopePayload.current = null;
   };
 
   useImperativeHandle(ref, () => ({
@@ -292,6 +306,18 @@ export const TaskSheet = forwardRef<TaskSheetRef, TaskSheetProps>(function TaskS
         // The current task instance and its history are untouched.
         await deleteRule(existingRuleId).unwrap();
         showSuccessToast(ToastMessages.TASK_UPDATED_SUCCESSFULLY, toast);
+      } else if (isEditMode && task && existingRuleId) {
+        // Editing a recurring task's non-recurrence fields: show inline scope
+        // chooser and bail — the actual mutation fires from onScopeSelect.
+        pendingScopePayload.current = {
+          ruleId: existingRuleId,
+          taskId: task.id,
+          updateFields: fields,
+          currentStatus: status,
+          statusChanged,
+        };
+        setShowScopeChooser(true);
+        return;
       } else if (isEditMode && task) {
         const updatePayload: Parameters<ReturnType<typeof useUpdateTaskMutation>[0]>[0] = {
           id: task.id,
@@ -370,77 +396,177 @@ export const TaskSheet = forwardRef<TaskSheetRef, TaskSheetProps>(function TaskS
     }
   };
 
+  const onScopeSelect = async (scope: 'this' | 'future') => {
+    const payload = pendingScopePayload.current;
+    if (!payload) return;
+    setShowScopeChooser(false);
+    pendingScopePayload.current = null;
+    try {
+      if (scope === 'future') {
+        await updateRule({
+          id: payload.ruleId,
+          title: payload.updateFields.title,
+          notes: payload.updateFields.notes || undefined,
+          priority: payload.updateFields.priority,
+          energy: payload.updateFields.energy,
+          estimatedMinutes: payload.updateFields.estimatedMinutes ?? undefined,
+        }).unwrap();
+      } else {
+        const updatePayload: Parameters<ReturnType<typeof useUpdateTaskMutation>[0]>[0] = {
+          id: payload.taskId,
+          title: payload.updateFields.title,
+          notes: payload.updateFields.notes || null,
+          priority: payload.updateFields.priority,
+          energy: payload.updateFields.energy,
+          rollsOver: payload.updateFields.rollsOver,
+          scheduledFor: payload.updateFields.scheduledFor || null,
+          scheduledTime: payload.updateFields.scheduledTime || null,
+          estimatedMinutes: payload.updateFields.estimatedMinutes ?? null,
+          url: payload.updateFields.url || null,
+        };
+        if (payload.statusChanged) {
+          updatePayload.status = payload.currentStatus;
+        }
+        await updateTask(updatePayload).unwrap();
+      }
+      showSuccessToast(ToastMessages.TASK_UPDATED_SUCCESSFULLY, toast);
+      onSaved();
+    } catch (error) {
+      if (isApiErrorCode(error, 'PLAN_LIMIT_EXCEEDED')) {
+        setFormError('planLimit');
+        return;
+      }
+      toast.errorWithRetry(t('common:mutationError'), {
+        label: t('common:actions.retry'),
+        onPress: () => {
+          void onScopeSelect(scope);
+        },
+      });
+    }
+  };
+
+  const onScopeCancel = () => {
+    setShowScopeChooser(false);
+    pendingScopePayload.current = null;
+  };
+
   const isLoading =
     isCreatingTask || isUpdatingTask || isCreatingRule || isConvertingTask || isUpdatingRule || isDeletingRule;
 
   return (
     <Sheet ref={sheetRef} snapPoints={['75%']} onDismiss={onDismiss}>
-      <View className="gap-4">
-        <SheetHeader>
-          <View className="flex-row items-center gap-3">
-            <View className="size-10 items-center justify-center rounded-lg bg-primary/10 dark:bg-primary-dark/10">
-              <CheckSquare size={20} color={isDark ? '#6366f1' : '#4f46e5'} />
+      {showScopeChooser ? (
+        <View className="gap-4" testID="scope-chooser">
+          <SheetHeader>
+            <SheetTitle>Apply changes to…</SheetTitle>
+            <SheetDescription>This task repeats. Choose how far your changes should reach.</SheetDescription>
+          </SheetHeader>
+
+          <Pressable
+            onPress={() => void onScopeSelect('this')}
+            accessibilityRole="button"
+            testID="scope-this"
+            className="rounded-xl border border-input dark:border-input-dark bg-card dark:bg-card-dark p-4 active:opacity-70"
+          >
+            <Text className="text-foreground dark:text-foreground-dark text-[15px] font-semibold">
+              This occurrence only
+            </Text>
+            <Text className="text-muted-foreground dark:text-muted-foreground-dark text-sm mt-1">
+              Just this one date. The series keeps its original template.
+            </Text>
+          </Pressable>
+
+          <Pressable
+            onPress={() => void onScopeSelect('future')}
+            accessibilityRole="button"
+            testID="scope-future"
+            className="rounded-xl border border-input dark:border-input-dark bg-card dark:bg-card-dark p-4 active:opacity-70"
+          >
+            <Text className="text-foreground dark:text-foreground-dark text-[15px] font-semibold">
+              This and all future occurrences
+            </Text>
+            <Text className="text-muted-foreground dark:text-muted-foreground-dark text-sm mt-1">
+              Updates the recurring template from this date onward. Past occurrences aren't changed.
+            </Text>
+          </Pressable>
+
+          <Pressable
+            onPress={onScopeCancel}
+            accessibilityRole="button"
+            testID="scope-cancel"
+            className="h-11 rounded-md items-center justify-center border border-input dark:border-input-dark mt-1"
+          >
+            <Text className="text-foreground dark:text-foreground-dark text-[15px] font-semibold">Cancel</Text>
+          </Pressable>
+        </View>
+      ) : (
+        <View className="gap-4">
+          <SheetHeader>
+            <View className="flex-row items-center gap-3">
+              <View className="size-10 items-center justify-center rounded-lg bg-primary/10 dark:bg-primary-dark/10">
+                <CheckSquare size={20} color={isDark ? '#6366f1' : '#4f46e5'} />
+              </View>
+              <View className="flex-1">
+                <SheetTitle>{isEditMode ? t('task:dialog.editTitle') : t('task:dialog.createTitle')}</SheetTitle>
+                <SheetDescription>
+                  {isEditMode ? t('task:dialog.editDescription') : t('task:dialog.createDescription')}
+                </SheetDescription>
+              </View>
             </View>
-            <View className="flex-1">
-              <SheetTitle>{isEditMode ? t('task:dialog.editTitle') : t('task:dialog.createTitle')}</SheetTitle>
-              <SheetDescription>
-                {isEditMode ? t('task:dialog.editDescription') : t('task:dialog.createDescription')}
-              </SheetDescription>
-            </View>
-          </View>
-        </SheetHeader>
+          </SheetHeader>
 
-        {formError === 'planLimit' && <PlanLimitAlert />}
+          {formError === 'planLimit' && <PlanLimitAlert />}
 
-        {/* Web's calendar:timedSchedulingLocked copy — mobile has no calendar
-            i18n namespace registered yet (that feature isn't built), so this
-            is inlined verbatim rather than pulling in a whole namespace for
-            one string. */}
-        {formError === 'timedScheduling' && (
-          <PlanLimitAlert message="Timed scheduling is a Pro feature. Upgrade to drag tasks to a specific time." />
-        )}
+          {/* Web's calendar:timedSchedulingLocked copy — mobile has no calendar
+              i18n namespace registered yet (that feature isn't built), so this
+              is inlined verbatim rather than pulling in a whole namespace for
+              one string. */}
+          {formError === 'timedScheduling' && (
+            <PlanLimitAlert message="Timed scheduling is a Pro feature. Upgrade to drag tasks to a specific time." />
+          )}
 
-        <ProjectPicker
-          value={projectId}
-          onChange={v => {
-            setProjectId(v);
-            setProjectError(undefined);
-          }}
-          error={projectError}
-        />
+          <ProjectPicker
+            value={projectId}
+            onChange={v => {
+              setProjectId(v);
+              setProjectError(undefined);
+            }}
+            error={projectError}
+          />
 
-        <TaskFieldsForm
-          value={fields}
-          onChange={setField}
-          titleError={titleError}
-          hideScheduledTime={!!recurrence}
-          statusSlot={isEditMode && <TaskStatusField value={status} onChange={setStatus} />}
-          recurrenceSlot={
-            // Editing an already-repeating task loads its real rule (see the
-            // effect above) rather than always opening closed. Turning it off
-            // ends that rule; turning it on for a plain task starts a new one —
-            // see the submit branches for exactly which mutation each case
-            // fires. On a delegated create, the value is handed to
-            // onCreateSubmit instead of resolved here (see its call site above).
-            <RecurrenceField
-              value={recurrence}
-              onChange={next => {
-                setRecurrence(next);
-                setRecurrenceDirty(true);
-              }}
-            />
-          }
-        />
+          <TaskFieldsForm
+            value={fields}
+            onChange={setField}
+            titleError={titleError}
+            hideScheduledTime={!!recurrence}
+            statusSlot={isEditMode && <TaskStatusField value={status} onChange={setStatus} />}
+            recurrenceSlot={
+              // Editing an already-repeating task loads its real rule (see the
+              // effect above) rather than always opening closed. Turning it off
+              // ends that rule; turning it on for a plain task starts a new one —
+              // see the submit branches for exactly which mutation each case
+              // fires. On a delegated create, the value is handed to
+              // onCreateSubmit instead of resolved here (see its call site above).
+              <RecurrenceField
+                value={recurrence}
+                onChange={next => {
+                  setRecurrence(next);
+                  setRecurrenceDirty(true);
+                }}
+              />
+            }
+          />
 
-        {isEditMode && task && <SubtaskSection taskId={task.id} />}
+          {isEditMode && task && <SubtaskSection taskId={task.id} />}
 
-        <Button
-          label={isEditMode ? t('common:actions.save') : t('common:actions.create')}
-          onPress={onSubmit}
-          loading={isLoading}
-          disabled={(isEditMode && !hasChanges) || isLoading || isLoadingRule}
-        />
-      </View>
+          <Button
+            label={isEditMode ? t('common:actions.save') : t('common:actions.create')}
+            onPress={onSubmit}
+            loading={isLoading}
+            disabled={(isEditMode && !hasChanges) || isLoading || isLoadingRule}
+          />
+        </View>
+      )}
     </Sheet>
   );
 });

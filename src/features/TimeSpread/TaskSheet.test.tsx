@@ -409,4 +409,95 @@ describe('TaskSheet', () => {
     await fireEvent.press(screen.getByText('Monthly'));
     await waitFor(() => expect(screen.queryByText('Sun')).toBeNull());
   });
+
+  it('editing a non-recurrence field on a recurring task opens the scope modal before saving', async () => {
+    let taskPatched = false;
+    let rulePatched = false;
+    server.use(
+      http.get(`${API}/recurrence-rules/:id`, () => HttpResponse.json({ data: existingRule, error: null })),
+      http.patch(`${API}/tasks/:id`, () => {
+        taskPatched = true;
+        return HttpResponse.json({ data: task({ recurrenceRuleId: 'r1' }), error: null });
+      }),
+      http.patch(`${API}/recurrence-rules/:id`, () => {
+        rulePatched = true;
+        return HttpResponse.json({ data: existingRule, error: null });
+      })
+    );
+    const { ref, onSaved } = await renderSheet();
+    await waitFor(() => ref.current?.present({ task: task({ recurrenceRuleId: 'r1' }) }));
+    await waitFor(() => expect(screen.getByText('On')).toBeTruthy());
+
+    // Change the title only — recurrence field untouched, so recurrenceDirty stays false.
+    await fireEvent.changeText(screen.getByDisplayValue('Write report'), 'Write report v2');
+    await waitFor(() => expect(screen.getByLabelText('Save Changes').props.accessibilityState.disabled).toBe(false));
+    await fireEvent.press(screen.getByLabelText('Save Changes'));
+
+    // Scope modal should appear.
+    await waitFor(() => expect(screen.getByText('Apply changes to…')).toBeTruthy());
+    expect(screen.getByText('This occurrence only')).toBeTruthy();
+    expect(screen.getByText('This and all future occurrences')).toBeTruthy();
+
+    // Choose "this occurrence only" — PATCHes the task, not the rule.
+    await fireEvent.press(screen.getByText('This occurrence only'));
+
+    await waitFor(() => expect(onSaved).toHaveBeenCalled());
+    expect(taskPatched).toBe(true);
+    expect(rulePatched).toBe(false);
+  });
+
+  it('"this and all future" on the scope modal PATCHes the rule, not the task', async () => {
+    let taskPatched = false;
+    let rulePatched = false;
+    server.use(
+      http.get(`${API}/recurrence-rules/:id`, () => HttpResponse.json({ data: existingRule, error: null })),
+      http.patch(`${API}/tasks/:id`, () => {
+        taskPatched = true;
+        return HttpResponse.json({ data: task({ recurrenceRuleId: 'r1' }), error: null });
+      }),
+      http.patch(`${API}/recurrence-rules/:id`, () => {
+        rulePatched = true;
+        return HttpResponse.json({ data: existingRule, error: null });
+      })
+    );
+    const { ref, onSaved } = await renderSheet();
+    await waitFor(() => ref.current?.present({ task: task({ recurrenceRuleId: 'r1' }) }));
+    await waitFor(() => expect(screen.getByText('On')).toBeTruthy());
+
+    await fireEvent.changeText(screen.getByDisplayValue('Write report'), 'Write report v2');
+    await waitFor(() => expect(screen.getByLabelText('Save Changes').props.accessibilityState.disabled).toBe(false));
+    await fireEvent.press(screen.getByLabelText('Save Changes'));
+
+    await waitFor(() => expect(screen.getByText('Apply changes to…')).toBeTruthy());
+    await fireEvent.press(screen.getByText('This and all future occurrences'));
+
+    await waitFor(() => expect(onSaved).toHaveBeenCalled());
+    expect(rulePatched).toBe(true);
+    expect(taskPatched).toBe(false);
+  });
+
+  it('cancelling the scope modal does NOT save', async () => {
+    let taskPatched = false;
+    server.use(
+      http.get(`${API}/recurrence-rules/:id`, () => HttpResponse.json({ data: existingRule, error: null })),
+      http.patch(`${API}/tasks/:id`, () => {
+        taskPatched = true;
+        return HttpResponse.json({ data: task({ recurrenceRuleId: 'r1' }), error: null });
+      })
+    );
+    const { ref, onSaved } = await renderSheet();
+    await waitFor(() => ref.current?.present({ task: task({ recurrenceRuleId: 'r1' }) }));
+    await waitFor(() => expect(screen.getByText('On')).toBeTruthy());
+
+    await fireEvent.changeText(screen.getByDisplayValue('Write report'), 'Write report v2');
+    await waitFor(() => expect(screen.getByLabelText('Save Changes').props.accessibilityState.disabled).toBe(false));
+    await fireEvent.press(screen.getByLabelText('Save Changes'));
+
+    await waitFor(() => expect(screen.getByText('Apply changes to…')).toBeTruthy());
+    await fireEvent.press(screen.getByText('Cancel'));
+
+    // onSaved must not have fired.
+    expect(onSaved).not.toHaveBeenCalled();
+    expect(taskPatched).toBe(false);
+  });
 });

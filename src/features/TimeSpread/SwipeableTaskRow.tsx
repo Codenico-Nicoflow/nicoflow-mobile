@@ -1,10 +1,11 @@
 import { useRef, useState } from 'react';
 
 import { type ITask, TaskStatus } from '@nicoflow/shared/types';
-import { Check, Trash2 } from 'lucide-react-native';
+import { Check, SkipForward, Trash2 } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import Reanimated from 'react-native-reanimated';
 
+import { EndSeriesDialog, SkipOccurrenceDialog } from '@/components/recurrence/RecurrenceConfirmDialogs';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -23,12 +24,12 @@ import { cn } from '@/lib/utils/cn';
 import type { Segment } from './segments';
 import { TaskRow } from './TaskRow';
 
-// Swipe right completes; swipe left asks for delete confirmation via
-// AlertDialog before firing onDelete — a destructive action must never fire
-// straight off the gesture (see the memory: swipe-to-delete always needs a
-// confirm, no exceptions). TaskRow's own 3-dot menu delete item routes
-// through this same alert (its onDelete prop just opens it, doesn't call the
-// real onDelete directly) so both paths share one confirm step.
+// Swipe right completes; swipe left opens:
+//   - non-recurring tasks: delete confirmation (AlertDialog)
+//   - recurring tasks: skip-occurrence confirmation (SkipOccurrenceDialog)
+// A destructive action must never fire straight off the gesture — both paths
+// ask for confirmation first (see memory: swipe-to-delete always needs a
+// confirm, no exceptions).
 export function SwipeableTaskRow({
   task,
   segment,
@@ -38,6 +39,8 @@ export function SwipeableTaskRow({
   onScheduleTomorrow,
   onUnschedule,
   onDelete,
+  onSkip,
+  onEndSeries,
 }: {
   task: ITask;
   segment: Segment;
@@ -47,14 +50,19 @@ export function SwipeableTaskRow({
   onScheduleTomorrow: (task: ITask) => void;
   onUnschedule: (task: ITask) => void;
   onDelete: (task: ITask) => void;
+  onSkip: (task: ITask) => void;
+  onEndSeries: (task: ITask) => void;
 }) {
   const { t } = useTranslation(['task', 'common']);
+  const isRecurring = !!task.recurrenceRuleId;
   const swipeableRef = useRef<SwipeableRowHandle>(null);
-  const alertRef = useRef<AlertDialogRef>(null);
+  const deleteAlertRef = useRef<AlertDialogRef>(null);
+  const skipAlertRef = useRef<AlertDialogRef>(null);
+  const endSeriesAlertRef = useRef<AlertDialogRef>(null);
   const [pendingDelete, setPendingDelete] = useState(false);
+  const [pendingSkip, setPendingSkip] = useState(false);
+  const [pendingEndSeries, setPendingEndSeries] = useState(false);
 
-  // Completing holds the row visible with a celebration before onToggleStatus
-  // actually fires; un-completing (or any non-DONE transition) is instant.
   const {
     trigger: celebrateComplete,
     celebrationStyle,
@@ -73,7 +81,17 @@ export function SwipeableTaskRow({
 
   const openDeleteConfirm = () => {
     setPendingDelete(true);
-    alertRef.current?.present();
+    deleteAlertRef.current?.present();
+  };
+
+  const openSkipConfirm = () => {
+    setPendingSkip(true);
+    skipAlertRef.current?.present();
+  };
+
+  const openEndSeriesConfirm = () => {
+    setPendingEndSeries(true);
+    endSeriesAlertRef.current?.present();
   };
 
   return (
@@ -92,12 +110,9 @@ export function SwipeableTaskRow({
         }}
         right={{
           tone: 'destructive',
-          icon: <Trash2 size={20} color="#ffffff" />,
-          // Both tap-the-panel and full-swipe-open only ever OPEN the confirm
-          // — neither calls onDelete directly. Destructive swipe actions
-          // always confirm, no exceptions.
-          onPress: openDeleteConfirm,
-          onOpen: openDeleteConfirm,
+          icon: isRecurring ? <SkipForward size={20} color="#ffffff" /> : <Trash2 size={20} color="#ffffff" />,
+          onPress: isRecurring ? openSkipConfirm : openDeleteConfirm,
+          onOpen: isRecurring ? openSkipConfirm : openDeleteConfirm,
         }}
       >
         <TaskRow
@@ -108,7 +123,9 @@ export function SwipeableTaskRow({
           onScheduleToday={onScheduleToday}
           onScheduleTomorrow={onScheduleTomorrow}
           onUnschedule={onUnschedule}
-          onDelete={openDeleteConfirm}
+          onDelete={isRecurring ? openSkipConfirm : openDeleteConfirm}
+          onSkip={openSkipConfirm}
+          onEndSeries={openEndSeriesConfirm}
         />
         <Reanimated.View
           pointerEvents="none"
@@ -116,7 +133,8 @@ export function SwipeableTaskRow({
         />
       </SwipeableRow>
 
-      <AlertDialog ref={alertRef}>
+      {/* Non-recurring delete confirm */}
+      <AlertDialog ref={deleteAlertRef}>
         <AlertDialogHeader>
           <AlertDialogTitle>{t('task:deleteDialog.title')}</AlertDialogTitle>
           <AlertDialogDescription>{t('task:deleteDialog.description', { name: task.title })}</AlertDialogDescription>
@@ -126,7 +144,7 @@ export function SwipeableTaskRow({
             onPress={() => {
               if (pendingDelete) onDelete(task);
               setPendingDelete(false);
-              alertRef.current?.dismiss();
+              deleteAlertRef.current?.dismiss();
               swipeableRef.current?.close();
             }}
           >
@@ -135,7 +153,7 @@ export function SwipeableTaskRow({
           <AlertDialogCancel
             onPress={() => {
               setPendingDelete(false);
-              alertRef.current?.dismiss();
+              deleteAlertRef.current?.dismiss();
               swipeableRef.current?.close();
             }}
           >
@@ -143,6 +161,36 @@ export function SwipeableTaskRow({
           </AlertDialogCancel>
         </AlertDialogFooter>
       </AlertDialog>
+
+      {/* Skip occurrence confirm */}
+      <SkipOccurrenceDialog
+        ref={skipAlertRef}
+        onConfirm={() => {
+          if (pendingSkip) onSkip(task);
+          setPendingSkip(false);
+          skipAlertRef.current?.dismiss();
+          swipeableRef.current?.close();
+        }}
+        onCancel={() => {
+          setPendingSkip(false);
+          skipAlertRef.current?.dismiss();
+          swipeableRef.current?.close();
+        }}
+      />
+
+      {/* End series confirm */}
+      <EndSeriesDialog
+        ref={endSeriesAlertRef}
+        onConfirm={() => {
+          if (pendingEndSeries) onEndSeries(task);
+          setPendingEndSeries(false);
+          endSeriesAlertRef.current?.dismiss();
+        }}
+        onCancel={() => {
+          setPendingEndSeries(false);
+          endSeriesAlertRef.current?.dismiss();
+        }}
+      />
     </Reanimated.View>
   );
 }
