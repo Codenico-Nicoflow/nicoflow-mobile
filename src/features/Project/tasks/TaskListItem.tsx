@@ -98,6 +98,9 @@ export function TaskListItem({ task, onEdit, onToggleStatus, dragHandleProps, is
   });
 
   const handleToggle = () => {
+    // Recurring done tasks can't be un-completed — backend rejects with
+    // TASK_RECURRING_NOT_REVERSIBLE (the successor is already materialized).
+    if (isDone && isRecurring) return;
     if (isDone) {
       onToggleStatus(task);
       return;
@@ -318,7 +321,7 @@ export function TaskListItem({ task, onEdit, onToggleStatus, dragHandleProps, is
               )}
             </DropdownMenu>
 
-            <Checkbox checked={isDone} onCheckedChange={handleToggle} />
+            <Checkbox checked={isDone} onCheckedChange={handleToggle} disabled={isDone && isRecurring} />
           </View>
         </Pressable>
 
