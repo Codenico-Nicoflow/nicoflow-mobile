@@ -52,13 +52,30 @@ export function TasksSection({ projectId }: TasksSectionProps) {
   const { data, isLoading, hasNextPage, isFetchingNextPage, fetchNextPage } = useGetTasksInfiniteQuery({
     projectId,
   });
+  // The default (no-status) fetch above deliberately excludes done tasks and
+  // any recurring occurrence retired as skipped/missed/paused (backend
+  // taskquery.go) — otherwise years of occurrence history would bury the
+  // working view. That means the Done and Cancelled tabs, which filter this
+  // same array client-side, would show nothing for exactly the rows this
+  // fix is about. Two extra one-shot fetches (first page only, same 50-item
+  // cap as everywhere else in this file) backfill just those two statuses so
+  // every tab keeps working off one shared array. Mirrors web's TasksSection.tsx fix.
+  const { data: doneData } = useGetTasksInfiniteQuery({ projectId, status: TaskStatus.DONE });
+  const { data: cancelledData } = useGetTasksInfiniteQuery({ projectId, status: TaskStatus.CANCELLED });
   const [updateTaskStatus] = useUpdateTaskStatusMutation();
   const [reorderTask] = useReorderTaskMutation();
   const sheetRef = useRef<TaskSheetRef>(null);
   const completeConfirmRef = useRef<SheetRef>(null);
   const [pendingComplete, setPendingComplete] = useState<ITask | null>(null);
 
-  const tasks = useMemo(() => data?.pages.flatMap(p => p.items) ?? [], [data]);
+  const tasks = useMemo(() => {
+    const defaultItems = data?.pages.flatMap(p => p.items) ?? [];
+    const doneItems = doneData?.pages[0]?.items ?? [];
+    const cancelledItems = cancelledData?.pages[0]?.items ?? [];
+    const merged = new Map<string, ITask>();
+    for (const task of [...defaultItems, ...doneItems, ...cancelledItems]) merged.set(task.id, task);
+    return [...merged.values()];
+  }, [data, doneData, cancelledData]);
 
   const [pickedFilter, setPickedFilter] = useState<TaskFilter | null>(null);
   const [scheduleFilter, setScheduleFilter] = useState<(typeof ScheduleFilter)[keyof typeof ScheduleFilter]>(
