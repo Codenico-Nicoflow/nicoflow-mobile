@@ -47,6 +47,9 @@ export function TaskRow({
   const isDark = useColorScheme() === 'dark';
   const mutedColor = isDark ? '#94a3b8' : '#64748b';
   const isRecurring = !!task.recurrenceRuleId;
+  // Live = still governed by its rule, not yet skipped/missed/paused/done.
+  // Backend rejects a plain reschedule on this row with TASK_RECURRING_NOT_RESCHEDULABLE.
+  const isLiveRecurringInstance = isRecurring && !task.occurrenceStatus && task.status === TaskStatus.ACTIVE;
   const menuRef = useRef<DropdownMenuRef>(null);
 
   return (
@@ -85,7 +88,7 @@ export function TaskRow({
             </View>
           }
         >
-          {segment !== 'today' && (
+          {!isLiveRecurringInstance && segment !== 'today' && (
             <DropdownMenuItem
               icon={<CalendarClock size={16} color={mutedColor} />}
               onPress={() => {
@@ -96,7 +99,7 @@ export function TaskRow({
               {t('timeSpread.actions.today')}
             </DropdownMenuItem>
           )}
-          {segment !== 'tomorrow' && (
+          {!isLiveRecurringInstance && segment !== 'tomorrow' && (
             <DropdownMenuItem
               icon={<CalendarClock size={16} color={mutedColor} />}
               onPress={() => {
@@ -107,15 +110,17 @@ export function TaskRow({
               {t('timeSpread.actions.tomorrow')}
             </DropdownMenuItem>
           )}
-          <DropdownMenuItem
-            icon={<CalendarX size={16} color={mutedColor} />}
-            onPress={() => {
-              menuRef.current?.dismiss();
-              onUnschedule(task);
-            }}
-          >
-            {t('timeSpread.actions.remove')}
-          </DropdownMenuItem>
+          {!isLiveRecurringInstance && (
+            <DropdownMenuItem
+              icon={<CalendarX size={16} color={mutedColor} />}
+              onPress={() => {
+                menuRef.current?.dismiss();
+                onUnschedule(task);
+              }}
+            >
+              {t('timeSpread.actions.remove')}
+            </DropdownMenuItem>
+          )}
           {isRecurring ? (
             <>
               <DropdownMenuItem
@@ -152,7 +157,7 @@ export function TaskRow({
           )}
         </DropdownMenu>
 
-        <Checkbox checked={isDone} onCheckedChange={() => onToggleStatus(task)} />
+        <Checkbox checked={isDone} onCheckedChange={() => onToggleStatus(task)} disabled={isDone && isRecurring} />
       </View>
     </View>
   );

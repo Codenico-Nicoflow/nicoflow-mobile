@@ -539,7 +539,19 @@ export const TaskSheet = forwardRef<TaskSheetRef, TaskSheetProps>(function TaskS
             onChange={setField}
             titleError={titleError}
             hideScheduledTime={!!recurrence}
-            statusSlot={isEditMode && <TaskStatusField value={status} onChange={setStatus} />}
+            statusSlot={
+              isEditMode && (
+                <TaskStatusField
+                  value={status}
+                  onChange={next => {
+                    // Recurring done tasks can't be un-completed — backend rejects
+                    // with TASK_RECURRING_NOT_REVERSIBLE.
+                    if (task?.recurrenceRuleId && status === TaskStatus.DONE && next === TaskStatus.ACTIVE) return;
+                    setStatus(next);
+                  }}
+                />
+              )
+            }
             recurrenceSlot={
               // Editing an already-repeating task loads its real rule (see the
               // effect above) rather than always opening closed. Turning it off
