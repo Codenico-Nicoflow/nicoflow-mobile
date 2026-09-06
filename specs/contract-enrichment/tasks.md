@@ -1,7 +1,7 @@
 # Tasks — contract-enrichment (nicoflow-mobile)
 
-Swap the Expo app onto the generated types. Nothing here starts until
-`nicoflow-shared` has published them.
+Fix this app's call sites wherever the shared types were wrong. Nothing here
+starts until `nicoflow-shared` has published its corrected types.
 
 38 files import the hand-written interfaces.
 
@@ -21,19 +21,19 @@ that before assuming the types are wrong.
 
 ## Planned
 
-- [ ] Bump @nicoflow/shared from ^0.10.4 to the version carrying the generated types and confirm the app still compiles before any migration [ac:AC9] [files:package.json] [verify:pnpm install && pnpm type-check]
+- [ ] Bump @nicoflow/shared from ^0.10.4 to the version carrying the corrected types and confirm the app still compiles before any call-site work [ac:AC9] [files:package.json] [verify:pnpm install && pnpm type-check]
 
-- [ ] Migrate the TimeSpread feature (10 files) to the generated task types [ac:AC9] [files:src/features/TimeSpread] [verify:pnpm type-check && npx jest src/features/TimeSpread]
+- [ ] Fix the TimeSpread feature (10 files) against the corrected task types [ac:AC9] [files:src/features/TimeSpread] [verify:pnpm type-check && npx jest src/features/TimeSpread]
 
-- [ ] Migrate the Inbox feature (7 files) [ac:AC9] [files:src/features/Inbox] [verify:pnpm type-check && npx jest src/features/Inbox]
+- [ ] Fix the Inbox feature (7 files) [ac:AC9] [files:src/features/Inbox] [verify:pnpm type-check && npx jest src/features/Inbox]
 
-- [ ] Migrate the Areas feature (7 files) [ac:AC9] [files:src/features/Areas] [verify:pnpm type-check && npx jest src/features/Areas]
+- [ ] Fix the Areas feature (7 files) [ac:AC9] [files:src/features/Areas] [verify:pnpm type-check && npx jest src/features/Areas]
 
-- [ ] Migrate the Project feature including its tasks and notes subtrees (11 files) [ac:AC9] [files:src/features/Project] [verify:pnpm type-check && npx jest src/features/Project]
+- [ ] Fix the Project feature including its tasks and notes subtrees (11 files) [ac:AC9] [files:src/features/Project] [verify:pnpm type-check && npx jest src/features/Project]
 
-- [ ] Migrate the Notes feature and the store (3 files) [ac:AC9] [files:src/features/Notes,src/lib/store] [verify:pnpm type-check && npx jest src/features/Notes]
+- [ ] Fix the Notes feature and the store (3 files) [ac:AC9] [files:src/features/Notes,src/lib/store] [verify:pnpm type-check && npx jest src/features/Notes]
 
-- [ ] Full sweep: no hand-written interface remains, no `as` cast or local re-declaration was introduced to satisfy the compiler [ac:AC8,AC9] [verify:pnpm type-check && pnpm lint && pnpm test && ! grep -rqE "\b(ITask|IProject|IArea|IBucket|INote|IHabit|ISubtask)\b" src/]
+- [ ] Full sweep: no local re-declaration of a shared type remains, and no `as` cast was introduced to satisfy the compiler [ac:AC8,AC9] [verify:pnpm type-check && pnpm lint && pnpm test && ! grep -rqE "\b(ITask|IProject|IArea|IBucket|INote|IHabit|ISubtask)\b" src/]
 
 ## Discovered
 
