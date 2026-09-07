@@ -47,6 +47,3 @@ example
 
 expo-env.d.ts
 # @end expo-cli
-# Harness loop state — local working memory, not shared
-specs/**/progress.md
-specs/**/blockers.md
