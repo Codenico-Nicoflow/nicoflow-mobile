@@ -27,6 +27,17 @@ jobs:
       - run: |
           printf '/// <reference types="expo/types" />\n' > expo-env.d.ts
 
+      # .expo/types/router.d.ts (typed routes) is also gitignored and normally
+      # written by `expo start`. Without it Href degrades to plain string and
+      # a typo'd route silently type-checks green in CI while erroring locally.
+      # This is the documented no-dev-server way to generate it. It also
+      # rewrites tsconfig.json (already committed in its generated form), so
+      # fail loudly if that write actually changes something rather than
+      # type-checking against a config nobody reviewed.
+      - run: npx expo customize tsconfig.json
+
+      - run: git diff --exit-code tsconfig.json
+
       - run: npm run lint
 
       - run: npm run type-check
