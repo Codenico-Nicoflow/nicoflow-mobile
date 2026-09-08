@@ -1,4 +1,15 @@
-import { aiApi, areaApi, authApi, bucketApi, noteApi, projectApi, recurrenceApi, subtaskApi, taskApi } from './store';
+import {
+  aiApi,
+  areaApi,
+  authApi,
+  bucketApi,
+  noteApi,
+  projectApi,
+  recurrenceApi,
+  searchApi,
+  subtaskApi,
+  taskApi,
+} from './store';
 
 export { useSkipTaskOccurrenceMutation } from './store';
 
@@ -15,6 +26,7 @@ export {
   persistor,
   projectApi,
   recurrenceApi,
+  searchApi,
   store,
   subtaskApi,
   taskApi,
@@ -118,3 +130,7 @@ export const {
   useGetAISessionsQuery,
   useGetAIUsageQuery,
 } = aiApi;
+
+// Search exports — hooks are generated on the instance constructed in store.ts
+export const { useSearchQuery } = searchApi;
+export type { IAreaResult, INoteResult, IProjectResult, ISearchResults, ITaskResult } from '@nicoflow/shared/api';

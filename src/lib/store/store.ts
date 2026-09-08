@@ -8,6 +8,7 @@ import {
   createNoteApi,
   createProjectApi,
   createRecurrenceApi,
+  createSearchApi,
   createSubtaskApi,
   createTaskApi,
 } from '@nicoflow/shared/api';
@@ -71,6 +72,7 @@ export const bucketApi = createBucketApi(baseQueryWithReauth);
 export const noteApi = createNoteApi(baseQueryWithReauth);
 export const subtaskApi = createSubtaskApi(baseQueryWithReauth);
 export const aiApi = createAiApi(baseQueryWithReauth);
+export const searchApi = createSearchApi(baseQueryWithReauth);
 
 const apiReducerPaths = [
   authApi.reducerPath,
@@ -82,6 +84,7 @@ const apiReducerPaths = [
   noteApi.reducerPath,
   subtaskApi.reducerPath,
   aiApi.reducerPath,
+  searchApi.reducerPath,
 ] as const;
 
 const combinedReducer = combineReducers({
@@ -95,6 +98,7 @@ const combinedReducer = combineReducers({
   [noteApi.reducerPath]: noteApi.reducer,
   [subtaskApi.reducerPath]: subtaskApi.reducer,
   [aiApi.reducerPath]: aiApi.reducer,
+  [searchApi.reducerPath]: searchApi.reducer,
 });
 
 type CombinedState = ReturnType<typeof combinedReducer>;
@@ -140,7 +144,8 @@ export const store = configureStore({
       bucketApi.middleware,
       noteApi.middleware,
       subtaskApi.middleware,
-      aiApi.middleware
+      aiApi.middleware,
+      searchApi.middleware
     ),
   enhancers: getDefaultEnhancers =>
     __DEV__ ? getDefaultEnhancers().concat(devToolsEnhancer()) : getDefaultEnhancers(),
