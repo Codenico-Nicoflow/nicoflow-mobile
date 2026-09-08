@@ -1,10 +1,11 @@
-import { areaApi, authApi, bucketApi, noteApi, projectApi, recurrenceApi, subtaskApi, taskApi } from './store';
+import { aiApi, areaApi, authApi, bucketApi, noteApi, projectApi, recurrenceApi, subtaskApi, taskApi } from './store';
 
 export { useSkipTaskOccurrenceMutation } from './store';
 
 // Store exports
 export type { AppDispatch, RootState } from './store';
 export {
+  aiApi,
   areaApi,
   authApi,
   bucketApi,
@@ -108,3 +109,12 @@ export const {
 // Subtask exports — hooks are generated on the instance constructed in store.ts
 export const { useCreateSubtaskMutation, useDeleteSubtaskMutation, useGetSubtasksQuery, useUpdateSubtaskMutation } =
   subtaskApi;
+
+// AI exports — hooks are generated on the instance constructed in store.ts
+export const {
+  useCreateAISessionMutation,
+  useDeleteAISessionMutation,
+  useGetAISessionQuery,
+  useGetAISessionsQuery,
+  useGetAIUsageQuery,
+} = aiApi;

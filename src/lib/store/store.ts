@@ -1,6 +1,7 @@
 import { router } from 'expo-router';
 
 import {
+  createAiApi,
   createAreaApi,
   createAuthApi,
   createBucketApi,
@@ -69,6 +70,7 @@ export const recurrenceApi = createRecurrenceApi(baseQueryWithReauth, taskApi);
 export const bucketApi = createBucketApi(baseQueryWithReauth);
 export const noteApi = createNoteApi(baseQueryWithReauth);
 export const subtaskApi = createSubtaskApi(baseQueryWithReauth);
+export const aiApi = createAiApi(baseQueryWithReauth);
 
 const apiReducerPaths = [
   authApi.reducerPath,
@@ -79,6 +81,7 @@ const apiReducerPaths = [
   bucketApi.reducerPath,
   noteApi.reducerPath,
   subtaskApi.reducerPath,
+  aiApi.reducerPath,
 ] as const;
 
 const combinedReducer = combineReducers({
@@ -91,6 +94,7 @@ const combinedReducer = combineReducers({
   [bucketApi.reducerPath]: bucketApi.reducer,
   [noteApi.reducerPath]: noteApi.reducer,
   [subtaskApi.reducerPath]: subtaskApi.reducer,
+  [aiApi.reducerPath]: aiApi.reducer,
 });
 
 type CombinedState = ReturnType<typeof combinedReducer>;
@@ -135,7 +139,8 @@ export const store = configureStore({
       recurrenceApi.middleware,
       bucketApi.middleware,
       noteApi.middleware,
-      subtaskApi.middleware
+      subtaskApi.middleware,
+      aiApi.middleware
     ),
   enhancers: getDefaultEnhancers =>
     __DEV__ ? getDefaultEnhancers().concat(devToolsEnhancer()) : getDefaultEnhancers(),
