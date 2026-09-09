@@ -39,3 +39,26 @@ export const settingsExtensionsRu = {
   planSection: 'Тариф',
   planUpgradeHint: 'Pro открывает неограниченные области, проекты и AI. Оформите на сайте nicoflow.app.',
 };
+
+// NIC-1995: the upload source sheet is mobile-only — web has a drag-and-drop
+// zone, so it has no camera/library/file wording and no permission-denial copy.
+export const taskAttachmentExtensionsEn = {
+  sourceCamera: 'Take a photo',
+  sourceLibrary: 'Choose from library',
+  sourceFile: 'Choose a file',
+  permissionDenied: "Permission denied. You can allow access in your device's settings.",
+};
+
+export const taskAttachmentExtensionsHe = {
+  sourceCamera: 'צילום תמונה',
+  sourceLibrary: 'בחירה מהגלריה',
+  sourceFile: 'בחירת קובץ',
+  permissionDenied: 'ההרשאה נדחתה. אפשר לאשר גישה בהגדרות המכשיר.',
+};
+
+export const taskAttachmentExtensionsRu = {
+  sourceCamera: 'Сделать фото',
+  sourceLibrary: 'Выбрать из галереи',
+  sourceFile: 'Выбрать файл',
+  permissionDenied: 'Доступ запрещён. Его можно разрешить в настройках устройства.',
+};

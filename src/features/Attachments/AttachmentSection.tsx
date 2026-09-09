@@ -9,6 +9,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useTheme } from '@/hooks/use-theme';
 import { useGetAttachmentsQuery } from '@/lib/store';
 
+import { UploadControl } from './upload/UploadControl';
 import { AttachmentRow } from './AttachmentRow';
 
 // Matches web's SKELETON_ROWS — never a blank gap or a spinner-only state.
@@ -58,6 +59,8 @@ export function AttachmentSection({ ownerType, ownerId, children }: AttachmentSe
           ))}
         </View>
       )}
+
+      <UploadControl ownerType={ownerType} ownerId={ownerId} currentCount={attachments.length} />
 
       {children}
     </View>
