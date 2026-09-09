@@ -7,6 +7,18 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 
+import {
+  aiExtensionsEn,
+  aiExtensionsHe,
+  aiExtensionsRu,
+  settingsExtensionsEn,
+  settingsExtensionsHe,
+  settingsExtensionsRu,
+  taskAttachmentExtensionsEn,
+  taskAttachmentExtensionsHe,
+  taskAttachmentExtensionsRu,
+} from './localeExtensions';
+
 export const SUPPORTED_LANGUAGES = ['en', 'he', 'ru'] as const;
 export type SupportedLanguage = (typeof SUPPORTED_LANGUAGES)[number];
 
@@ -48,6 +60,35 @@ export async function resolveInitialLanguage(): Promise<SupportedLanguage> {
   return 'en';
 }
 
+// Mobile-only copy layered over the shared locales (see localeExtensions.ts).
+const mergedEn = {
+  ...en,
+  ai: { ...en.ai, quota: { ...en.ai.quota, ...aiExtensionsEn.quota } },
+  common: {
+    ...en.common,
+    pages: { ...en.common.pages, settings: { ...en.common.pages.settings, ...settingsExtensionsEn } },
+  },
+  task: { ...en.task, attachments: { ...en.task.attachments, ...taskAttachmentExtensionsEn } },
+};
+const mergedHe = {
+  ...he,
+  ai: { ...he.ai, quota: { ...he.ai.quota, ...aiExtensionsHe.quota } },
+  common: {
+    ...he.common,
+    pages: { ...he.common.pages, settings: { ...he.common.pages.settings, ...settingsExtensionsHe } },
+  },
+  task: { ...he.task, attachments: { ...he.task.attachments, ...taskAttachmentExtensionsHe } },
+};
+const mergedRu = {
+  ...ru,
+  ai: { ...ru.ai, quota: { ...ru.ai.quota, ...aiExtensionsRu.quota } },
+  common: {
+    ...ru.common,
+    pages: { ...ru.common.pages, settings: { ...ru.common.pages.settings, ...settingsExtensionsRu } },
+  },
+  task: { ...ru.task, attachments: { ...ru.task.attachments, ...taskAttachmentExtensionsRu } },
+};
+
 export const isRTLLanguage = (lng: SupportedLanguage): boolean => lng === 'he';
 
 // Text content updates immediately via i18n.changeLanguage. Layout direction
@@ -85,7 +126,7 @@ export async function initI18n(): Promise<void> {
   I18nManager.forceRTL(isRTLLanguage(lng));
 
   await i18n.use(initReactI18next).init({
-    resources: { en, he, ru },
+    resources: { en: mergedEn, he: mergedHe, ru: mergedRu },
     lng,
     supportedLngs: SUPPORTED_LANGUAGES,
     fallbackLng: 'en',

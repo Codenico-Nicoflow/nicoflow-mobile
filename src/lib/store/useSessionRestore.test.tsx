@@ -11,9 +11,13 @@ import { useSessionRestore } from './useSessionRestore';
 
 const mockRefreshSessionFromStore = jest.fn();
 
-jest.mock('@/lib/store', () => ({
-  mobileTokenStorage: {},
+// Mocked per source module rather than through the '@/lib/store' barrel — the
+// hook imports from the sources directly to avoid a require cycle.
+jest.mock('./store', () => ({ mobileTokenStorage: {} }));
+jest.mock('./slices/baseQuery', () => ({
   refreshSessionFromStore: (...args: unknown[]) => mockRefreshSessionFromStore(...args),
+}));
+jest.mock('./hooks', () => ({
   useAppDispatch: () => mockStore.dispatch,
   useAppSelector: (selector: (state: ReturnType<typeof mockStore.getState>) => unknown) =>
     selector(mockStore.getState()),

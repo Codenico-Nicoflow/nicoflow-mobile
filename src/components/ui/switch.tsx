@@ -6,9 +6,10 @@ export interface SwitchProps {
   checked: boolean;
   onCheckedChange: (checked: boolean) => void;
   disabled?: boolean;
+  testID?: string;
 }
 
-export function Switch({ checked, onCheckedChange, disabled }: SwitchProps) {
+export function Switch({ checked, onCheckedChange, disabled, testID }: SwitchProps) {
   const scheme = useColorScheme();
   const isDark = scheme === 'dark';
   const primary = isDark ? '#6366f1' : '#4f46e5';
@@ -24,6 +25,7 @@ export function Switch({ checked, onCheckedChange, disabled }: SwitchProps) {
 
   return (
     <Pressable
+      testID={testID}
       onPress={() => !disabled && onCheckedChange(!checked)}
       disabled={disabled}
       accessibilityRole="switch"

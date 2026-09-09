@@ -37,6 +37,18 @@ const mockRecurrenceApi = createRecurrenceApi(baseQuery, mockTaskApi);
 const mockSubtaskApi = createSubtaskApi(baseQuery);
 
 jest.mock('@/lib/store', () => ({
+  // AttachmentSection renders inside this screen (NIC-1994); it only needs to
+  // resolve to an empty list here.
+  useGetAttachmentsQuery: () => ({ data: [], isLoading: false }),
+  // UploadControl (NIC-1995) renders inside AttachmentSection; a free user just
+  // gets the Pro hint, which keeps these suites free of upload plumbing.
+  useAppUser: () => ({ status: 'regular' }),
+  useGetUploadUrlMutation: () => [jest.fn(), { isLoading: false }],
+  useConfirmAttachmentMutation: () => [jest.fn(), { isLoading: false }],
+  useGetStorageUsageQuery: () => ({ data: undefined, isLoading: false }),
+  useGetDownloadUrlMutation: () => [jest.fn(), { isLoading: false }],
+  useDeleteAttachmentMutation: () => [jest.fn(), { isLoading: false }],
+
   useCreateTaskMutation: () => mockTaskApi.useCreateTaskMutation(),
   useUpdateTaskMutation: () => mockTaskApi.useUpdateTaskMutation(),
   useGetProjectsQuery: () => mockProjectApi.useGetProjectsQuery(),

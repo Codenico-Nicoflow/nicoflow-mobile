@@ -16,6 +16,7 @@ import { Button } from '@/components/ui/button';
 import { PlanLimitAlert } from '@/components/ui/plan-limit-alert';
 import { Sheet, SheetDescription, SheetHeader, type SheetRef, SheetTitle } from '@/components/ui/sheet';
 import { toast } from '@/components/ui/toast';
+import { AttachmentSection } from '@/features/Attachments/AttachmentSection';
 import {
   useConvertTaskToRecurringMutation,
   useCreateRecurrenceRuleMutation,
@@ -570,6 +571,9 @@ export const TaskSheet = forwardRef<TaskSheetRef, TaskSheetProps>(function TaskS
           />
 
           {isEditMode && task && <SubtaskSection taskId={task.id} />}
+
+          {/* Attachments need a persisted owner id, so edit mode only. */}
+          {isEditMode && task && <AttachmentSection ownerType="task" ownerId={task.id} />}
 
           <Button
             label={isEditMode ? t('common:actions.save') : t('common:actions.create')}
