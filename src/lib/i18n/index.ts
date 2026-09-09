@@ -7,7 +7,14 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 
-import { aiExtensionsEn, aiExtensionsHe, aiExtensionsRu } from './aiExtensions';
+import {
+  aiExtensionsEn,
+  aiExtensionsHe,
+  aiExtensionsRu,
+  settingsExtensionsEn,
+  settingsExtensionsHe,
+  settingsExtensionsRu,
+} from './localeExtensions';
 
 export const SUPPORTED_LANGUAGES = ['en', 'he', 'ru'] as const;
 export type SupportedLanguage = (typeof SUPPORTED_LANGUAGES)[number];
@@ -51,9 +58,30 @@ export async function resolveInitialLanguage(): Promise<SupportedLanguage> {
 }
 
 // Mobile-only copy layered over the shared locales (see aiExtensions.ts).
-const mergedEn = { ...en, ai: { ...en.ai, quota: { ...en.ai.quota, ...aiExtensionsEn.quota } } };
-const mergedHe = { ...he, ai: { ...he.ai, quota: { ...he.ai.quota, ...aiExtensionsHe.quota } } };
-const mergedRu = { ...ru, ai: { ...ru.ai, quota: { ...ru.ai.quota, ...aiExtensionsRu.quota } } };
+const mergedEn = {
+  ...en,
+  ai: { ...en.ai, quota: { ...en.ai.quota, ...aiExtensionsEn.quota } },
+  common: {
+    ...en.common,
+    pages: { ...en.common.pages, settings: { ...en.common.pages.settings, ...settingsExtensionsEn } },
+  },
+};
+const mergedHe = {
+  ...he,
+  ai: { ...he.ai, quota: { ...he.ai.quota, ...aiExtensionsHe.quota } },
+  common: {
+    ...he.common,
+    pages: { ...he.common.pages, settings: { ...he.common.pages.settings, ...settingsExtensionsHe } },
+  },
+};
+const mergedRu = {
+  ...ru,
+  ai: { ...ru.ai, quota: { ...ru.ai.quota, ...aiExtensionsRu.quota } },
+  common: {
+    ...ru.common,
+    pages: { ...ru.common.pages, settings: { ...ru.common.pages.settings, ...settingsExtensionsRu } },
+  },
+};
 
 export const isRTLLanguage = (lng: SupportedLanguage): boolean => lng === 'he';
 

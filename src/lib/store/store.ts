@@ -6,6 +6,7 @@ import {
   createAuthApi,
   createBucketApi,
   createNoteApi,
+  createNotificationApi,
   createProjectApi,
   createRecurrenceApi,
   createSearchApi,
@@ -73,6 +74,7 @@ export const noteApi = createNoteApi(baseQueryWithReauth);
 export const subtaskApi = createSubtaskApi(baseQueryWithReauth);
 export const aiApi = createAiApi(baseQueryWithReauth);
 export const searchApi = createSearchApi(baseQueryWithReauth);
+export const notificationApi = createNotificationApi(baseQueryWithReauth);
 
 const apiReducerPaths = [
   authApi.reducerPath,
@@ -85,6 +87,7 @@ const apiReducerPaths = [
   subtaskApi.reducerPath,
   aiApi.reducerPath,
   searchApi.reducerPath,
+  notificationApi.reducerPath,
 ] as const;
 
 const combinedReducer = combineReducers({
@@ -99,6 +102,7 @@ const combinedReducer = combineReducers({
   [subtaskApi.reducerPath]: subtaskApi.reducer,
   [aiApi.reducerPath]: aiApi.reducer,
   [searchApi.reducerPath]: searchApi.reducer,
+  [notificationApi.reducerPath]: notificationApi.reducer,
 });
 
 type CombinedState = ReturnType<typeof combinedReducer>;
@@ -145,7 +149,8 @@ export const store = configureStore({
       noteApi.middleware,
       subtaskApi.middleware,
       aiApi.middleware,
-      searchApi.middleware
+      searchApi.middleware,
+      notificationApi.middleware
     ),
   enhancers: getDefaultEnhancers =>
     __DEV__ ? getDefaultEnhancers().concat(devToolsEnhancer()) : getDefaultEnhancers(),

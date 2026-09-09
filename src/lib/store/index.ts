@@ -4,6 +4,7 @@ import {
   authApi,
   bucketApi,
   noteApi,
+  notificationApi,
   projectApi,
   recurrenceApi,
   searchApi,
@@ -23,6 +24,7 @@ export {
   mobileTokenStorage,
   mobileWSLifecycleAdapter,
   noteApi,
+  notificationApi,
   persistor,
   projectApi,
   recurrenceApi,
@@ -42,6 +44,7 @@ export { refreshSessionFromStore } from './slices/baseQuery';
 
 // Auth exports — hooks are generated on the instance constructed in store.ts
 export const {
+  useChangePasswordMutation,
   useForgotPasswordMutation,
   useGetCurrentUserQuery,
   useLoginMutation,
@@ -134,3 +137,6 @@ export const {
 // Search exports — hooks are generated on the instance constructed in store.ts
 export const { useSearchQuery } = searchApi;
 export type { IAreaResult, INoteResult, IProjectResult, ISearchResults, ITaskResult } from '@nicoflow/shared/api';
+
+// Notification exports — hooks are generated on the instance constructed in store.ts
+export const { useGetPreferencesQuery, useUpdatePreferencesMutation } = notificationApi;
