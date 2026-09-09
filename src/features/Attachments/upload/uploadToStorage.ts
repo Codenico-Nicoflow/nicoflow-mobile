@@ -15,13 +15,31 @@ import type { PickedFile } from './validate';
 export const uploadToStorage = async (
   file: PickedFile,
   url: string,
-  headers: Record<string, string>
+  headers: Record<string, string>,
+  // Reports 0..1 as bytes go out. createUploadTask (rather than uploadAsync) is
+  // what makes a determinate bar possible — a spinner stops being honest past a
+  // second or two on a photo.
+  onProgress?: (ratio: number) => void
 ): Promise<void> => {
-  const result = await FileSystem.uploadAsync(url, file.uri, {
-    httpMethod: 'PUT',
-    uploadType: FileSystem.FileSystemUploadType.BINARY_CONTENT,
-    headers: { 'Content-Type': file.mimeType, ...headers },
-  });
+  const task = FileSystem.createUploadTask(
+    url,
+    file.uri,
+    {
+      httpMethod: 'PUT',
+      uploadType: FileSystem.FileSystemUploadType.BINARY_CONTENT,
+      headers: { 'Content-Type': file.mimeType, ...headers },
+    },
+    ({ totalBytesSent, totalBytesExpectedToSend }) => {
+      // A zero/unknown total would divide to Infinity or NaN and blow out the
+      // bar's width, so only report once the total is known.
+      if (totalBytesExpectedToSend > 0) {
+        onProgress?.(Math.min(1, totalBytesSent / totalBytesExpectedToSend));
+      }
+    }
+  );
+
+  const result = await task.uploadAsync();
+  if (!result) throw new Error('upload was cancelled');
 
   // Storage answers 200/204 on success. Anything else means the object is not
   // there, so confirming would create a row pointing at nothing.

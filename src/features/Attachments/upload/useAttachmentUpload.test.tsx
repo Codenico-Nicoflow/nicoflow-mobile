@@ -74,7 +74,12 @@ describe('useAttachmentUpload', () => {
     await result.current.upload(file());
 
     await waitFor(() => expect(confirmed).toEqual({ s3Key: 'key-1', fileName: 'a.jpg' }));
-    expect(mockedUpload).toHaveBeenCalledWith(file(), 'https://r2.test/put', { 'x-amz-meta': '1' });
+    expect(mockedUpload).toHaveBeenCalledWith(
+      file(),
+      'https://r2.test/put',
+      { 'x-amz-meta': '1' },
+      expect.any(Function)
+    );
     // The item leaves the in-flight list; the real row arrives via the
     // invalidated attachments query.
     await waitFor(() => expect(result.current.uploads).toHaveLength(0));
@@ -132,6 +137,89 @@ describe('useAttachmentUpload', () => {
     // that was never stored.
     await waitFor(() => expect(result.current.uploads[0]?.status).toBe('error'));
     expect(confirmCalled).toBe(false);
+  });
+
+  it.each([
+    ['PLAN_LIMIT_EXCEEDED', 'attachments.proHint'],
+    ['STORAGE_LIMIT_EXCEEDED', 'attachments.storageFull'],
+  ])('surfaces %s from the confirm step as an informational message', async code => {
+    server.use(
+      http.post(`${API}/attachments/upload-url`, () =>
+        HttpResponse.json({ data: { url: 'https://r2.test/put', headers: {}, s3Key: 'key-1' }, error: null })
+      ),
+      http.post(`${API}/attachments`, () =>
+        HttpResponse.json({ data: null, error: { code, message: code } }, { status: 403 })
+      )
+    );
+
+    const { result } = await renderUpload();
+    await result.current.upload(file());
+
+    // The code is retained on the item so the row can reflect why it failed.
+    await waitFor(() => expect(result.current.uploads[0]?.errorCode).toBe(code));
+    expect(mockToastError).toHaveBeenCalled();
+    // Reader-app posture: informs, never sells (E-037).
+    expect(String(mockToastError.mock.calls[0][0])).not.toContain('Upgrade to Pro');
+  });
+
+  it('retries a failed upload from the retained file, without re-picking', async () => {
+    let attempts = 0;
+    server.use(
+      http.post(`${API}/attachments/upload-url`, () => {
+        attempts += 1;
+        return HttpResponse.json({ data: { url: 'https://r2.test/put', headers: {}, s3Key: 'key-1' }, error: null });
+      }),
+      http.post(`${API}/attachments`, () => HttpResponse.json({ data: { id: 'a1' }, error: null }))
+    );
+    mockedUpload.mockRejectedValueOnce(new Error('network'));
+
+    const { result } = await renderUpload();
+    await result.current.upload(file());
+    await waitFor(() => expect(result.current.uploads[0]?.status).toBe('error'));
+
+    mockedUpload.mockResolvedValue(undefined);
+    await result.current.retry(result.current.uploads[0].id);
+
+    await waitFor(() => expect(result.current.uploads).toHaveLength(0));
+    expect(attempts).toBe(2);
+  });
+
+  it('removes a failed upload without retrying it', async () => {
+    server.use(
+      http.post(`${API}/attachments/upload-url`, () =>
+        HttpResponse.json({ data: { url: 'https://r2.test/put', headers: {}, s3Key: 'key-1' }, error: null })
+      )
+    );
+    mockedUpload.mockRejectedValue(new Error('network'));
+
+    const { result } = await renderUpload();
+    await result.current.upload(file());
+    await waitFor(() => expect(result.current.uploads).toHaveLength(1));
+
+    result.current.remove(result.current.uploads[0].id);
+
+    await waitFor(() => expect(result.current.uploads).toHaveLength(0));
+  });
+
+  it('reports progress as bytes go out', async () => {
+    server.use(
+      http.post(`${API}/attachments/upload-url`, () =>
+        HttpResponse.json({ data: { url: 'https://r2.test/put', headers: {}, s3Key: 'key-1' }, error: null })
+      ),
+      http.post(`${API}/attachments`, () => HttpResponse.json({ data: { id: 'a1' }, error: null }))
+    );
+    // Drive the callback the hook passes in, then leave the upload pending so
+    // the item is still in the list to assert on.
+    let reported = -1;
+    mockedUpload.mockImplementation(async (_f, _u, _h, onProgress) => {
+      onProgress?.(0.5);
+      reported = 0.5;
+    });
+
+    const { result } = await renderUpload();
+    await result.current.upload(file());
+
+    expect(reported).toBe(0.5);
   });
 
   it('blocks a pick once the owner is at the count cap', async () => {
