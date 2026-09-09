@@ -31,6 +31,12 @@ const baseQuery = fetchBaseQuery({ baseUrl: API });
 const mockNoteApi = createNoteApi(baseQuery);
 
 jest.mock('@/lib/store', () => ({
+  // AttachmentSection renders inside this screen (NIC-1994); it only needs to
+  // resolve to an empty list here.
+  useGetAttachmentsQuery: () => ({ data: [], isLoading: false }),
+  useGetDownloadUrlMutation: () => [jest.fn(), { isLoading: false }],
+  useDeleteAttachmentMutation: () => [jest.fn(), { isLoading: false }],
+
   useGetNoteQuery: (id: string, opts: { skip?: boolean }) => mockNoteApi.useGetNoteQuery(id, opts),
   useUpdateNoteMutation: () => mockNoteApi.useUpdateNoteMutation(),
   useDeleteNoteMutation: () => mockNoteApi.useDeleteNoteMutation(),
