@@ -3,11 +3,14 @@ import { router } from 'expo-router';
 import {
   createAiApi,
   createAreaApi,
+  createAttachmentApi,
   createAuthApi,
   createBucketApi,
   createNoteApi,
+  createNotificationApi,
   createProjectApi,
   createRecurrenceApi,
+  createSearchApi,
   createSubtaskApi,
   createTaskApi,
 } from '@nicoflow/shared/api';
@@ -71,6 +74,28 @@ export const bucketApi = createBucketApi(baseQueryWithReauth);
 export const noteApi = createNoteApi(baseQueryWithReauth);
 export const subtaskApi = createSubtaskApi(baseQueryWithReauth);
 export const aiApi = createAiApi(baseQueryWithReauth);
+export const searchApi = createSearchApi(baseQueryWithReauth);
+export const notificationApi = createNotificationApi(baseQueryWithReauth);
+export const attachmentApi = createAttachmentApi(baseQueryWithReauth);
+
+// The expo variant of the push-subscribe union (NIC-1991) is not in the published
+// @nicoflow/shared yet — its PushSubscribeRequest is still the web-only shape.
+// Injected locally until the next shared release carries the union, same pattern
+// as skipTaskOccurrence above.
+export const { useSubscribeExpoPushMutation, useUnsubscribeExpoPushMutation } = notificationApi.injectEndpoints({
+  endpoints: build => ({
+    subscribeExpoPush: build.mutation<void, { expoPushToken: string; deviceId?: string }>({
+      query: body => ({
+        url: '/notifications/push/subscribe',
+        method: 'POST',
+        body: { platform: 'expo', ...body },
+      }),
+    }),
+    unsubscribeExpoPush: build.mutation<void, { expoPushToken: string }>({
+      query: body => ({ url: '/notifications/push/subscribe', method: 'DELETE', body }),
+    }),
+  }),
+});
 
 const apiReducerPaths = [
   authApi.reducerPath,
@@ -82,6 +107,9 @@ const apiReducerPaths = [
   noteApi.reducerPath,
   subtaskApi.reducerPath,
   aiApi.reducerPath,
+  searchApi.reducerPath,
+  notificationApi.reducerPath,
+  attachmentApi.reducerPath,
 ] as const;
 
 const combinedReducer = combineReducers({
@@ -95,6 +123,9 @@ const combinedReducer = combineReducers({
   [noteApi.reducerPath]: noteApi.reducer,
   [subtaskApi.reducerPath]: subtaskApi.reducer,
   [aiApi.reducerPath]: aiApi.reducer,
+  [searchApi.reducerPath]: searchApi.reducer,
+  [notificationApi.reducerPath]: notificationApi.reducer,
+  [attachmentApi.reducerPath]: attachmentApi.reducer,
 });
 
 type CombinedState = ReturnType<typeof combinedReducer>;
@@ -140,7 +171,10 @@ export const store = configureStore({
       bucketApi.middleware,
       noteApi.middleware,
       subtaskApi.middleware,
-      aiApi.middleware
+      aiApi.middleware,
+      searchApi.middleware,
+      notificationApi.middleware,
+      attachmentApi.middleware
     ),
   enhancers: getDefaultEnhancers =>
     __DEV__ ? getDefaultEnhancers().concat(devToolsEnhancer()) : getDefaultEnhancers(),

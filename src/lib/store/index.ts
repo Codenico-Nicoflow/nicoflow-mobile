@@ -1,20 +1,36 @@
-import { aiApi, areaApi, authApi, bucketApi, noteApi, projectApi, recurrenceApi, subtaskApi, taskApi } from './store';
+import {
+  aiApi,
+  areaApi,
+  attachmentApi,
+  authApi,
+  bucketApi,
+  noteApi,
+  notificationApi,
+  projectApi,
+  recurrenceApi,
+  searchApi,
+  subtaskApi,
+  taskApi,
+} from './store';
 
-export { useSkipTaskOccurrenceMutation } from './store';
+export { useSkipTaskOccurrenceMutation, useSubscribeExpoPushMutation, useUnsubscribeExpoPushMutation } from './store';
 
 // Store exports
 export type { AppDispatch, RootState } from './store';
 export {
   aiApi,
   areaApi,
+  attachmentApi,
   authApi,
   bucketApi,
   mobileTokenStorage,
   mobileWSLifecycleAdapter,
   noteApi,
+  notificationApi,
   persistor,
   projectApi,
   recurrenceApi,
+  searchApi,
   store,
   subtaskApi,
   taskApi,
@@ -30,6 +46,7 @@ export { refreshSessionFromStore } from './slices/baseQuery';
 
 // Auth exports — hooks are generated on the instance constructed in store.ts
 export const {
+  useChangePasswordMutation,
   useForgotPasswordMutation,
   useGetCurrentUserQuery,
   useLoginMutation,
@@ -118,3 +135,20 @@ export const {
   useGetAISessionsQuery,
   useGetAIUsageQuery,
 } = aiApi;
+
+// Search exports — hooks are generated on the instance constructed in store.ts
+export const { useSearchQuery } = searchApi;
+export type { IAreaResult, INoteResult, IProjectResult, ISearchResults, ITaskResult } from '@nicoflow/shared/api';
+
+// Notification exports — hooks are generated on the instance constructed in store.ts
+export const { useGetPreferencesQuery, useUpdatePreferencesMutation } = notificationApi;
+
+// Attachment exports — hooks are generated on the instance constructed in store.ts
+export const {
+  useConfirmAttachmentMutation,
+  useDeleteAttachmentMutation,
+  useGetAttachmentsQuery,
+  useGetDownloadUrlMutation,
+  useGetStorageUsageQuery,
+  useGetUploadUrlMutation,
+} = attachmentApi;
