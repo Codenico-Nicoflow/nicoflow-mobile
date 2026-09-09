@@ -76,6 +76,25 @@ export const aiApi = createAiApi(baseQueryWithReauth);
 export const searchApi = createSearchApi(baseQueryWithReauth);
 export const notificationApi = createNotificationApi(baseQueryWithReauth);
 
+// The expo variant of the push-subscribe union (NIC-1991) is not in the published
+// @nicoflow/shared yet — its PushSubscribeRequest is still the web-only shape.
+// Injected locally until the next shared release carries the union, same pattern
+// as skipTaskOccurrence above.
+export const { useSubscribeExpoPushMutation, useUnsubscribeExpoPushMutation } = notificationApi.injectEndpoints({
+  endpoints: build => ({
+    subscribeExpoPush: build.mutation<void, { expoPushToken: string; deviceId?: string }>({
+      query: body => ({
+        url: '/notifications/push/subscribe',
+        method: 'POST',
+        body: { platform: 'expo', ...body },
+      }),
+    }),
+    unsubscribeExpoPush: build.mutation<void, { expoPushToken: string }>({
+      query: body => ({ url: '/notifications/push/subscribe', method: 'DELETE', body }),
+    }),
+  }),
+});
+
 const apiReducerPaths = [
   authApi.reducerPath,
   taskApi.reducerPath,

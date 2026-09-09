@@ -12,7 +12,7 @@ import {
   taskApi,
 } from './store';
 
-export { useSkipTaskOccurrenceMutation } from './store';
+export { useSkipTaskOccurrenceMutation, useSubscribeExpoPushMutation, useUnsubscribeExpoPushMutation } from './store';
 
 // Store exports
 export type { AppDispatch, RootState } from './store';

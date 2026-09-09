@@ -37,7 +37,8 @@
       ],
       "expo-secure-store",
       "@sentry/react-native",
-      "expo-localization"
+      "expo-localization",
+      "expo-notifications"
     ],
     "experiments": {
       "typedRoutes": true,

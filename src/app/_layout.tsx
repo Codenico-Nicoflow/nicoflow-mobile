@@ -15,9 +15,11 @@ import { PersistGate } from 'redux-persist/integration/react';
 import { AnimatedSplashOverlay } from '@/components/animated-icon';
 import { RootNavigator } from '@/components/root-navigator';
 import { Toaster } from '@/components/ui/toast';
+import { usePushNotifications } from '@/features/Push/usePushNotifications';
 import i18n, { initI18n } from '@/lib/i18n';
 import { AnalyticsProvider } from '@/lib/observability/AnalyticsProvider';
 import { initSentry } from '@/lib/observability/sentry';
+import { useWebSocket } from '@/lib/realtime/useWebSocket';
 import { persistor, store } from '@/lib/store';
 import { useSessionRestore } from '@/lib/store/useSessionRestore';
 import { ThemeOverrideProvider } from '@/lib/theme/ThemeOverrideProvider';
@@ -37,6 +39,10 @@ LogBox.ignoreLogs(['Warning: ref.measureLayout must be called with a ref to a na
 
 function SessionRestoringNavigator() {
   useSessionRestore();
+  // Both live below the store Provider and above the navigator: the socket needs
+  // the auth token from the store, and push registration needs the user's plan.
+  useWebSocket();
+  usePushNotifications();
   return <RootNavigator />;
 }
 
