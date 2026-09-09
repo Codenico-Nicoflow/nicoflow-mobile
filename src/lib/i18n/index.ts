@@ -14,6 +14,9 @@ import {
   settingsExtensionsEn,
   settingsExtensionsHe,
   settingsExtensionsRu,
+  taskAttachmentExtensionsEn,
+  taskAttachmentExtensionsHe,
+  taskAttachmentExtensionsRu,
 } from './localeExtensions';
 
 export const SUPPORTED_LANGUAGES = ['en', 'he', 'ru'] as const;
@@ -57,7 +60,7 @@ export async function resolveInitialLanguage(): Promise<SupportedLanguage> {
   return 'en';
 }
 
-// Mobile-only copy layered over the shared locales (see aiExtensions.ts).
+// Mobile-only copy layered over the shared locales (see localeExtensions.ts).
 const mergedEn = {
   ...en,
   ai: { ...en.ai, quota: { ...en.ai.quota, ...aiExtensionsEn.quota } },
@@ -65,6 +68,7 @@ const mergedEn = {
     ...en.common,
     pages: { ...en.common.pages, settings: { ...en.common.pages.settings, ...settingsExtensionsEn } },
   },
+  task: { ...en.task, attachments: { ...en.task.attachments, ...taskAttachmentExtensionsEn } },
 };
 const mergedHe = {
   ...he,
@@ -73,6 +77,7 @@ const mergedHe = {
     ...he.common,
     pages: { ...he.common.pages, settings: { ...he.common.pages.settings, ...settingsExtensionsHe } },
   },
+  task: { ...he.task, attachments: { ...he.task.attachments, ...taskAttachmentExtensionsHe } },
 };
 const mergedRu = {
   ...ru,
@@ -81,6 +86,7 @@ const mergedRu = {
     ...ru.common,
     pages: { ...ru.common.pages, settings: { ...ru.common.pages.settings, ...settingsExtensionsRu } },
   },
+  task: { ...ru.task, attachments: { ...ru.task.attachments, ...taskAttachmentExtensionsRu } },
 };
 
 export const isRTLLanguage = (lng: SupportedLanguage): boolean => lng === 'he';

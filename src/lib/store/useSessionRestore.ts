@@ -1,6 +1,11 @@
 import { useEffect, useState } from 'react';
 
-import { mobileTokenStorage, refreshSessionFromStore, useAppDispatch, useAppSelector } from '@/lib/store';
+import { refreshSessionFromStore } from './slices/baseQuery';
+// Imported from the source modules, not the '@/lib/store' barrel: the barrel
+// re-exports this hook, so going through it forms a require cycle whose values
+// can be uninitialised at module-eval time.
+import { useAppDispatch, useAppSelector } from './hooks';
+import { mobileTokenStorage } from './store';
 
 // Cold-start restore: the access token is memory-only (Redux), so it's always
 // gone after a fresh app launch — only the persisted `user` survives via

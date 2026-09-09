@@ -1,6 +1,7 @@
 import {
   aiApi,
   areaApi,
+  attachmentApi,
   authApi,
   bucketApi,
   noteApi,
@@ -12,13 +13,14 @@ import {
   taskApi,
 } from './store';
 
-export { useSkipTaskOccurrenceMutation } from './store';
+export { useSkipTaskOccurrenceMutation, useSubscribeExpoPushMutation, useUnsubscribeExpoPushMutation } from './store';
 
 // Store exports
 export type { AppDispatch, RootState } from './store';
 export {
   aiApi,
   areaApi,
+  attachmentApi,
   authApi,
   bucketApi,
   mobileTokenStorage,
@@ -140,3 +142,13 @@ export type { IAreaResult, INoteResult, IProjectResult, ISearchResults, ITaskRes
 
 // Notification exports — hooks are generated on the instance constructed in store.ts
 export const { useGetPreferencesQuery, useUpdatePreferencesMutation } = notificationApi;
+
+// Attachment exports — hooks are generated on the instance constructed in store.ts
+export const {
+  useConfirmAttachmentMutation,
+  useDeleteAttachmentMutation,
+  useGetAttachmentsQuery,
+  useGetDownloadUrlMutation,
+  useGetStorageUsageQuery,
+  useGetUploadUrlMutation,
+} = attachmentApi;

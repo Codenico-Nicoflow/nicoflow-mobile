@@ -20,6 +20,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
 import { toast } from '@/components/ui/toast';
+import { AttachmentSection } from '@/features/Attachments/AttachmentSection';
 import { useDeleteNoteMutation, useGetNoteQuery } from '@/lib/store';
 
 import { ConflictNotice, SaveStatusIndicator, useNoteAutosave } from '../autosave';
@@ -174,6 +175,8 @@ export function NoteEditorPage({ noteId }: NoteEditorPageProps) {
           {t('notes:editor.contentError')}
         </Text>
       )}
+
+      <AttachmentSection ownerType="note" ownerId={note.id} />
 
       <BacklinksPanel noteId={note.id} />
 
