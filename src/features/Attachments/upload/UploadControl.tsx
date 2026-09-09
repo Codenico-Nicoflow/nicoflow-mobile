@@ -6,10 +6,11 @@ import { USER_STATUS } from '@nicoflow/shared/types';
 import { useTranslation } from 'react-i18next';
 
 import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
-import { useAppUser } from '@/lib/store';
+import { useAppUser, useGetStorageUsageQuery } from '@/lib/store';
 
 import { AddAttachmentSheet, type AddAttachmentSheetRef } from './AddAttachmentSheet';
+import { StorageBar } from './StorageBar';
+import { UploadProgressRow } from './UploadProgressRow';
 import { useAttachmentUpload } from './useAttachmentUpload';
 
 interface UploadControlProps {
@@ -30,12 +31,14 @@ export function UploadControl({ ownerType, ownerId, currentCount }: UploadContro
   const isPro = user?.status === USER_STATUS.PREMIUM;
   const sheetRef = useRef<AddAttachmentSheetRef>(null);
 
-  const { uploads, upload, isAtCap } = useAttachmentUpload(ownerType, ownerId, currentCount);
+  const { uploads, upload, retry, remove, isAtCap } = useAttachmentUpload(ownerType, ownerId, currentCount);
+  // Account-wide usage is a Pro-only surface, so don't fetch it otherwise.
+  const { data: storage, isLoading: isStorageLoading } = useGetStorageUsageQuery(undefined, { skip: !isPro });
 
   if (!isPro) {
     return (
       <Text className="text-xs text-muted-foreground dark:text-muted-foreground-dark" testID="attachment-pro-gate">
-        {t('attachments.proHint')}
+        {t('attachments.proHintReader')}
       </Text>
     );
   }
@@ -43,12 +46,7 @@ export function UploadControl({ ownerType, ownerId, currentCount }: UploadContro
   return (
     <View className="gap-2">
       {uploads.map(item => (
-        <View key={item.id} className="gap-1" testID={`attachment-upload-${item.id}`}>
-          <Text className="text-xs text-muted-foreground dark:text-muted-foreground-dark" numberOfLines={1}>
-            {item.status === 'error' ? t('attachments.uploadFailed', { name: item.name }) : item.name}
-          </Text>
-          {item.status === 'uploading' && <Skeleton className="h-1 w-full" />}
-        </View>
+        <UploadProgressRow key={item.id} item={item} onRetry={id => void retry(id)} onRemove={remove} />
       ))}
 
       <Button
@@ -63,6 +61,10 @@ export function UploadControl({ ownerType, ownerId, currentCount }: UploadContro
         <Text className="text-xs text-muted-foreground dark:text-muted-foreground-dark" testID="attachment-cap">
           {t('attachments.countCap')}
         </Text>
+      )}
+
+      {storage && (
+        <StorageBar usedBytes={storage.usedBytes} limitBytes={storage.limitBytes} isLoading={isStorageLoading} />
       )}
 
       <AddAttachmentSheet ref={sheetRef} onPicked={file => void upload(file)} />

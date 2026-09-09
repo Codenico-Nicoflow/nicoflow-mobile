@@ -28,6 +28,7 @@ jest.mock('@/lib/store', () => ({
   useAppUser: () => mockUser,
   useGetUploadUrlMutation: () => mockAttachmentApi.useGetUploadUrlMutation(),
   useConfirmAttachmentMutation: () => mockAttachmentApi.useConfirmAttachmentMutation(),
+  useGetStorageUsageQuery: () => ({ data: undefined, isLoading: false }),
 }));
 
 const mockUser: { status: string } = { status: 'premium' };

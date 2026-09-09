@@ -47,6 +47,12 @@ export const taskAttachmentExtensionsEn = {
   sourceLibrary: 'Choose from library',
   sourceFile: 'Choose a file',
   permissionDenied: "Permission denied. You can allow access in your device's settings.",
+  // NIC-1996: STORAGE_LIMIT_EXCEEDED has no web copy — web's storage bar warns
+  // before the cap, so it never had to name the refusal.
+  storageFull: 'Your storage is full. Remove some files, or upgrade on the web at nicoflow.app.',
+  // Web's `proHint` reads "Upgrade to Pro to add files" — an instruction with no
+  // in-app way to act on it. Mobile points at the web app instead (E-037).
+  proHintReader: 'Attachments are a Pro feature. Upgrade on the web at nicoflow.app to add files.',
 };
 
 export const taskAttachmentExtensionsHe = {
@@ -54,6 +60,8 @@ export const taskAttachmentExtensionsHe = {
   sourceLibrary: 'בחירה מהגלריה',
   sourceFile: 'בחירת קובץ',
   permissionDenied: 'ההרשאה נדחתה. אפשר לאשר גישה בהגדרות המכשיר.',
+  storageFull: 'שטח האחסון מלא. מחקו קבצים או שדרגו באתר nicoflow.app.',
+  proHintReader: 'קבצים מצורפים הם תכונת Pro. שדרגו באתר nicoflow.app כדי להוסיף קבצים.',
 };
 
 export const taskAttachmentExtensionsRu = {
@@ -61,4 +69,6 @@ export const taskAttachmentExtensionsRu = {
   sourceLibrary: 'Выбрать из галереи',
   sourceFile: 'Выбрать файл',
   permissionDenied: 'Доступ запрещён. Его можно разрешить в настройках устройства.',
+  storageFull: 'Хранилище заполнено. Удалите файлы или оформите Pro на сайте nicoflow.app.',
+  proHintReader: 'Вложения — функция Pro. Оформите Pro на сайте nicoflow.app, чтобы добавлять файлы.',
 };

@@ -45,6 +45,7 @@ jest.mock('@/lib/store', () => ({
   useAppUser: () => ({ status: 'regular' }),
   useGetUploadUrlMutation: () => [jest.fn(), { isLoading: false }],
   useConfirmAttachmentMutation: () => [jest.fn(), { isLoading: false }],
+  useGetStorageUsageQuery: () => ({ data: undefined, isLoading: false }),
   useGetDownloadUrlMutation: () => [jest.fn(), { isLoading: false }],
   useDeleteAttachmentMutation: () => [jest.fn(), { isLoading: false }],
 
