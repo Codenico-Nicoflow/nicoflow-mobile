@@ -17,12 +17,21 @@ const API = 'http://localhost:8080/v1';
 const baseQuery = fetchBaseQuery({ baseUrl: API });
 const mockAttachmentApi = createAttachmentApi(baseQuery);
 
+jest.mock('@gorhom/bottom-sheet', () => require('@gorhom/bottom-sheet/mock'));
+
 jest.mock('@/lib/store', () => ({
   useGetAttachmentsQuery: (arg: { ownerType: AttachmentOwnerType; ownerId: string }) =>
     mockAttachmentApi.useGetAttachmentsQuery(arg),
   useGetDownloadUrlMutation: () => mockAttachmentApi.useGetDownloadUrlMutation(),
   useDeleteAttachmentMutation: () => mockAttachmentApi.useDeleteAttachmentMutation(),
+  // UploadControl renders below the list; these cover its Pro gate and flow.
+  useAppUser: () => mockUser,
+  useGetUploadUrlMutation: () => mockAttachmentApi.useGetUploadUrlMutation(),
+  useConfirmAttachmentMutation: () => mockAttachmentApi.useConfirmAttachmentMutation(),
+  useGetStorageUsageQuery: () => ({ data: undefined, isLoading: false }),
 }));
+
+const mockUser: { status: string } = { status: 'premium' };
 
 const attachment = (overrides: Partial<IAttachment> = {}): IAttachment => ({
   id: 'a1',

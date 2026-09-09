@@ -14,6 +14,11 @@ export type RegisterOutcome =
 
 // Expo push tokens are only issued to real hardware — a simulator has no APNs/FCM
 // registration to back one.
+//
+// Expo Go is the other case that cannot produce a token: Android remote push was
+// removed from it in SDK 53, so getExpoPushTokenAsync throws there and this
+// resolves to `failed`. Both are silent, non-fatal outcomes by design — verifying
+// push end to end requires a development build, not Expo Go.
 const isRealDevice = (): boolean => Device.isDevice;
 
 // A stable per-install identifier, so a device that reinstalls or rotates its Expo
