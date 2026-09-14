@@ -15,8 +15,12 @@ export function Switch({ checked, onCheckedChange, disabled, testID }: SwitchPro
   const primary = isDark ? '#6366f1' : '#4f46e5';
   const input = isDark ? '#283549' : '#e2e8f0';
 
+  // withTiming returns an animation object, not a number, so it may only be the
+  // value a style property is set to. Feeding it into interpolateColor passes an
+  // object where a number is required, which throws on the UI thread and takes
+  // the whole app down — animate the interpolated colour instead.
   const trackStyle = useAnimatedStyle(() => ({
-    backgroundColor: interpolateColor(withTiming(checked ? 1 : 0, { duration: 150 }), [0, 1], [input, primary]),
+    backgroundColor: withTiming(interpolateColor(checked ? 1 : 0, [0, 1], [input, primary]), { duration: 150 }),
   }));
 
   const thumbStyle = useAnimatedStyle(() => ({
