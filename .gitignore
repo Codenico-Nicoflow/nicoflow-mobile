@@ -33,6 +33,12 @@ yarn-error.*
 .env
 .env*.local
 
+# Firebase/Google service-account keys — these are real credentials, unlike
+# google-services.json, which is public config shipped inside the APK.
+*service-account*.json
+*serviceaccount*.json
+*-firebase-adminsdk-*.json
+
 # typescript
 *.tsbuildinfo
 
