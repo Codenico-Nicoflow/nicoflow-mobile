@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "326128487353",
+    "project_id": "nicoflow-liam",
+    "storage_bucket": "nicoflow-liam.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:326128487353:android:0dc198aca54ea0eb618468",
+        "android_client_info": {
+          "package_name": "com.nicoflow.mobile"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBTpQmGJPbMg--czuhjZ6l0DZ_fdcTOlOk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
