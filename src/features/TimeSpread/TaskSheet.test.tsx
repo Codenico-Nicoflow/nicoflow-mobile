@@ -204,6 +204,33 @@ describe('TaskSheet', () => {
     expect(capturedBody).toMatchObject({ projectId: 'p2' });
   });
 
+  it('reassigning the project on a recurring task sends projectId on both scope choices', async () => {
+    for (const scope of ['This occurrence only', 'This and all future occurrences']) {
+      let capturedBody: Record<string, unknown> | null = null;
+      server.use(
+        http.get(`${API}/recurrence-rules/:id`, () => HttpResponse.json({ data: existingRule, error: null })),
+        http.patch(`${API}/recurrence-rules/:id`, () => HttpResponse.json({ data: existingRule, error: null })),
+        http.patch(`${API}/tasks/:id`, async ({ request }) => {
+          capturedBody = (await request.json()) as Record<string, unknown>;
+          return HttpResponse.json({ data: task({ projectId: 'p2' }), error: null });
+        })
+      );
+      const { ref, onSaved } = await renderSheet();
+      await waitFor(() => ref.current?.present({ task: task({ recurrenceRuleId: 'r1' }) }));
+      await waitFor(() => expect(screen.getByText('Beta Project')).toBeTruthy());
+
+      await fireEvent.press(screen.getByText('Beta Project'));
+      await waitFor(() => expect(screen.getByLabelText('Save Changes').props.accessibilityState.disabled).toBe(false));
+      await fireEvent.press(screen.getByLabelText('Save Changes'));
+
+      await waitFor(() => expect(screen.getByText('Apply changes to…')).toBeTruthy());
+      await fireEvent.press(screen.getByText(scope));
+
+      await waitFor(() => expect(onSaved).toHaveBeenCalled());
+      expect(capturedBody).toMatchObject({ projectId: 'p2' });
+    }
+  });
+
   it('setting recurrence on a plain task converts it IN PLACE rather than creating a duplicate', async () => {
     let convertCalled = false;
     let ruleCreated = false;

@@ -171,6 +171,8 @@ export const TaskSheet = forwardRef<TaskSheetRef, TaskSheetProps>(function TaskS
     updateFields: TaskFieldsValue;
     currentStatus: TaskStatus;
     statusChanged: boolean;
+    projectId: string;
+    projectChanged: boolean;
   } | null>(null);
 
   const resetForm = (arg: TaskSheetPresentArg | undefined) => {
@@ -316,6 +318,8 @@ export const TaskSheet = forwardRef<TaskSheetRef, TaskSheetProps>(function TaskS
           updateFields: fields,
           currentStatus: status,
           statusChanged,
+          projectId,
+          projectChanged,
         };
         setShowScopeChooser(true);
         return;
@@ -412,6 +416,12 @@ export const TaskSheet = forwardRef<TaskSheetRef, TaskSheetProps>(function TaskS
           energy: payload.updateFields.energy,
           estimatedMinutes: payload.updateFields.estimatedMinutes ?? undefined,
         }).unwrap();
+        // The rule carries no projectId, so a series edit can't move the task —
+        // patch this occurrence so the move isn't silently dropped. Future
+        // occurrences still materialize into the rule's original project.
+        if (payload.projectChanged) {
+          await updateTask({ id: payload.taskId, projectId: payload.projectId }).unwrap();
+        }
       } else {
         const updatePayload: Parameters<ReturnType<typeof useUpdateTaskMutation>[0]>[0] = {
           id: payload.taskId,
@@ -427,6 +437,9 @@ export const TaskSheet = forwardRef<TaskSheetRef, TaskSheetProps>(function TaskS
         };
         if (payload.statusChanged) {
           updatePayload.status = payload.currentStatus;
+        }
+        if (payload.projectChanged) {
+          updatePayload.projectId = payload.projectId;
         }
         await updateTask(updatePayload).unwrap();
       }
