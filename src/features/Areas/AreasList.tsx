@@ -17,7 +17,9 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
+import { ScreenHeader } from '@/components/ui/screen-header';
 import { Skeleton } from '@/components/ui/skeleton';
+import { SearchButton } from '@/features/Search/SearchButton';
 import { useGetAreasWithProjectsQuery, useReorderAreasMutation } from '@/lib/store';
 
 import { ProjectDialog, type ProjectDialogRef } from '../Project/ProjectDialog';
@@ -26,13 +28,15 @@ import { AreaCard } from './AreaCard';
 import { AreaDialog, type AreaDialogRef } from './AreaDialog';
 import { MoveToAreaSheet, type MoveToAreaSheetRef } from './MoveToAreaSheet';
 
-function AreasListSkeleton() {
+function AreasListSkeleton({ title }: { title: string }) {
   return (
-    <View className="gap-3 px-4 pt-2" testID="areas-loading">
-      <Skeleton className="h-6 w-32" />
-      {[0, 1, 2].map(i => (
-        <Skeleton key={i} className="h-24 w-full rounded-lg" />
-      ))}
+    <View testID="areas-loading">
+      <ScreenHeader title={title} actions={<SearchButton />} />
+      <View className="gap-3 px-4">
+        {[0, 1, 2].map(i => (
+          <Skeleton key={i} className="h-24 w-full rounded-lg" />
+        ))}
+      </View>
     </View>
   );
 }
@@ -58,7 +62,7 @@ export function AreasList() {
     if (areas && !isFetching) setLocalOrder(areas);
   }, [areas, isFetching]);
 
-  if (isLoading) return <AreasListSkeleton />;
+  if (isLoading) return <AreasListSkeleton title={t('area:board.yourAreas')} />;
 
   const allProjects: IProject[] = localOrder.flatMap(a => a.projects ?? []);
   const favoriteCount = allProjects.filter(p => p.isFavorite).length;
@@ -68,6 +72,7 @@ export function AreasList() {
   if (!areas || areas.length === 0) {
     return (
       <GestureHandlerRootView style={{ flex: 1 }}>
+        <ScreenHeader title={t('area:board.yourAreas')} actions={<SearchButton />} />
         <EmptyState
           icon={Layers}
           title={t('area:board.empty')}
@@ -108,45 +113,44 @@ export function AreasList() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <View className="flex-row items-start justify-between gap-2 px-4 pt-2 pb-3">
-        <View className="flex-1">
-          <Text className="text-2xl font-bold text-foreground dark:text-foreground-dark">
-            {t('area:board.yourAreas')}
-          </Text>
-          <Text className="text-sm text-muted-foreground dark:text-muted-foreground-dark">
-            {t(localOrder.length === 1 ? 'area:board.areaCount_one' : 'area:board.areaCount_other', {
-              count: localOrder.length,
-            })}
-            {' · '}
-            {t(projectTotal === 1 ? 'area:board.projectCount_one' : 'area:board.projectCount_other', {
-              count: projectTotal,
-            })}
-          </Text>
-        </View>
-        <View className="flex-row gap-2">
-          <Button
-            size="sm"
-            variant="outline"
-            disabled={atProjectLimit}
-            accessibilityLabel={atProjectLimit ? t('area:board.planLimitTooltip') : t('area:board.newProject')}
-            onPress={() => projectDialogRef.current?.present()}
-          >
-            <Plus size={16} color={isDark ? '#e2e8f0' : '#1e293b'} />
-            <Text className="text-sm font-medium text-foreground dark:text-foreground-dark">
-              {t('area:board.newProject')}
-            </Text>
-          </Button>
-          <Button
-            size="sm"
-            disabled={atAreaLimit}
-            accessibilityLabel={atAreaLimit ? t('area:board.planLimitTooltip') : t('area:board.newArea')}
-            onPress={() => areaDialogRef.current?.present()}
-          >
-            <Plus size={16} color="#ffffff" />
-            <Text className="text-sm font-medium text-primary-foreground">{t('area:board.newArea')}</Text>
-          </Button>
-        </View>
-      </View>
+      <ScreenHeader
+        title={t('area:board.yourAreas')}
+        subtitle={
+          t(localOrder.length === 1 ? 'area:board.areaCount_one' : 'area:board.areaCount_other', {
+            count: localOrder.length,
+          }) +
+          ' · ' +
+          t(projectTotal === 1 ? 'area:board.projectCount_one' : 'area:board.projectCount_other', {
+            count: projectTotal,
+          })
+        }
+        actions={
+          <>
+            <SearchButton />
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={atProjectLimit}
+              accessibilityLabel={atProjectLimit ? t('area:board.planLimitTooltip') : t('area:board.newProject')}
+              onPress={() => projectDialogRef.current?.present()}
+            >
+              <Plus size={16} color={isDark ? '#e2e8f0' : '#1e293b'} />
+              <Text className="text-sm font-medium text-foreground dark:text-foreground-dark">
+                {t('area:board.newProject')}
+              </Text>
+            </Button>
+            <Button
+              size="sm"
+              disabled={atAreaLimit}
+              accessibilityLabel={atAreaLimit ? t('area:board.planLimitTooltip') : t('area:board.newArea')}
+              onPress={() => areaDialogRef.current?.present()}
+            >
+              <Plus size={16} color="#ffffff" />
+              <Text className="text-sm font-medium text-primary-foreground">{t('area:board.newArea')}</Text>
+            </Button>
+          </>
+        }
+      />
       <NestableScrollContainer contentContainerStyle={{ paddingBottom: 24 }}>
         <NestableDraggableFlatList
           data={localOrder}

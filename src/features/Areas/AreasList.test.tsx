@@ -168,3 +168,33 @@ describe.skip('AreasList', () => {
     expect(mockRouterPush).toHaveBeenCalledWith('/project/p1');
   });
 });
+
+// These never render an AreaCard, so they avoid the nested-draggable OOM that
+// keeps the suite above skipped.
+describe('AreasList header', () => {
+  // The header sits above both early-returns (skeleton and empty state). If it
+  // only lived in the populated branch, search would vanish exactly when a new
+  // user most needs it — an empty account.
+  it('keeps the search affordance while loading', async () => {
+    server.use(
+      http.get(`${API}/areas/with-projects`, async () => {
+        await new Promise(resolve => setTimeout(resolve, 50));
+        return HttpResponse.json({ data: [], error: null });
+      })
+    );
+
+    await renderList();
+
+    expect(screen.getByTestId('areas-loading')).toBeTruthy();
+    expect(screen.getByTestId('search-button')).toBeTruthy();
+  });
+
+  it('keeps the search affordance when the account has no areas', async () => {
+    server.use(http.get(`${API}/areas/with-projects`, () => HttpResponse.json({ data: [], error: null })));
+
+    await renderList();
+
+    await waitFor(() => expect(screen.getByTestId('areas-empty-state')).toBeTruthy());
+    expect(screen.getByTestId('search-button')).toBeTruthy();
+  });
+});

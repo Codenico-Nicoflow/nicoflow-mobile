@@ -7,8 +7,10 @@ import { useTranslation } from 'react-i18next';
 
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
+import { ScreenHeader } from '@/components/ui/screen-header';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from '@/components/ui/toast';
+import { SearchButton } from '@/features/Search/SearchButton';
 import {
   useDeleteRecurrenceRuleMutation,
   useDeleteTaskMutation,
@@ -166,19 +168,17 @@ export function TimeSpreadView() {
 
   return (
     <View className="flex-1">
-      <View className="flex-1 gap-4 px-4 pt-4">
-        <View className="flex-row items-start justify-between gap-4">
-          <View className="flex-1">
-            <Text className="text-2xl font-bold text-foreground dark:text-foreground-dark">
-              {t('timeSpread.title')}
-            </Text>
-            <Text className="text-sm text-muted-foreground dark:text-muted-foreground-dark">
-              {t('timeSpread.subtitle')}
-            </Text>
-          </View>
-          <ViewModeToggle mode={viewMode} onChange={handleViewModeChange} />
-        </View>
-
+      <ScreenHeader
+        title={t('timeSpread.title')}
+        subtitle={t('timeSpread.subtitle')}
+        actions={
+          <>
+            <SearchButton />
+            <ViewModeToggle mode={viewMode} onChange={handleViewModeChange} />
+          </>
+        }
+      />
+      <View className="flex-1 gap-4 px-4">
         {viewMode === 'tabs' && (
           <Tabs value={segment} onValueChange={value => setSegment(value as Segment)}>
             <TabsList>
