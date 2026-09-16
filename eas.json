@@ -9,9 +9,9 @@
       "distribution": "internal",
       "channel": "development",
       "env": {
-        "EXPO_PUBLIC_API_URL": "$EXPO_PUBLIC_API_URL",
-        "EXPO_PUBLIC_POSTHOG_DSN": "$EXPO_PUBLIC_POSTHOG_DSN",
-        "EXPO_PUBLIC_SENTRY_DSN": "$EXPO_PUBLIC_SENTRY_DSN"
+        "EAS_NO_FROZEN_LOCKFILE": "1",
+        "EXPO_PUBLIC_API_URL": "http://10.0.2.2:8080/v1",
+        "SENTRY_DISABLE_AUTO_UPLOAD": "true"
       },
       "android": {
         "buildType": "apk"
@@ -21,9 +21,9 @@
       "distribution": "internal",
       "channel": "preview",
       "env": {
-        "EXPO_PUBLIC_API_URL": "$EXPO_PUBLIC_API_URL",
-        "EXPO_PUBLIC_POSTHOG_DSN": "$EXPO_PUBLIC_POSTHOG_DSN",
-        "EXPO_PUBLIC_SENTRY_DSN": "$EXPO_PUBLIC_SENTRY_DSN"
+        "EAS_NO_FROZEN_LOCKFILE": "1",
+        "EXPO_PUBLIC_API_URL": "https://nicoflow-api-staging.onrender.com/v1",
+        "SENTRY_DISABLE_AUTO_UPLOAD": "true"
       },
       "android": {
         "buildType": "apk"
@@ -33,9 +33,8 @@
       "channel": "production",
       "autoIncrement": true,
       "env": {
-        "EXPO_PUBLIC_API_URL": "$EXPO_PUBLIC_API_URL",
-        "EXPO_PUBLIC_POSTHOG_DSN": "$EXPO_PUBLIC_POSTHOG_DSN",
-        "EXPO_PUBLIC_SENTRY_DSN": "$EXPO_PUBLIC_SENTRY_DSN"
+        "EAS_NO_FROZEN_LOCKFILE": "1",
+        "EXPO_PUBLIC_API_URL": "https://api.nicoflow.app/v1"
       },
       "android": {
         "buildType": "app-bundle"
