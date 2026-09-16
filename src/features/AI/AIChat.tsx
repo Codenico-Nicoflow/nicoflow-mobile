@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { FlatList, KeyboardAvoidingView, Platform, View } from 'react-native';
 
 import type { AIMessageView } from '@nicoflow/shared/api';
@@ -29,15 +29,40 @@ export function AIChat({ sessionId }: AIChatProps) {
   const listRef = useRef<FlatList<AIMessageView | PendingMessage>>(null);
   const { data: session, isLoading, isError, refetch } = useGetAISessionQuery(sessionId);
   const { quota, isLoading: isQuotaLoading, featureDisabled, hardenFromError, isExhausted } = useAIQuota();
-  const { pending, isStreaming, send, abort } = useAIStream();
+  const { pending, isStreaming, send, abort, reset } = useAIStream();
 
-  // Pending turns replace their persisted twins only after a refetch, so while a
-  // send is in flight both lists are concatenated — the pending ids are local
-  // (`local-N`) and never collide with server ids.
-  const messages = useMemo<(AIMessageView | PendingMessage)[]>(
-    () => [...(session?.messages ?? []), ...pending],
-    [session?.messages, pending]
+  const history = useMemo(() => session?.messages ?? [], [session?.messages]);
+  const historyIds = useMemo(() => new Set(history.map(m => m.id)), [history]);
+  // The server never echoes back the client-generated id for the USER half of a
+  // turn — the done event carries only the assistant's persisted messageId — so a
+  // pending user turn can never match history by id. Match on content instead, or
+  // it renders twice once the session refetches.
+  const historyUserContents = useMemo(
+    () => new Set(history.filter(m => m.role === 'user').map(m => m.content)),
+    [history]
   );
+
+  // Only the turns the refetched history doesn't already carry.
+  const extraTurns = useMemo(
+    () => pending.filter(m => (m.role === 'user' ? !historyUserContents.has(m.content) : !historyIds.has(m.id))),
+    [pending, historyIds, historyUserContents]
+  );
+
+  // A finished turn that streamed no text (the model went straight to a tool_use,
+  // or the stream closed empty) has nothing to show. A turn still sending or
+  // streaming stays, so its placeholder remains visible. Filtered here rather than
+  // in renderItem: a null row still occupies a FlatList slot and its gap.
+  const messages = useMemo<(AIMessageView | PendingMessage)[]>(
+    () => [...history, ...extraTurns].filter(m => m.content.trim() !== '' || ('status' in m && m.status !== 'done')),
+    [history, extraTurns]
+  );
+
+  // Once the assistant turn is persisted, drop the local copies entirely so the
+  // next send starts from a clean slate.
+  const merged = pending.some(m => m.role === 'assistant' && m.status === 'done' && historyIds.has(m.id));
+  useEffect(() => {
+    if (!isStreaming && merged) reset();
+  }, [isStreaming, merged, reset]);
 
   const handleSend = useCallback(
     (content: string) => {
