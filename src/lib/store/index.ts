@@ -141,7 +141,15 @@ export const { useSearchQuery } = searchApi;
 export type { IAreaResult, INoteResult, IProjectResult, ISearchResults, ITaskResult } from '@nicoflow/shared/api';
 
 // Notification exports — hooks are generated on the instance constructed in store.ts
-export const { useGetPreferencesQuery, useUpdatePreferencesMutation } = notificationApi;
+export const {
+  useDeleteNotificationMutation,
+  useGetNotificationsQuery,
+  useGetPreferencesQuery,
+  useGetUnreadCountQuery,
+  useMarkAllReadMutation,
+  useMarkReadMutation,
+  useUpdatePreferencesMutation,
+} = notificationApi;
 
 // Attachment exports — hooks are generated on the instance constructed in store.ts
 export const {
