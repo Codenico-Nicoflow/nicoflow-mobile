@@ -1,3 +1,5 @@
+import { AppState } from 'react-native';
+
 import { createNotificationApi } from '@nicoflow/shared/api';
 import type { INotification } from '@nicoflow/shared/types';
 import { configureStore } from '@reduxjs/toolkit';
@@ -12,6 +14,17 @@ import { NotificationsScreen } from './NotificationsScreen';
 
 const API = 'http://localhost:8080/v1';
 
+// Captured so a foreground transition can be simulated — RN's AppState never
+// actually changes under Jest.
+const appStateListeners: ((state: string) => void)[] = [];
+jest.spyOn(AppState, 'addEventListener').mockImplementation((_event, handler) => {
+  const listener = handler as (state: string) => void;
+  appStateListeners.push(listener);
+  return {
+    remove: () => appStateListeners.splice(appStateListeners.indexOf(listener), 1),
+  } as ReturnType<typeof AppState.addEventListener>;
+});
+
 const baseQuery = fetchBaseQuery({ baseUrl: API });
 const mockApi = createNotificationApi(baseQuery);
 const mockPush = jest.fn();
@@ -23,6 +36,33 @@ jest.mock('expo-router', () => ({
   Stack: { Screen: () => null },
 }));
 jest.mock('expo-notifications', () => ({ setBadgeCountAsync: (n: number) => mockSetBadgeCount(n) }));
+
+// Reanimated gesture swipes can't be driven from RNTL, so the row is stubbed to
+// surface its right-side handler as a pressable. The behaviour under test is what
+// the swipe *leads to* — a confirm dialog, never an immediate delete.
+jest.mock('@/components/ui/swipeable-row', () => {
+  const { Pressable, Text, View } = require('react-native');
+  return {
+    SwipeableRow: ({
+      children,
+      style,
+      testID,
+      right,
+    }: {
+      children: React.ReactNode;
+      style?: object;
+      testID?: string;
+      right?: { onOpen: () => void };
+    }) => (
+      <View style={style} testID={testID}>
+        {children}
+        <Pressable testID={`${testID}-swipe-delete`} onPress={() => right?.onOpen()}>
+          <Text>swipe</Text>
+        </Pressable>
+      </View>
+    ),
+  };
+});
 
 jest.mock('@/lib/store', () => ({
   useGetNotificationsQuery: (args: { limit: number; cursor?: string }) => mockApi.useGetNotificationsQuery(args),
@@ -140,5 +180,53 @@ describe('NotificationsScreen', () => {
     await renderScreen();
 
     await waitFor(() => expect(mockSetBadgeCount).toHaveBeenCalledWith(4));
+  });
+
+  it('dims read rows and leaves unread ones at full strength', async () => {
+    listReturns([notification({ id: 'n1', isRead: false }), notification({ id: 'n2', isRead: true, title: 'Older' })]);
+
+    await renderScreen();
+
+    await waitFor(() => expect(screen.getByText('Older')).toBeTruthy());
+    expect(screen.getByTestId('notification-row-n2')).toHaveStyle({ opacity: 0.6 });
+    expect(screen.getByTestId('notification-row-n1')).not.toHaveStyle({ opacity: 0.6 });
+  });
+
+  it('deletes nothing until the swipe is confirmed', async () => {
+    const user = userEvent.setup();
+    let deleted = false;
+    listReturns([notification()]);
+    server.use(
+      http.delete(`${API}/notifications/n1`, () => {
+        deleted = true;
+        return new HttpResponse(null, { status: 204 });
+      })
+    );
+
+    await renderScreen();
+    await waitFor(() => expect(screen.getByText('Task completed')).toBeTruthy());
+
+    await user.press(screen.getByTestId('notification-row-n1-swipe-delete'));
+
+    await waitFor(() => expect(screen.getByText('Nice work')).toBeTruthy());
+    expect(deleted).toBe(false);
+  });
+
+  it('refetches the unread count when the app returns to the foreground', async () => {
+    let countCalls = 0;
+    listReturns([notification()]);
+    server.use(
+      http.get(`${API}/notifications/unread-count`, () => {
+        countCalls += 1;
+        return HttpResponse.json({ data: { count: countCalls }, error: null });
+      })
+    );
+
+    await renderScreen();
+    await waitFor(() => expect(countCalls).toBe(1));
+
+    appStateListeners.forEach(listener => listener('active'));
+
+    await waitFor(() => expect(countCalls).toBe(2));
   });
 });

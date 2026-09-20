@@ -43,6 +43,9 @@ export function NotificationRow({ notification, onMarkRead, onDelete }: Notifica
   return (
     <SwipeableRow
       className="rounded-lg border border-border dark:border-border-dark px-3 py-2.5"
+      // Read rows dim rather than disappear — this screen exists to show what was
+      // already missed, so they stay legible, just visibly settled.
+      style={unread ? undefined : { opacity: 0.6 }}
       testID={`notification-row-${notification.id}`}
       right={{
         tone: 'destructive',
