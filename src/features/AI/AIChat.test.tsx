@@ -126,4 +126,20 @@ describe('AIChat turn reconciliation', () => {
 
     expect(screen.queryByTestId('ai-message-local-2')).toBeNull();
   });
+
+  it('keeps partial text from an aborted stream and does not duplicate it', async () => {
+    // An abort never reaches the done event, so the assistant keeps its local id
+    // and the history never carries it — nothing to dedupe against, nothing to clear.
+    mockSession = session([persisted()]);
+    mockPending = [
+      pendingTurn(),
+      pendingTurn({ id: 'local-2', role: 'assistant', content: 'Start with your', status: 'done' }),
+    ];
+
+    await render(<AIChat sessionId="s1" />);
+
+    expect(screen.getAllByText('How do I plan my week?')).toHaveLength(1);
+    expect(screen.getByText('Start with your')).toBeTruthy();
+    expect(mockReset).not.toHaveBeenCalled();
+  });
 });
