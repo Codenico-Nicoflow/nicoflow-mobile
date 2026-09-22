@@ -415,13 +415,10 @@ export const TaskSheet = forwardRef<TaskSheetRef, TaskSheetProps>(function TaskS
           priority: payload.updateFields.priority,
           energy: payload.updateFields.energy,
           estimatedMinutes: payload.updateFields.estimatedMinutes ?? undefined,
+          // The rule owns the project every future occurrence materializes into,
+          // so the series move belongs here — not on this one occurrence.
+          ...(payload.projectChanged ? { projectId: payload.projectId } : {}),
         }).unwrap();
-        // The rule carries no projectId, so a series edit can't move the task —
-        // patch this occurrence so the move isn't silently dropped. Future
-        // occurrences still materialize into the rule's original project.
-        if (payload.projectChanged) {
-          await updateTask({ id: payload.taskId, projectId: payload.projectId }).unwrap();
-        }
       } else {
         const updatePayload: Parameters<ReturnType<typeof useUpdateTaskMutation>[0]>[0] = {
           id: payload.taskId,
