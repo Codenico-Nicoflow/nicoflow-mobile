@@ -143,6 +143,7 @@ export type { IAreaResult, INoteResult, IProjectResult, ISearchResults, ITaskRes
 // Notification exports — hooks are generated on the instance constructed in store.ts
 export const {
   useDeleteNotificationMutation,
+  useGetNotificationsPagedInfiniteQuery,
   useGetNotificationsQuery,
   useGetPreferencesQuery,
   useGetUnreadCountQuery,

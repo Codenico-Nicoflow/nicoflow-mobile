@@ -65,7 +65,8 @@ jest.mock('@/components/ui/swipeable-row', () => {
 });
 
 jest.mock('@/lib/store', () => ({
-  useGetNotificationsQuery: (args: { limit: number; cursor?: string }) => mockApi.useGetNotificationsQuery(args),
+  useGetNotificationsPagedInfiniteQuery: (args: { limit: number }) =>
+    mockApi.useGetNotificationsPagedInfiniteQuery(args),
   useGetUnreadCountQuery: (arg: undefined, opts: object) => mockApi.useGetUnreadCountQuery(arg, opts),
   useMarkReadMutation: () => mockApi.useMarkReadMutation(),
   useMarkAllReadMutation: () => mockApi.useMarkAllReadMutation(),
@@ -228,5 +229,29 @@ describe('NotificationsScreen', () => {
     appStateListeners.forEach(listener => listener('active'));
 
     await waitFor(() => expect(countCalls).toBe(2));
+  });
+
+  it('loads the next page when the list scrolls to the end', async () => {
+    server.use(
+      http.get(`${API}/notifications`, ({ request }) => {
+        const cursor = new URL(request.url).searchParams.get('cursor');
+        return HttpResponse.json({
+          data: cursor
+            ? { items: [notification({ id: 'n2', title: 'Second page' })], nextCursor: '' }
+            : { items: [notification({ id: 'n1' })], nextCursor: 'cur' },
+          error: null,
+        });
+      })
+    );
+
+    await renderScreen();
+    await waitFor(() => expect(screen.getByText('Task completed')).toBeTruthy());
+    expect(screen.queryByText('Second page')).toBeNull();
+
+    screen.getByTestId('notifications-list').props.onEndReached();
+
+    // The first page stays: pages accumulate rather than replacing one another.
+    await waitFor(() => expect(screen.getByText('Second page')).toBeTruthy());
+    expect(screen.getByText('Task completed')).toBeTruthy();
   });
 });

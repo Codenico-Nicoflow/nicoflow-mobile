@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { FlatList, Pressable, Text, View } from 'react-native';
 
 import type { INotification } from '@nicoflow/shared/types';
@@ -10,7 +10,7 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { ScreenHeader } from '@/components/ui/screen-header';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from '@/components/ui/toast';
-import { useGetNotificationsQuery, useMarkAllReadMutation, useMarkReadMutation } from '@/lib/store';
+import { useGetNotificationsPagedInfiniteQuery, useMarkAllReadMutation, useMarkReadMutation } from '@/lib/store';
 
 import { NotificationDeleteAlert } from './NotificationDeleteAlert';
 import { NotificationRow } from './NotificationRow';
@@ -39,16 +39,16 @@ function NotificationsSkeleton() {
 // already missed is the reason this screen exists.
 export function NotificationsScreen() {
   const { t } = useTranslation(['notification', 'common']);
-  const [cursor, setCursor] = useState<string | undefined>(undefined);
   const [deleting, setDeleting] = useState<INotification | null>(null);
   const deleteAlertRef = useRef<AlertDialogRef>(null);
 
-  const { data, isLoading, isFetching, refetch } = useGetNotificationsQuery({ limit: PAGE_SIZE, cursor });
+  const { data, isLoading, isFetching, isFetchingNextPage, hasNextPage, fetchNextPage, refetch } =
+    useGetNotificationsPagedInfiniteQuery({ limit: PAGE_SIZE });
   const [markRead] = useMarkReadMutation();
   const [markAllRead, { isLoading: isMarkingAll }] = useMarkAllReadMutation();
   const unreadCount = useUnreadCount();
 
-  const items = data?.items ?? [];
+  const items = useMemo(() => data?.pages.flatMap(page => page.items) ?? [], [data?.pages]);
 
   const handleDelete = (notification: INotification) => {
     setDeleting(notification);
@@ -62,11 +62,12 @@ export function NotificationsScreen() {
       .catch(() => undefined);
   };
 
-  // Paging forward swaps the cursor; the tag invalidation on any mutation
-  // refetches whichever page is showing.
+  // Pages accumulate in one cache entry, and a mutation's tag invalidation
+  // refetches every page held — so a delete can't leave a stale row behind a
+  // fresh first page.
   const handleEndReached = () => {
-    if (isFetching || !data?.nextCursor) return;
-    setCursor(data.nextCursor);
+    if (isFetchingNextPage || !hasNextPage) return;
+    void fetchNextPage();
   };
 
   return (
@@ -97,11 +98,14 @@ export function NotificationsScreen() {
         <NotificationsSkeleton />
       ) : (
         <FlatList
+          testID="notifications-list"
           data={items}
           keyExtractor={item => item.id}
           contentContainerClassName="gap-2 px-4 pb-6"
           onRefresh={refetch}
-          refreshing={isFetching && !isLoading}
+          // Paging forward is also a fetch, but it isn't a pull-to-refresh —
+          // without the guard the spinner fires every time the list scrolls on.
+          refreshing={isFetching && !isLoading && !isFetchingNextPage}
           onEndReached={handleEndReached}
           onEndReachedThreshold={0.4}
           renderItem={({ item }) => (
