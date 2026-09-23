@@ -22,6 +22,11 @@ jest.mock('@/lib/store', () => ({
   useGetBucketsQuery: () => mockBucketApi.useGetBucketsQuery(),
 }));
 
+// The More badge's count comes from its own hook (poll + AppState + OS badge);
+// stubbed here so these stay tests of the tab bar, not of notifications.
+let mockUnread = 0;
+jest.mock('@/features/Notifications/useUnreadCount', () => ({ useUnreadCount: () => mockUnread }));
+
 const makeStore = () =>
   configureStore({
     reducer: { [mockTaskApi.reducerPath]: mockTaskApi.reducer, [mockBucketApi.reducerPath]: mockBucketApi.reducer },
@@ -142,6 +147,18 @@ describe('CustomTabBar', () => {
       await renderTabBar(makeProps(0));
 
       expect(screen.queryByText('0')).toBeNull();
+    });
+
+    // Notifications live behind More, so their unread count has to reach the tab
+    // itself — nothing else signals them without opening the menu first.
+    it('shows the unread notification count on More', async () => {
+      mockUnread = 3;
+
+      await renderTabBar(makeProps(0));
+
+      await waitFor(() => expect(screen.getByText('3')).toBeTruthy());
+
+      mockUnread = 0;
     });
 
     it('excludes already-processed buckets from the Inbox count', async () => {

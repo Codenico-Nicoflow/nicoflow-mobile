@@ -8,8 +8,10 @@ import Animated, { LinearTransition } from 'react-native-reanimated';
 
 import { type AlertDialogRef } from '@/components/ui/alert-dialog';
 import { EmptyState } from '@/components/ui/empty-state';
+import { ScreenHeader } from '@/components/ui/screen-header';
 import { type SheetRef } from '@/components/ui/sheet';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { SearchButton } from '@/features/Search/SearchButton';
 import { useGetBucketsQuery } from '@/lib/store';
 
 import { ArchivedList } from './ArchivedList';
@@ -63,13 +65,10 @@ export function InboxView() {
       : t('page.subtitle', { count: unprocessed.length });
 
   return (
-    <View className="flex-1 gap-4 px-4 pt-4">
-      <View>
-        <Text className="text-2xl font-bold text-foreground dark:text-foreground-dark">{t('page.heading')}</Text>
-        <Text className="text-sm text-muted-foreground dark:text-muted-foreground-dark">{subtitle}</Text>
-      </View>
+    <View className="flex-1 gap-4">
+      <ScreenHeader title={t('page.heading')} subtitle={subtitle} actions={<SearchButton />} />
 
-      <Tabs defaultValue="inbox" className="flex-1">
+      <Tabs defaultValue="inbox" className="flex-1 px-4">
         <TabsList>
           <TabsTrigger value="inbox" badge={!isLoading && <TabCountBadge count={unprocessed.length} />}>
             {t('page.tabs.inbox')}
