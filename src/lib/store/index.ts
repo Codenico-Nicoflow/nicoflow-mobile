@@ -63,6 +63,7 @@ export const {
   useCreateTaskMutation,
   useDeleteTaskMutation,
   useGetTaskQuery,
+  useGetCalendarTasksQuery,
   useGetTasksInfiniteQuery,
   useGetTimeSpreadQuery,
   useMarkTaskMissedMutation,
