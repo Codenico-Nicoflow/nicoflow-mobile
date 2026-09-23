@@ -65,6 +65,13 @@ export const calendarExtensionsEn = {
   invalidMoveDate: 'Enter a date as YYYY-MM-DD.',
   recurringMoveLocked: 'Edit the recurring series to change this occurrence date.',
   dropOnDate: 'Move to {{date}}',
+  duration: 'Duration',
+  editDuration: 'Edit duration for {{title}}',
+  durationSuggestion: 'Suggested: {{count}} minutes. Nothing is saved until you confirm.',
+  durationPreview: 'Starts {{start}} · {{count}} minutes',
+  resizeDuration: 'Drag to resize duration',
+  durationMinutes: 'Duration in minutes',
+  invalidDuration: 'Enter a whole number from 1 to 1440.',
 };
 
 export const calendarExtensionsHe = {
@@ -92,6 +99,13 @@ export const calendarExtensionsHe = {
   invalidMoveDate: 'הזינו תאריך בתבנית YYYY-MM-DD.',
   recurringMoveLocked: 'כדי לשנות את תאריך המופע, ערכו את הסדרה החוזרת.',
   dropOnDate: 'העברה אל {{date}}',
+  duration: 'משך',
+  editDuration: 'עריכת המשך של {{title}}',
+  durationSuggestion: 'הצעה: {{count}} דקות. דבר לא נשמר עד לאישור.',
+  durationPreview: 'התחלה {{start}} · {{count}} דקות',
+  resizeDuration: 'גררו לשינוי משך הזמן',
+  durationMinutes: 'משך בדקות',
+  invalidDuration: 'הזינו מספר שלם בין 1 ל-1440.',
 };
 
 export const calendarExtensionsRu = {
@@ -120,6 +134,13 @@ export const calendarExtensionsRu = {
   invalidMoveDate: 'Введите дату в формате YYYY-MM-DD.',
   recurringMoveLocked: 'Измените повторяющуюся серию, чтобы поменять дату этого события.',
   dropOnDate: 'Перенести на {{date}}',
+  duration: 'Длительность',
+  editDuration: 'Изменить длительность: {{title}}',
+  durationSuggestion: 'Предложение: {{count}} минут. До подтверждения ничего не сохраняется.',
+  durationPreview: 'Начало {{start}} · {{count}} мин.',
+  resizeDuration: 'Перетащите, чтобы изменить длительность',
+  durationMinutes: 'Длительность в минутах',
+  invalidDuration: 'Введите целое число от 1 до 1440.',
 };
 
 // NIC-1995: the upload source sheet is mobile-only — web has a drag-and-drop

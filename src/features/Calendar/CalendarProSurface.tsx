@@ -63,6 +63,19 @@ export function CalendarProSurface() {
     }
   };
 
+  const saveDuration = async (task: ITask, estimatedMinutes: number): Promise<void> => {
+    if (pendingTaskId === task.id) return;
+    setPendingTaskId(task.id);
+    try {
+      await updateTask({ id: task.id, estimatedMinutes }).unwrap();
+    } catch (error) {
+      toast.error(resolveApiErrorMessage(error));
+      throw error;
+    } finally {
+      setPendingTaskId(null);
+    }
+  };
+
   const moveMonth = (amount: -1 | 1): void => setAnchor(current => shiftMonth(current, amount));
   const swipe = useMemo(
     () =>
@@ -231,6 +244,7 @@ export function CalendarProSurface() {
         onSelectedDayChange={setSelectedKey}
         onMoveTask={moveTask}
         pendingTaskId={pendingTaskId}
+        onSaveDuration={saveDuration}
       />
     </View>
   );

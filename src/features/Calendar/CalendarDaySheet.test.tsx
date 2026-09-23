@@ -34,6 +34,7 @@ describe('CalendarDaySheet', () => {
         onSelectedDayChange={jest.fn()}
         onMoveTask={jest.fn()}
         pendingTaskId={null}
+        onSaveDuration={jest.fn()}
       />
     );
 
@@ -59,6 +60,7 @@ describe('CalendarDaySheet', () => {
         onSelectedDayChange={jest.fn()}
         onMoveTask={onMoveTask}
         pendingTaskId={null}
+        onSaveDuration={jest.fn()}
       />
     );
     await act(() => ref.current?.present('2026-09-23'));
@@ -80,6 +82,7 @@ describe('CalendarDaySheet', () => {
         onSelectedDayChange={jest.fn()}
         onMoveTask={jest.fn()}
         pendingTaskId={null}
+        onSaveDuration={jest.fn()}
       />
     );
     await act(() => ref.current?.present('2026-09-24'));
