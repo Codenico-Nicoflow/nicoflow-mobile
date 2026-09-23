@@ -59,6 +59,12 @@ export const calendarExtensionsEn = {
   emptyDayTitle: 'No tasks scheduled',
   emptyDayDescription: 'This day is clear.',
   openTask: 'Open task: {{title}}',
+  move: 'Move',
+  moveTask: 'Move {{title}} to a date',
+  moveDateLabel: 'New task date',
+  invalidMoveDate: 'Enter a date as YYYY-MM-DD.',
+  recurringMoveLocked: 'Edit the recurring series to change this occurrence date.',
+  dropOnDate: 'Move to {{date}}',
 };
 
 export const calendarExtensionsHe = {
@@ -80,6 +86,12 @@ export const calendarExtensionsHe = {
   emptyDayTitle: 'אין משימות מתוזמנות',
   emptyDayDescription: 'היום הזה פנוי.',
   openTask: 'פתיחת משימה: {{title}}',
+  move: 'העברה',
+  moveTask: 'העברת {{title}} לתאריך',
+  moveDateLabel: 'תאריך חדש למשימה',
+  invalidMoveDate: 'הזינו תאריך בתבנית YYYY-MM-DD.',
+  recurringMoveLocked: 'כדי לשנות את תאריך המופע, ערכו את הסדרה החוזרת.',
+  dropOnDate: 'העברה אל {{date}}',
 };
 
 export const calendarExtensionsRu = {
@@ -102,6 +114,12 @@ export const calendarExtensionsRu = {
   emptyDayTitle: 'Нет запланированных задач',
   emptyDayDescription: 'Этот день свободен.',
   openTask: 'Открыть задачу: {{title}}',
+  move: 'Перенести',
+  moveTask: 'Перенести {{title}} на дату',
+  moveDateLabel: 'Новая дата задачи',
+  invalidMoveDate: 'Введите дату в формате YYYY-MM-DD.',
+  recurringMoveLocked: 'Измените повторяющуюся серию, чтобы поменять дату этого события.',
+  dropOnDate: 'Перенести на {{date}}',
 };
 
 // NIC-1995: the upload source sheet is mobile-only — web has a drag-and-drop

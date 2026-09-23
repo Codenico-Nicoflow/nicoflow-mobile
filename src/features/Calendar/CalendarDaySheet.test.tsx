@@ -26,7 +26,16 @@ describe('CalendarDaySheet', () => {
   it('shows every task in server order and opens the existing string-id route', async () => {
     const ref = createRef<CalendarDaySheetRef>();
     const tasks = new Map([['2026-09-23', [task('task-a', 'First'), task('task-b', 'Second')]]]);
-    await render(<CalendarDaySheet ref={ref} tasksByDay={tasks} locale="en" onSelectedDayChange={jest.fn()} />);
+    await render(
+      <CalendarDaySheet
+        ref={ref}
+        tasksByDay={tasks}
+        locale="en"
+        onSelectedDayChange={jest.fn()}
+        onMoveTask={jest.fn()}
+        pendingTaskId={null}
+      />
+    );
 
     await act(() => ref.current?.present('2026-09-23'));
 
@@ -34,13 +43,45 @@ describe('CalendarDaySheet', () => {
       'calendar-day-task-task-a',
       'calendar-day-task-task-b',
     ]);
-    await fireEvent.press(screen.getByTestId('calendar-day-task-task-b'));
+    await fireEvent.press(screen.getByLabelText('Open task: Second'));
     expect(router.push).toHaveBeenCalledWith('/task/task-b');
+  });
+
+  it('uses the same date-only move callback for the accessible action', async () => {
+    const ref = createRef<CalendarDaySheetRef>();
+    const moving = task('task-a', 'First');
+    const onMoveTask = jest.fn(() => Promise.resolve());
+    await render(
+      <CalendarDaySheet
+        ref={ref}
+        tasksByDay={new Map([['2026-09-23', [moving]]])}
+        locale="en"
+        onSelectedDayChange={jest.fn()}
+        onMoveTask={onMoveTask}
+        pendingTaskId={null}
+      />
+    );
+    await act(() => ref.current?.present('2026-09-23'));
+
+    await fireEvent.press(screen.getByLabelText('Move First to a date'));
+    await fireEvent.changeText(screen.getByTestId('calendar-move-date-input'), '2026-09-25');
+    await fireEvent.press(screen.getByTestId('calendar-move-save'));
+
+    expect(onMoveTask).toHaveBeenCalledWith(moving, '2026-09-25');
   });
 
   it('shows an explicit empty state for a selectable empty day', async () => {
     const ref = createRef<CalendarDaySheetRef>();
-    await render(<CalendarDaySheet ref={ref} tasksByDay={new Map()} locale="en" onSelectedDayChange={jest.fn()} />);
+    await render(
+      <CalendarDaySheet
+        ref={ref}
+        tasksByDay={new Map()}
+        locale="en"
+        onSelectedDayChange={jest.fn()}
+        onMoveTask={jest.fn()}
+        pendingTaskId={null}
+      />
+    );
     await act(() => ref.current?.present('2026-09-24'));
     expect(screen.getByTestId('calendar-day-empty')).toBeTruthy();
   });
