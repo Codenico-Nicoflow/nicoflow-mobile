@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 
 import type { ITask } from '@nicoflow/shared/types';
@@ -9,7 +9,7 @@ import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { toast } from '@/components/ui/toast';
 import { Radius, Shadows } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import { useAppUser, useGetCalendarTasksQuery, useUpdateTaskMutation } from '@/lib/store';
+import { mobileWSLifecycleAdapter, useAppUser, useGetCalendarTasksQuery, useUpdateTaskMutation } from '@/lib/store';
 import { resolveApiErrorMessage } from '@/lib/utils/apiError';
 
 import {
@@ -24,6 +24,7 @@ import {
 } from './calendarDate';
 import { CalendarDaySheet, type CalendarDaySheetRef } from './CalendarDaySheet';
 import { calendarMoveRequest, isLiveRecurringOccurrence } from './calendarMove';
+import { canRetryCalendarFailure, isCalendarOfflineFailure } from './calendarRecovery';
 import { CalendarTaskChip } from './CalendarTaskChip';
 
 const SWIPE_THRESHOLD = 48;
@@ -36,43 +37,69 @@ export function CalendarProSurface() {
   const [anchor, setAnchor] = useState(() => fromDayKey(todayKey));
   const [selectedKey, setSelectedKey] = useState(todayKey);
   const daySheetRef = useRef<CalendarDaySheetRef>(null);
-  const [pendingTaskId, setPendingTaskId] = useState<string | null>(null);
+  const pendingTaskIdsRef = useRef(new Set<string>());
+  const [pendingTaskIds, setPendingTaskIds] = useState<ReadonlySet<string>>(() => new Set());
   const [dragTargetKey, setDragTargetKey] = useState<string | null>(null);
   const [gridSize, setGridSize] = useState({ width: 0, height: 0 });
   const [updateTask] = useUpdateTaskMutation();
   const weekStart = normalizeWeekStart(user?.calendar?.weekStart);
   const days = useMemo(() => buildMonthDays(anchor, weekStart), [anchor, weekStart]);
   const range = useMemo(() => rangeForMonth(days), [days]);
-  const { data: tasks = [], isLoading, isError, refetch } = useGetCalendarTasksQuery(range);
+  const { currentData: tasks = [], error, isLoading, isError, refetch } = useGetCalendarTasksQuery(range);
   const tasksByDay = useMemo(() => groupTasksByDay(tasks), [tasks]);
+  const isOffline = isCalendarOfflineFailure(error);
+
+  useEffect(() => mobileWSLifecycleAdapter.onForeground(() => void refetch()), [refetch]);
+
+  const recoverFailedWrite = async (mutationError: unknown, retry: () => void): Promise<void> => {
+    await refetch();
+    const message = resolveApiErrorMessage(mutationError);
+    if (canRetryCalendarFailure(mutationError)) {
+      toast.errorWithRetry(message, { label: t('actions.retry'), onPress: retry });
+      return;
+    }
+    toast.error(message);
+  };
 
   const moveTask = async (task: ITask, scheduledFor: string): Promise<void> => {
-    if (task.scheduledFor === scheduledFor || pendingTaskId === task.id) return;
+    if (task.scheduledFor === scheduledFor || pendingTaskIdsRef.current.has(task.id)) return;
     if (isLiveRecurringOccurrence(task)) {
       toast.error(t('pages.calendar.recurringMoveLocked'));
       return;
     }
-    setPendingTaskId(task.id);
+    pendingTaskIdsRef.current.add(task.id);
+    setPendingTaskIds(current => new Set(current).add(task.id));
     try {
       await updateTask(calendarMoveRequest(task, scheduledFor)).unwrap();
     } catch (error) {
-      toast.error(resolveApiErrorMessage(error));
+      await recoverFailedWrite(error, () => void moveTask(task, scheduledFor));
       throw error;
     } finally {
-      setPendingTaskId(null);
+      pendingTaskIdsRef.current.delete(task.id);
+      setPendingTaskIds(current => {
+        const next = new Set(current);
+        next.delete(task.id);
+        return next;
+      });
     }
   };
 
   const saveDuration = async (task: ITask, estimatedMinutes: number): Promise<void> => {
-    if (pendingTaskId === task.id) return;
-    setPendingTaskId(task.id);
+    if (pendingTaskIdsRef.current.has(task.id)) return;
+    pendingTaskIdsRef.current.add(task.id);
+    setPendingTaskIds(current => new Set(current).add(task.id));
     try {
       await updateTask({ id: task.id, estimatedMinutes }).unwrap();
     } catch (error) {
-      toast.error(resolveApiErrorMessage(error));
+      await recoverFailedWrite(error, () => void saveDuration(task, estimatedMinutes));
       throw error;
     } finally {
-      setPendingTaskId(null);
+      pendingTaskIdsRef.current.delete(task.id);
+      setPendingTaskIds(current => {
+        const next = new Set(current);
+        next.delete(task.id);
+        return next;
+      });
     }
   };
 
@@ -149,7 +176,7 @@ export function CalendarProSurface() {
           ) : isError ? (
             <View className="h-72 items-center justify-center gap-3 px-6" accessibilityRole="alert">
               <Text className="text-sm text-muted-foreground dark:text-muted-foreground-dark text-center">
-                {t('pages.calendar.loadError')}
+                {t(isOffline ? 'pages.calendar.offlineError' : 'pages.calendar.loadError')}
               </Text>
               <Pressable
                 onPress={() => void refetch()}
@@ -203,7 +230,7 @@ export function CalendarProSurface() {
                           sourceIndex={dayIndex}
                           gridWidth={gridSize.width}
                           gridHeight={gridSize.height}
-                          disabled={pendingTaskId === task.id || isLiveRecurringOccurrence(task)}
+                          disabled={pendingTaskIds.has(task.id) || isLiveRecurringOccurrence(task)}
                           onTargetChange={setDragTargetKey}
                           onMove={moveTask}
                         />
@@ -237,13 +264,24 @@ export function CalendarProSurface() {
           </Text>
         </View>
       ) : null}
+      {pendingTaskIds.size > 0 ? (
+        <View
+          className="absolute top-16 self-center rounded-full bg-foreground dark:bg-foreground-dark px-4 py-2"
+          accessibilityLiveRegion="polite"
+          testID="calendar-saving"
+        >
+          <Text className="text-xs font-semibold text-background dark:text-background-dark">
+            {t('pages.calendar.saving')}
+          </Text>
+        </View>
+      ) : null}
       <CalendarDaySheet
         ref={daySheetRef}
         tasksByDay={tasksByDay}
         locale={i18n.language}
         onSelectedDayChange={setSelectedKey}
         onMoveTask={moveTask}
-        pendingTaskId={pendingTaskId}
+        pendingTaskIds={pendingTaskIds}
         onSaveDuration={saveDuration}
       />
     </View>
