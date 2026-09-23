@@ -1,5 +1,5 @@
 import { forwardRef, type ReactNode, useRef } from 'react';
-import { Pressable, useColorScheme } from 'react-native';
+import { Pressable, type StyleProp, useColorScheme, type ViewStyle } from 'react-native';
 
 import * as Haptics from 'expo-haptics';
 
@@ -136,6 +136,8 @@ export interface SwipeSideConfig {
 export interface SwipeableRowProps {
   children: ReactNode;
   className?: string;
+  /** Composed over the swipe tint — for per-row state the tint shouldn't own (e.g. a read row dimming). */
+  style?: StyleProp<ViewStyle>;
   testID?: string;
   /** Swipe right to reveal — conventionally the affirmative action (e.g. complete). */
   left?: SwipeSideConfig;
@@ -153,7 +155,7 @@ export interface SwipeableRowHandle {
 // left-vs-right-active flag is enough to drive one shared tint — no need to
 // track two independent colors simultaneously.
 export const SwipeableRow = forwardRef<SwipeableRowHandle, SwipeableRowProps>(function SwipeableRow(
-  { children, className, testID, left, right, isDragging },
+  { children, className, style, testID, left, right, isDragging },
   ref
 ) {
   const isDark = useColorScheme() === 'dark';
@@ -230,7 +232,7 @@ export const SwipeableRow = forwardRef<SwipeableRowHandle, SwipeableRowProps>(fu
         if (direction === 'right' && left) left.onOpen();
       }}
     >
-      <Reanimated.View style={rowTintStyle} className={className} testID={testID}>
+      <Reanimated.View style={[rowTintStyle, style]} className={className} testID={testID}>
         {children}
       </Reanimated.View>
     </ReanimatedSwipeable>

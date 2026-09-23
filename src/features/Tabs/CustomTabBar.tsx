@@ -6,6 +6,7 @@ import type { BottomTabBarProps } from 'expo-router/build/react-navigation/botto
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { useUnreadCount } from '@/features/Notifications/useUnreadCount';
 import { useGetBucketsQuery, useGetTimeSpreadQuery } from '@/lib/store';
 import { cn } from '@/lib/utils/cn';
 
@@ -35,10 +36,14 @@ export function CustomTabBar({ state, navigation }: BottomTabBarProps) {
   const todayCount = timeSpread?.today.length ?? 0;
   const { data: buckets } = useGetBucketsQuery();
   const inboxCount = buckets?.items.filter(b => !b.processedAt).length ?? 0;
+  // Notifications live behind More, so their unread count has to surface on the
+  // tab itself — otherwise nothing signals them without opening the menu first.
+  const unreadCount = useUnreadCount();
 
   const badgeFor = (id: string) => {
     if (id === 'today') return todayCount;
     if (id === 'inbox') return inboxCount;
+    if (id === 'more') return unreadCount;
     return 0;
   };
 
