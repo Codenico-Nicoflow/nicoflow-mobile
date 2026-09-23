@@ -1,16 +1,16 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
-
-import { router } from 'expo-router';
 
 import type { ITask } from '@nicoflow/shared/types';
 import { ChevronLeft, ChevronRight } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 
+import { toast } from '@/components/ui/toast';
 import { Radius, Shadows } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import { useAppUser, useGetCalendarTasksQuery } from '@/lib/store';
+import { mobileWSLifecycleAdapter, useAppUser, useGetCalendarTasksQuery, useUpdateTaskMutation } from '@/lib/store';
+import { resolveApiErrorMessage } from '@/lib/utils/apiError';
 
 import {
   buildMonthDays,
@@ -23,23 +23,11 @@ import {
   todayKeyIn,
 } from './calendarDate';
 import { CalendarDaySheet, type CalendarDaySheetRef } from './CalendarDaySheet';
+import { calendarMoveRequest, isLiveRecurringOccurrence } from './calendarMove';
+import { canRetryCalendarFailure, isCalendarOfflineFailure } from './calendarRecovery';
+import { CalendarTaskChip } from './CalendarTaskChip';
 
 const SWIPE_THRESHOLD = 48;
-
-const taskChip = (task: ITask) => (
-  <Pressable
-    key={task.id}
-    onPress={() => router.push(`/task/${task.id}`)}
-    accessibilityRole="button"
-    accessibilityLabel={task.title}
-    className="mt-1 rounded bg-primary/10 px-1 py-0.5"
-    testID={`calendar-task-${task.id}`}
-  >
-    <Text numberOfLines={1} className="text-[10px] font-medium text-primary">
-      {task.title}
-    </Text>
-  </Pressable>
-);
 
 export function CalendarProSurface() {
   const { t, i18n } = useTranslation('common');
@@ -49,11 +37,71 @@ export function CalendarProSurface() {
   const [anchor, setAnchor] = useState(() => fromDayKey(todayKey));
   const [selectedKey, setSelectedKey] = useState(todayKey);
   const daySheetRef = useRef<CalendarDaySheetRef>(null);
+  const pendingTaskIdsRef = useRef(new Set<string>());
+  const [pendingTaskIds, setPendingTaskIds] = useState<ReadonlySet<string>>(() => new Set());
+  const [dragTargetKey, setDragTargetKey] = useState<string | null>(null);
+  const [gridSize, setGridSize] = useState({ width: 0, height: 0 });
+  const [updateTask] = useUpdateTaskMutation();
   const weekStart = normalizeWeekStart(user?.calendar?.weekStart);
   const days = useMemo(() => buildMonthDays(anchor, weekStart), [anchor, weekStart]);
   const range = useMemo(() => rangeForMonth(days), [days]);
-  const { data: tasks = [], isLoading, isError, refetch } = useGetCalendarTasksQuery(range);
+  const { currentData: tasks = [], error, isLoading, isError, refetch } = useGetCalendarTasksQuery(range);
   const tasksByDay = useMemo(() => groupTasksByDay(tasks), [tasks]);
+  const isOffline = isCalendarOfflineFailure(error);
+
+  useEffect(() => mobileWSLifecycleAdapter.onForeground(() => void refetch()), [refetch]);
+
+  const recoverFailedWrite = async (mutationError: unknown, retry: () => void): Promise<void> => {
+    await refetch();
+    const message = resolveApiErrorMessage(mutationError);
+    if (canRetryCalendarFailure(mutationError)) {
+      toast.errorWithRetry(message, { label: t('actions.retry'), onPress: retry });
+      return;
+    }
+    toast.error(message);
+  };
+
+  const moveTask = async (task: ITask, scheduledFor: string): Promise<void> => {
+    if (task.scheduledFor === scheduledFor || pendingTaskIdsRef.current.has(task.id)) return;
+    if (isLiveRecurringOccurrence(task)) {
+      toast.error(t('pages.calendar.recurringMoveLocked'));
+      return;
+    }
+    pendingTaskIdsRef.current.add(task.id);
+    setPendingTaskIds(current => new Set(current).add(task.id));
+    try {
+      await updateTask(calendarMoveRequest(task, scheduledFor)).unwrap();
+    } catch (error) {
+      await recoverFailedWrite(error, () => void moveTask(task, scheduledFor));
+      throw error;
+    } finally {
+      pendingTaskIdsRef.current.delete(task.id);
+      setPendingTaskIds(current => {
+        const next = new Set(current);
+        next.delete(task.id);
+        return next;
+      });
+    }
+  };
+
+  const saveDuration = async (task: ITask, estimatedMinutes: number): Promise<void> => {
+    if (pendingTaskIdsRef.current.has(task.id)) return;
+    pendingTaskIdsRef.current.add(task.id);
+    setPendingTaskIds(current => new Set(current).add(task.id));
+    try {
+      await updateTask({ id: task.id, estimatedMinutes }).unwrap();
+    } catch (error) {
+      await recoverFailedWrite(error, () => void saveDuration(task, estimatedMinutes));
+      throw error;
+    } finally {
+      pendingTaskIdsRef.current.delete(task.id);
+      setPendingTaskIds(current => {
+        const next = new Set(current);
+        next.delete(task.id);
+        return next;
+      });
+    }
+  };
 
   const moveMonth = (amount: -1 | 1): void => setAnchor(current => shiftMonth(current, amount));
   const swipe = useMemo(
@@ -106,6 +154,7 @@ export function CalendarProSurface() {
           className="overflow-hidden border border-border dark:border-border-dark bg-card dark:bg-card-dark"
           style={[{ borderRadius: Radius.lg }, Shadows.sm]}
           testID="calendar-month-grid"
+          onLayout={event => setGridSize(event.nativeEvent.layout)}
         >
           <View className="flex-row border-b border-border dark:border-border-dark">
             {weekdayLabels.map((label, index) => (
@@ -127,7 +176,7 @@ export function CalendarProSurface() {
           ) : isError ? (
             <View className="h-72 items-center justify-center gap-3 px-6" accessibilityRole="alert">
               <Text className="text-sm text-muted-foreground dark:text-muted-foreground-dark text-center">
-                {t('pages.calendar.loadError')}
+                {t(isOffline ? 'pages.calendar.offlineError' : 'pages.calendar.loadError')}
               </Text>
               <Pressable
                 onPress={() => void refetch()}
@@ -140,16 +189,18 @@ export function CalendarProSurface() {
           ) : (
             Array.from({ length: 6 }, (_, row) => (
               <View key={row} className="flex-row border-b border-border dark:border-border-dark">
-                {days.slice(row * 7, row * 7 + 7).map(day => {
+                {days.slice(row * 7, row * 7 + 7).map((day, column) => {
                   const dayTasks = tasksByDay.get(day.key) ?? [];
                   const overflow = Math.max(0, dayTasks.length - MAX_VISIBLE_CHIPS);
                   const isToday = day.key === todayKey;
                   const isSelected = day.key === selectedKey;
+                  const isDragTarget = day.key === dragTargetKey;
+                  const dayIndex = row * 7 + column;
                   return (
                     <View
                       key={day.key}
                       className={`min-h-16 flex-1 border-r border-border dark:border-border-dark p-1 ${
-                        isSelected ? 'bg-primary/5' : ''
+                        isDragTarget ? 'bg-primary/15' : isSelected ? 'bg-primary/5' : ''
                       }`}
                       testID={`calendar-day-${day.key}`}
                     >
@@ -171,7 +222,19 @@ export function CalendarProSurface() {
                           {day.dayOfMonth}
                         </Text>
                       </Pressable>
-                      {dayTasks.slice(0, MAX_VISIBLE_CHIPS).map(taskChip)}
+                      {dayTasks.slice(0, MAX_VISIBLE_CHIPS).map(task => (
+                        <CalendarTaskChip
+                          key={task.id}
+                          task={task}
+                          days={days}
+                          sourceIndex={dayIndex}
+                          gridWidth={gridSize.width}
+                          gridHeight={gridSize.height}
+                          disabled={pendingTaskIds.has(task.id) || isLiveRecurringOccurrence(task)}
+                          onTargetChange={setDragTargetKey}
+                          onMove={moveTask}
+                        />
+                      ))}
                       {overflow > 0 && (
                         <Pressable
                           onPress={() => daySheetRef.current?.present(day.key)}
@@ -194,11 +257,32 @@ export function CalendarProSurface() {
           )}
         </View>
       </GestureDetector>
+      {dragTargetKey ? (
+        <View className="absolute bottom-5 self-center rounded-full bg-foreground dark:bg-foreground-dark px-4 py-2">
+          <Text className="text-xs font-semibold text-background dark:text-background-dark">
+            {t('pages.calendar.dropOnDate', { date: dragTargetKey })}
+          </Text>
+        </View>
+      ) : null}
+      {pendingTaskIds.size > 0 ? (
+        <View
+          className="absolute top-16 self-center rounded-full bg-foreground dark:bg-foreground-dark px-4 py-2"
+          accessibilityLiveRegion="polite"
+          testID="calendar-saving"
+        >
+          <Text className="text-xs font-semibold text-background dark:text-background-dark">
+            {t('pages.calendar.saving')}
+          </Text>
+        </View>
+      ) : null}
       <CalendarDaySheet
         ref={daySheetRef}
         tasksByDay={tasksByDay}
         locale={i18n.language}
         onSelectedDayChange={setSelectedKey}
+        onMoveTask={moveTask}
+        pendingTaskIds={pendingTaskIds}
+        onSaveDuration={saveDuration}
       />
     </View>
   );
