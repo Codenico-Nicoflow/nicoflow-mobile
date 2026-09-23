@@ -47,6 +47,13 @@ export const calendarExtensionsEn = {
   teaserDescription: 'Calendar is included with Pro. This preview uses sample blocks and never loads your tasks.',
   upgradeOnWeb: 'Upgrade on the web at nicoflow.app.',
   ready: 'Your calendar is ready.',
+  previousMonth: 'Previous month',
+  nextMonth: 'Next month',
+  loadingTasks: 'Loading calendar…',
+  loadError: 'Calendar could not be loaded.',
+  retry: 'Retry',
+  dayLabel: '{{date}}, {{count}} tasks',
+  more: '+{{count}} more',
 };
 
 export const calendarExtensionsHe = {
@@ -56,6 +63,13 @@ export const calendarExtensionsHe = {
   teaserDescription: 'לוח השנה כלול ב-Pro. התצוגה המקדימה משתמשת בנתוני דוגמה ולעולם לא טוענת את המשימות שלכם.',
   upgradeOnWeb: 'שדרגו באתר nicoflow.app.',
   ready: 'לוח השנה שלכם מוכן.',
+  previousMonth: 'החודש הקודם',
+  nextMonth: 'החודש הבא',
+  loadingTasks: 'טוענים את לוח השנה…',
+  loadError: 'לא ניתן לטעון את לוח השנה.',
+  retry: 'ניסיון חוזר',
+  dayLabel: '{{date}}, {{count}} משימות',
+  more: '+{{count}} נוספות',
 };
 
 export const calendarExtensionsRu = {
@@ -66,6 +80,13 @@ export const calendarExtensionsRu = {
     'Календарь доступен в Pro. В примере используются только условные блоки — ваши задачи не загружаются.',
   upgradeOnWeb: 'Оформите Pro на сайте nicoflow.app.',
   ready: 'Ваш календарь готов.',
+  previousMonth: 'Предыдущий месяц',
+  nextMonth: 'Следующий месяц',
+  loadingTasks: 'Загружаем календарь…',
+  loadError: 'Не удалось загрузить календарь.',
+  retry: 'Повторить',
+  dayLabel: '{{date}}, задач: {{count}}',
+  more: '+{{count}} ещё',
 };
 
 // NIC-1995: the upload source sheet is mobile-only — web has a drag-and-drop
