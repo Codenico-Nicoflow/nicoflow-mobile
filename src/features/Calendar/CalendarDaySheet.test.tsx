@@ -33,7 +33,7 @@ describe('CalendarDaySheet', () => {
         locale="en"
         onSelectedDayChange={jest.fn()}
         onMoveTask={jest.fn()}
-        pendingTaskId={null}
+        pendingTaskIds={new Set()}
         onSaveDuration={jest.fn()}
       />
     );
@@ -59,7 +59,7 @@ describe('CalendarDaySheet', () => {
         locale="en"
         onSelectedDayChange={jest.fn()}
         onMoveTask={onMoveTask}
-        pendingTaskId={null}
+        pendingTaskIds={new Set()}
         onSaveDuration={jest.fn()}
       />
     );
@@ -81,7 +81,7 @@ describe('CalendarDaySheet', () => {
         locale="en"
         onSelectedDayChange={jest.fn()}
         onMoveTask={jest.fn()}
-        pendingTaskId={null}
+        pendingTaskIds={new Set()}
         onSaveDuration={jest.fn()}
       />
     );

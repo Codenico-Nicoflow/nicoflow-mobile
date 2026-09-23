@@ -24,12 +24,12 @@ interface CalendarDaySheetProps {
   locale: string;
   onSelectedDayChange: (dayKey: string) => void;
   onMoveTask: (task: ITask, dayKey: string) => Promise<void>;
-  pendingTaskId: string | null;
+  pendingTaskIds: ReadonlySet<string>;
   onSaveDuration: (task: ITask, minutes: number) => Promise<void>;
 }
 
 export const CalendarDaySheet = forwardRef<CalendarDaySheetRef, CalendarDaySheetProps>(function CalendarDaySheet(
-  { tasksByDay, locale, onSelectedDayChange, onMoveTask, pendingTaskId, onSaveDuration },
+  { tasksByDay, locale, onSelectedDayChange, onMoveTask, pendingTaskIds, onSaveDuration },
   ref
 ) {
   const { t } = useTranslation('common');
@@ -122,7 +122,7 @@ export const CalendarDaySheet = forwardRef<CalendarDaySheetRef, CalendarDaySheet
                   onPress={() => startMove(task)}
                   accessibilityRole="button"
                   accessibilityLabel={t('pages.calendar.moveTask', { title: task.title })}
-                  disabled={pendingTaskId === task.id || recurringLocked}
+                  disabled={pendingTaskIds.has(task.id) || recurringLocked}
                   className="rounded-md border border-border dark:border-border-dark px-2 py-1"
                 >
                   <Text className="text-xs font-medium text-primary">{t('pages.calendar.move')}</Text>
@@ -131,7 +131,7 @@ export const CalendarDaySheet = forwardRef<CalendarDaySheetRef, CalendarDaySheet
                   onPress={() => setDurationTask(task)}
                   accessibilityRole="button"
                   accessibilityLabel={t('pages.calendar.editDuration', { title: task.title })}
-                  disabled={pendingTaskId === task.id}
+                  disabled={pendingTaskIds.has(task.id)}
                   className="rounded-md border border-border dark:border-border-dark px-2 py-1"
                 >
                   <Text className="text-xs font-medium text-primary">{t('pages.calendar.duration')}</Text>
@@ -170,7 +170,7 @@ export const CalendarDaySheet = forwardRef<CalendarDaySheetRef, CalendarDaySheet
             <Pressable
               onPress={() => void saveMove()}
               accessibilityRole="button"
-              disabled={pendingTaskId === movingTask.id}
+              disabled={pendingTaskIds.has(movingTask.id)}
               className="rounded-md bg-primary px-3 py-2"
               testID="calendar-move-save"
             >
@@ -182,7 +182,7 @@ export const CalendarDaySheet = forwardRef<CalendarDaySheetRef, CalendarDaySheet
       {durationTask ? (
         <CalendarDurationEditor
           task={durationTask}
-          pending={pendingTaskId === durationTask.id}
+          pending={pendingTaskIds.has(durationTask.id)}
           onSave={async (task, minutes) => {
             await onSaveDuration(task, minutes);
             setDurationTask(null);
