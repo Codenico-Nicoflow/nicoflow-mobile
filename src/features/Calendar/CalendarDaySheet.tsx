@@ -11,6 +11,7 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { Sheet, SheetHeader, type SheetRef, SheetTitle } from '@/components/ui/sheet';
 import { useTheme } from '@/hooks/use-theme';
 
+import { CalendarDurationEditor } from './CalendarDurationEditor';
 import { isLiveRecurringOccurrence } from './calendarMove';
 
 export interface CalendarDaySheetRef {
@@ -23,11 +24,12 @@ interface CalendarDaySheetProps {
   locale: string;
   onSelectedDayChange: (dayKey: string) => void;
   onMoveTask: (task: ITask, dayKey: string) => Promise<void>;
-  pendingTaskId: string | null;
+  pendingTaskIds: ReadonlySet<string>;
+  onSaveDuration: (task: ITask, minutes: number) => Promise<void>;
 }
 
 export const CalendarDaySheet = forwardRef<CalendarDaySheetRef, CalendarDaySheetProps>(function CalendarDaySheet(
-  { tasksByDay, locale, onSelectedDayChange, onMoveTask, pendingTaskId },
+  { tasksByDay, locale, onSelectedDayChange, onMoveTask, pendingTaskIds, onSaveDuration },
   ref
 ) {
   const { t } = useTranslation('common');
@@ -37,6 +39,7 @@ export const CalendarDaySheet = forwardRef<CalendarDaySheetRef, CalendarDaySheet
   const [movingTask, setMovingTask] = useState<ITask | null>(null);
   const [moveDate, setMoveDate] = useState('');
   const [moveError, setMoveError] = useState(false);
+  const [durationTask, setDurationTask] = useState<ITask | null>(null);
   const tasks = tasksByDay.get(dayKey) ?? [];
   const dateLabel = dayKey
     ? new Intl.DateTimeFormat(locale, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }).format(
@@ -119,10 +122,19 @@ export const CalendarDaySheet = forwardRef<CalendarDaySheetRef, CalendarDaySheet
                   onPress={() => startMove(task)}
                   accessibilityRole="button"
                   accessibilityLabel={t('pages.calendar.moveTask', { title: task.title })}
-                  disabled={pendingTaskId === task.id || recurringLocked}
+                  disabled={pendingTaskIds.has(task.id) || recurringLocked}
                   className="rounded-md border border-border dark:border-border-dark px-2 py-1"
                 >
                   <Text className="text-xs font-medium text-primary">{t('pages.calendar.move')}</Text>
+                </Pressable>
+                <Pressable
+                  onPress={() => setDurationTask(task)}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('pages.calendar.editDuration', { title: task.title })}
+                  disabled={pendingTaskIds.has(task.id)}
+                  className="rounded-md border border-border dark:border-border-dark px-2 py-1"
+                >
+                  <Text className="text-xs font-medium text-primary">{t('pages.calendar.duration')}</Text>
                 </Pressable>
                 {recurringLocked ? <Text className="sr-only">{t('pages.calendar.recurringMoveLocked')}</Text> : null}
               </View>
@@ -158,7 +170,7 @@ export const CalendarDaySheet = forwardRef<CalendarDaySheetRef, CalendarDaySheet
             <Pressable
               onPress={() => void saveMove()}
               accessibilityRole="button"
-              disabled={pendingTaskId === movingTask.id}
+              disabled={pendingTaskIds.has(movingTask.id)}
               className="rounded-md bg-primary px-3 py-2"
               testID="calendar-move-save"
             >
@@ -166,6 +178,17 @@ export const CalendarDaySheet = forwardRef<CalendarDaySheetRef, CalendarDaySheet
             </Pressable>
           </View>
         </View>
+      ) : null}
+      {durationTask ? (
+        <CalendarDurationEditor
+          task={durationTask}
+          pending={pendingTaskIds.has(durationTask.id)}
+          onSave={async (task, minutes) => {
+            await onSaveDuration(task, minutes);
+            setDurationTask(null);
+          }}
+          onCancel={() => setDurationTask(null)}
+        />
       ) : null}
     </Sheet>
   );
