@@ -1,5 +1,7 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
+
+import { router } from 'expo-router';
 
 import type { ITask } from '@nicoflow/shared/types';
 import { ChevronLeft, ChevronRight } from 'lucide-react-native';
@@ -20,15 +22,23 @@ import {
   shiftMonth,
   todayKeyIn,
 } from './calendarDate';
+import { CalendarDaySheet, type CalendarDaySheetRef } from './CalendarDaySheet';
 
 const SWIPE_THRESHOLD = 48;
 
 const taskChip = (task: ITask) => (
-  <View key={task.id} className="mt-1 rounded bg-primary/10 px-1 py-0.5" testID={`calendar-task-${task.id}`}>
+  <Pressable
+    key={task.id}
+    onPress={() => router.push(`/task/${task.id}`)}
+    accessibilityRole="button"
+    accessibilityLabel={task.title}
+    className="mt-1 rounded bg-primary/10 px-1 py-0.5"
+    testID={`calendar-task-${task.id}`}
+  >
     <Text numberOfLines={1} className="text-[10px] font-medium text-primary">
       {task.title}
     </Text>
-  </View>
+  </Pressable>
 );
 
 export function CalendarProSurface() {
@@ -38,6 +48,7 @@ export function CalendarProSurface() {
   const todayKey = todayKeyIn(user?.timezone);
   const [anchor, setAnchor] = useState(() => fromDayKey(todayKey));
   const [selectedKey, setSelectedKey] = useState(todayKey);
+  const daySheetRef = useRef<CalendarDaySheetRef>(null);
   const weekStart = normalizeWeekStart(user?.calendar?.weekStart);
   const days = useMemo(() => buildMonthDays(anchor, weekStart), [anchor, weekStart]);
   const range = useMemo(() => rangeForMonth(days), [days]);
@@ -135,17 +146,17 @@ export function CalendarProSurface() {
                   const isToday = day.key === todayKey;
                   const isSelected = day.key === selectedKey;
                   return (
-                    <Pressable
+                    <View
                       key={day.key}
-                      onPress={() => setSelectedKey(day.key)}
-                      accessibilityRole="button"
-                      accessibilityLabel={t('pages.calendar.dayLabel', { date: day.key, count: dayTasks.length })}
                       className={`min-h-16 flex-1 border-r border-border dark:border-border-dark p-1 ${
                         isSelected ? 'bg-primary/5' : ''
                       }`}
                       testID={`calendar-day-${day.key}`}
                     >
-                      <View
+                      <Pressable
+                        onPress={() => daySheetRef.current?.present(day.key)}
+                        accessibilityRole="button"
+                        accessibilityLabel={t('pages.calendar.dayLabel', { date: day.key, count: dayTasks.length })}
                         className={`h-5 w-5 items-center justify-center rounded-full ${isToday ? 'bg-primary' : ''}`}
                       >
                         <Text
@@ -159,14 +170,23 @@ export function CalendarProSurface() {
                         >
                           {day.dayOfMonth}
                         </Text>
-                      </View>
+                      </Pressable>
                       {dayTasks.slice(0, MAX_VISIBLE_CHIPS).map(taskChip)}
                       {overflow > 0 && (
-                        <Text className="mt-1 text-[10px] font-semibold text-muted-foreground dark:text-muted-foreground-dark">
-                          {t('pages.calendar.more', { count: overflow })}
-                        </Text>
+                        <Pressable
+                          onPress={() => daySheetRef.current?.present(day.key)}
+                          accessibilityRole="button"
+                          accessibilityLabel={t('pages.calendar.showAllTasks', {
+                            date: day.key,
+                            count: dayTasks.length,
+                          })}
+                        >
+                          <Text className="mt-1 text-[10px] font-semibold text-muted-foreground dark:text-muted-foreground-dark">
+                            {t('pages.calendar.more', { count: overflow })}
+                          </Text>
+                        </Pressable>
                       )}
-                    </Pressable>
+                    </View>
                   );
                 })}
               </View>
@@ -174,6 +194,12 @@ export function CalendarProSurface() {
           )}
         </View>
       </GestureDetector>
+      <CalendarDaySheet
+        ref={daySheetRef}
+        tasksByDay={tasksByDay}
+        locale={i18n.language}
+        onSelectedDayChange={setSelectedKey}
+      />
     </View>
   );
 }

@@ -54,6 +54,11 @@ export const calendarExtensionsEn = {
   retry: 'Retry',
   dayLabel: '{{date}}, {{count}} tasks',
   more: '+{{count}} more',
+  showAllTasks: 'Show all {{count}} tasks on {{date}}',
+  dayTaskCount: '{{count}} tasks',
+  emptyDayTitle: 'No tasks scheduled',
+  emptyDayDescription: 'This day is clear.',
+  openTask: 'Open task: {{title}}',
 };
 
 export const calendarExtensionsHe = {
@@ -70,6 +75,11 @@ export const calendarExtensionsHe = {
   retry: 'ניסיון חוזר',
   dayLabel: '{{date}}, {{count}} משימות',
   more: '+{{count}} נוספות',
+  showAllTasks: 'הצגת כל {{count}} המשימות ב-{{date}}',
+  dayTaskCount: '{{count}} משימות',
+  emptyDayTitle: 'אין משימות מתוזמנות',
+  emptyDayDescription: 'היום הזה פנוי.',
+  openTask: 'פתיחת משימה: {{title}}',
 };
 
 export const calendarExtensionsRu = {
@@ -87,6 +97,11 @@ export const calendarExtensionsRu = {
   retry: 'Повторить',
   dayLabel: '{{date}}, задач: {{count}}',
   more: '+{{count}} ещё',
+  showAllTasks: 'Показать все задачи ({{count}}) на {{date}}',
+  dayTaskCount: 'Задач: {{count}}',
+  emptyDayTitle: 'Нет запланированных задач',
+  emptyDayDescription: 'Этот день свободен.',
+  openTask: 'Открыть задачу: {{title}}',
 };
 
 // NIC-1995: the upload source sheet is mobile-only — web has a drag-and-drop
