@@ -11,6 +11,9 @@ import {
   aiExtensionsEn,
   aiExtensionsHe,
   aiExtensionsRu,
+  calendarExtensionsEn,
+  calendarExtensionsHe,
+  calendarExtensionsRu,
   settingsExtensionsEn,
   settingsExtensionsHe,
   settingsExtensionsRu,
@@ -66,7 +69,11 @@ const mergedEn = {
   ai: { ...en.ai, quota: { ...en.ai.quota, ...aiExtensionsEn.quota } },
   common: {
     ...en.common,
-    pages: { ...en.common.pages, settings: { ...en.common.pages.settings, ...settingsExtensionsEn } },
+    pages: {
+      ...en.common.pages,
+      calendar: calendarExtensionsEn,
+      settings: { ...en.common.pages.settings, ...settingsExtensionsEn },
+    },
   },
   task: { ...en.task, attachments: { ...en.task.attachments, ...taskAttachmentExtensionsEn } },
 };
@@ -75,7 +82,11 @@ const mergedHe = {
   ai: { ...he.ai, quota: { ...he.ai.quota, ...aiExtensionsHe.quota } },
   common: {
     ...he.common,
-    pages: { ...he.common.pages, settings: { ...he.common.pages.settings, ...settingsExtensionsHe } },
+    pages: {
+      ...he.common.pages,
+      calendar: calendarExtensionsHe,
+      settings: { ...he.common.pages.settings, ...settingsExtensionsHe },
+    },
   },
   task: { ...he.task, attachments: { ...he.task.attachments, ...taskAttachmentExtensionsHe } },
 };
@@ -84,7 +95,11 @@ const mergedRu = {
   ai: { ...ru.ai, quota: { ...ru.ai.quota, ...aiExtensionsRu.quota } },
   common: {
     ...ru.common,
-    pages: { ...ru.common.pages, settings: { ...ru.common.pages.settings, ...settingsExtensionsRu } },
+    pages: {
+      ...ru.common.pages,
+      calendar: calendarExtensionsRu,
+      settings: { ...ru.common.pages.settings, ...settingsExtensionsRu },
+    },
   },
   task: { ...ru.task, attachments: { ...ru.task.attachments, ...taskAttachmentExtensionsRu } },
 };

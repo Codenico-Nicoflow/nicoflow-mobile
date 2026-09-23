@@ -40,6 +40,34 @@ export const settingsExtensionsRu = {
   planUpgradeHint: 'Pro открывает неограниченные области, проекты и AI. Оформите на сайте nicoflow.app.',
 };
 
+export const calendarExtensionsEn = {
+  title: 'Calendar',
+  loading: 'Checking Calendar access…',
+  teaserTitle: 'Plan your month with Calendar',
+  teaserDescription: 'Calendar is included with Pro. This preview uses sample blocks and never loads your tasks.',
+  upgradeOnWeb: 'Upgrade on the web at nicoflow.app.',
+  ready: 'Your calendar is ready.',
+};
+
+export const calendarExtensionsHe = {
+  title: 'לוח שנה',
+  loading: 'בודקים גישה ללוח השנה…',
+  teaserTitle: 'תכננו את החודש עם לוח השנה',
+  teaserDescription: 'לוח השנה כלול ב-Pro. התצוגה המקדימה משתמשת בנתוני דוגמה ולעולם לא טוענת את המשימות שלכם.',
+  upgradeOnWeb: 'שדרגו באתר nicoflow.app.',
+  ready: 'לוח השנה שלכם מוכן.',
+};
+
+export const calendarExtensionsRu = {
+  title: 'Календарь',
+  loading: 'Проверяем доступ к календарю…',
+  teaserTitle: 'Планируйте месяц в календаре',
+  teaserDescription:
+    'Календарь доступен в Pro. В примере используются только условные блоки — ваши задачи не загружаются.',
+  upgradeOnWeb: 'Оформите Pro на сайте nicoflow.app.',
+  ready: 'Ваш календарь готов.',
+};
+
 // NIC-1995: the upload source sheet is mobile-only — web has a drag-and-drop
 // zone, so it has no camera/library/file wording and no permission-denial copy.
 export const taskAttachmentExtensionsEn = {
