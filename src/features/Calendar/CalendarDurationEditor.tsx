@@ -45,6 +45,13 @@ export function CalendarDurationEditor({ task, pending, onSave, onCancel }: Cale
     void onSave(task, clamped);
   };
 
+  const adjustDuration = (direction: 'increment' | 'decrement'): void => {
+    const delta = direction === 'increment' ? 15 : -15;
+    const next = clampDuration(preview + delta, task.scheduledTime);
+    setPreview(next);
+    setInput(String(next));
+  };
+
   return (
     <View className="mt-4 gap-3 rounded-md border border-border dark:border-border-dark p-3" testID="duration-editor">
       <Text className="text-sm font-semibold text-foreground dark:text-foreground-dark">{task.title}</Text>
@@ -63,6 +70,13 @@ export function CalendarDurationEditor({ task, pending, onSave, onCancel }: Cale
               className="mt-3 h-10 items-center justify-center rounded-md border border-primary/30 bg-primary/10"
               accessibilityRole="adjustable"
               accessibilityLabel={t('pages.calendar.resizeDuration')}
+              accessibilityValue={{ min: 1, max: 1440, now: preview, text: `${preview}` }}
+              accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]}
+              onAccessibilityAction={event => {
+                if (event.nativeEvent.actionName === 'increment' || event.nativeEvent.actionName === 'decrement') {
+                  adjustDuration(event.nativeEvent.actionName);
+                }
+              }}
               testID="calendar-duration-handle"
             >
               <GripHorizontal size={22} color={colors.primary} />
