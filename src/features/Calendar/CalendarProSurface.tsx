@@ -84,25 +84,6 @@ export function CalendarProSurface() {
     }
   };
 
-  const saveDuration = async (task: ITask, estimatedMinutes: number): Promise<void> => {
-    if (pendingTaskIdsRef.current.has(task.id)) return;
-    pendingTaskIdsRef.current.add(task.id);
-    setPendingTaskIds(current => new Set(current).add(task.id));
-    try {
-      await updateTask({ id: task.id, estimatedMinutes }).unwrap();
-    } catch (error) {
-      await recoverFailedWrite(error, () => void saveDuration(task, estimatedMinutes));
-      throw error;
-    } finally {
-      pendingTaskIdsRef.current.delete(task.id);
-      setPendingTaskIds(current => {
-        const next = new Set(current);
-        next.delete(task.id);
-        return next;
-      });
-    }
-  };
-
   const moveMonth = (amount: -1 | 1): void => setAnchor(current => shiftMonth(current, amount));
   const swipe = useMemo(
     () =>
@@ -280,9 +261,7 @@ export function CalendarProSurface() {
         tasksByDay={tasksByDay}
         locale={i18n.language}
         onSelectedDayChange={setSelectedKey}
-        onMoveTask={moveTask}
         pendingTaskIds={pendingTaskIds}
-        onSaveDuration={saveDuration}
       />
     </View>
   );
