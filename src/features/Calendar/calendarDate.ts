@@ -64,6 +64,32 @@ export const rangeForMonth = (days: readonly CalendarDay[]): CalendarRange => ({
   scheduledTo: days[days.length - 1]?.key ?? '',
 });
 
+export const rangeForDays = (days: readonly CalendarDay[]): CalendarRange => ({
+  scheduledFrom: days[0]?.key ?? '',
+  scheduledTo: days[days.length - 1]?.key ?? '',
+});
+
+export const buildWeekDays = (selectedDate: Date, weekStart = 0): CalendarDay[] => {
+  const normalizedStart = normalizeWeekStart(weekStart);
+  const leadingDays = (selectedDate.getDay() - normalizedStart + 7) % 7;
+  const start = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate() - leadingDays, 12);
+
+  return Array.from({ length: 7 }, (_, offset) => {
+    const date = new Date(start.getFullYear(), start.getMonth(), start.getDate() + offset, 12);
+    return {
+      key: toDayKey(date),
+      dayOfMonth: date.getDate(),
+      isCurrentMonth: date.getMonth() === selectedDate.getMonth(),
+    };
+  });
+};
+
+export const shiftDay = (dayKey: string, amount: number): string => {
+  const date = fromDayKey(dayKey);
+  date.setDate(date.getDate() + amount);
+  return toDayKey(date);
+};
+
 export const shiftMonth = (anchor: Date, amount: -1 | 1): Date =>
   new Date(anchor.getFullYear(), anchor.getMonth() + amount, 1, 12);
 

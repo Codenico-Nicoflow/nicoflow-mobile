@@ -8,3 +8,15 @@ export const calendarMoveRequest = (task: ITask, scheduledFor: string): UpdateTa
   id: task.id,
   scheduledFor,
 });
+
+export const calendarScheduleRequest = (
+  task: ITask,
+  scheduledFor: string,
+  scheduledTime: string | null,
+  estimatedMinutes: number | null
+): UpdateTaskRequest => ({
+  id: task.id,
+  scheduledFor,
+  scheduledTime,
+  estimatedMinutes,
+});
