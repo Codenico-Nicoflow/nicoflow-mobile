@@ -402,9 +402,7 @@ export function CalendarProSurface() {
         tasksByDay={tasksByDay}
         locale={i18n.language}
         onSelectedDayChange={setSelectedKey}
-        onMoveTask={moveTask}
         pendingTaskIds={pendingTaskIds}
-        onSaveDuration={saveDuration}
       />
     </View>
   );

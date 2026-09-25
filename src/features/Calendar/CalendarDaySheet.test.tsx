@@ -32,9 +32,7 @@ describe('CalendarDaySheet', () => {
         tasksByDay={tasks}
         locale="en"
         onSelectedDayChange={jest.fn()}
-        onMoveTask={jest.fn()}
         pendingTaskIds={new Set()}
-        onSaveDuration={jest.fn()}
       />
     );
 
@@ -48,28 +46,26 @@ describe('CalendarDaySheet', () => {
     expect(router.push).toHaveBeenCalledWith('/task/task-b');
   });
 
-  it('uses the same date-only move callback for the accessible action', async () => {
+  it('shows full schedule context in each selected-day card without separate move or duration actions', async () => {
     const ref = createRef<CalendarDaySheetRef>();
-    const moving = task('task-a', 'First');
-    const onMoveTask = jest.fn(() => Promise.resolve());
+    const timedTask = { ...task('task-a', 'First'), scheduledTime: '09:30', estimatedMinutes: 45 } as ITask;
+    const allDayTask = { ...task('task-b', 'All day'), scheduledTime: null, estimatedMinutes: null } as ITask;
     await render(
       <CalendarDaySheet
         ref={ref}
-        tasksByDay={new Map([['2026-09-23', [moving]]])}
+        tasksByDay={new Map([['2026-09-23', [timedTask, allDayTask]]])}
         locale="en"
         onSelectedDayChange={jest.fn()}
-        onMoveTask={onMoveTask}
         pendingTaskIds={new Set()}
-        onSaveDuration={jest.fn()}
       />
     );
     await act(() => ref.current?.present('2026-09-23'));
 
-    await fireEvent.press(screen.getByLabelText('Move First to a date'));
-    await fireEvent.changeText(screen.getByTestId('calendar-move-date-input'), '2026-09-25');
-    await fireEvent.press(screen.getByTestId('calendar-move-save'));
-
-    expect(onMoveTask).toHaveBeenCalledWith(moving, '2026-09-25');
+    expect(screen.getAllByText('Scheduled Sep 23, 2026')).toHaveLength(2);
+    expect(screen.getByText('09:30 · 45 min')).toBeTruthy();
+    expect(screen.getByText('All day · No duration')).toBeTruthy();
+    expect(screen.queryByLabelText('Move First to a date')).toBeNull();
+    expect(screen.queryByLabelText('Edit duration for First')).toBeNull();
   });
 
   it('shows an explicit empty state for a selectable empty day', async () => {
@@ -80,9 +76,7 @@ describe('CalendarDaySheet', () => {
         tasksByDay={new Map()}
         locale="en"
         onSelectedDayChange={jest.fn()}
-        onMoveTask={jest.fn()}
         pendingTaskIds={new Set()}
-        onSaveDuration={jest.fn()}
       />
     );
     await act(() => ref.current?.present('2026-09-24'));
