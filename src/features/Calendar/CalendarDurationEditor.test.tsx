@@ -1,5 +1,5 @@
 import type { ITask } from '@nicoflow/shared/types';
-import { fireEvent, render, screen } from '@testing-library/react-native';
+import { act, fireEvent, render, screen } from '@testing-library/react-native';
 
 import { CalendarDurationEditor } from './CalendarDurationEditor';
 
@@ -37,6 +37,31 @@ describe('CalendarDurationEditor', () => {
     );
     expect(screen.getByText(/Suggested: 30 minutes/)).toBeTruthy();
     expect(screen.queryByTestId('calendar-duration-handle')).toBeNull();
+    expect(onSave).not.toHaveBeenCalled();
+  });
+
+  it('supports screen-reader increment and decrement actions in 15-minute steps', async () => {
+    const onSave = jest.fn(() => Promise.resolve());
+    await render(
+      <CalendarDurationEditor
+        task={makeTask({ scheduledTime: '10:00', estimatedMinutes: 60 })}
+        pending={false}
+        onSave={onSave}
+        onCancel={jest.fn()}
+      />
+    );
+
+    const handle = screen.getByTestId('calendar-duration-handle');
+    const onAccessibilityAction = handle.props.onAccessibilityAction as (event: {
+      nativeEvent: { actionName: 'increment' | 'decrement' };
+    }) => void;
+    await act(async () => onAccessibilityAction({ nativeEvent: { actionName: 'increment' } }));
+    expect(screen.getByTestId('calendar-duration-input')).toHaveProp('value', '75');
+
+    const onUpdatedAccessibilityAction = screen.getByTestId('calendar-duration-handle').props
+      .onAccessibilityAction as typeof onAccessibilityAction;
+    await act(async () => onUpdatedAccessibilityAction({ nativeEvent: { actionName: 'decrement' } }));
+    expect(screen.getByTestId('calendar-duration-input')).toHaveProp('value', '60');
     expect(onSave).not.toHaveBeenCalled();
   });
 });
