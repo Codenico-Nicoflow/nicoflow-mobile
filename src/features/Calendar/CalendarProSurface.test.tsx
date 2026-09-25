@@ -30,6 +30,11 @@ jest.mock('react-native-gesture-handler', () => {
 jest.mock('./CalendarDaySheet', () => ({ CalendarDaySheet: () => null }));
 jest.mock('./CalendarTaskChip', () => ({ CalendarTaskChip: () => null }));
 jest.mock('./CalendarTaskAgendaCard', () => ({ CalendarTaskAgendaCard: () => null }));
+jest.mock('./CalendarDayTimeline', () => {
+  const React = jest.requireActual<typeof import('react')>('react');
+  const Native = jest.requireActual<typeof import('react-native')>('react-native');
+  return { CalendarDayTimeline: () => React.createElement(Native.View, { testID: 'calendar-day-timeline' }) };
+});
 
 describe('CalendarProSurface', () => {
   beforeEach(() => {
@@ -51,7 +56,7 @@ describe('CalendarProSurface', () => {
     ).toBe(6 * 24 * 60 * 60 * 1000);
 
     await fireEvent.press(screen.getByTestId('calendar-view-day'));
-    expect(screen.getAllByTestId(/^calendar-agenda-day-/)).toHaveLength(1);
+    expect(screen.getByTestId('calendar-day-timeline')).toBeTruthy();
     await fireEvent.press(screen.getByTestId('calendar-view-month'));
     expect(screen.getByTestId('calendar-month-grid')).toBeTruthy();
   });

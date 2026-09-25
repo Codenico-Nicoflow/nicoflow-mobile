@@ -26,6 +26,7 @@ import {
   todayKeyIn,
 } from './calendarDate';
 import { CalendarDaySheet, type CalendarDaySheetRef } from './CalendarDaySheet';
+import { CalendarDayTimeline } from './CalendarDayTimeline';
 import { calendarMoveRequest, calendarScheduleRequest, isLiveRecurringOccurrence } from './calendarMove';
 import { canRetryCalendarFailure, isCalendarOfflineFailure } from './calendarRecovery';
 import { CalendarTaskAgendaCard } from './CalendarTaskAgendaCard';
@@ -225,7 +226,9 @@ export function CalendarProSurface() {
       </View>
       <GestureDetector gesture={swipe}>
         <View
-          className="overflow-hidden border border-border dark:border-border-dark bg-card dark:bg-card-dark"
+          className={`overflow-hidden border border-border dark:border-border-dark bg-card dark:bg-card-dark ${
+            view === 'day' ? 'flex-1' : ''
+          }`}
           style={[{ borderRadius: Radius.lg }, Shadows.sm]}
           testID={view === 'month' ? 'calendar-month-grid' : 'calendar-agenda'}
           onLayout={event => setGridSize(event.nativeEvent.layout)}
@@ -330,6 +333,14 @@ export function CalendarProSurface() {
                 })}
               </View>
             ))
+          ) : view === 'day' ? (
+            <CalendarDayTimeline
+              dayKey={selectedDay.key}
+              locale={i18n.language}
+              tasks={tasksByDay.get(selectedDay.key) ?? []}
+              pendingTaskIds={pendingTaskIds}
+              onSaveSchedule={saveSchedule}
+            />
           ) : (
             days.map(day => {
               const dayTasks = tasksByDay.get(day.key) ?? [];
