@@ -3,6 +3,7 @@ import { I18nManager, Pressable, ScrollView, Text, View } from 'react-native';
 
 import { router } from 'expo-router';
 
+import type { IGoogleCalendar, IGoogleEvent } from '@nicoflow/shared/api';
 import type { ITask } from '@nicoflow/shared/types';
 import { useTranslation } from 'react-i18next';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
@@ -10,8 +11,10 @@ import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { Sheet, SheetHeader, type SheetRef, SheetTitle } from '@/components/ui/sheet';
 
 import { CalendarDayTaskCard } from './CalendarDayTaskCard';
+import { calendarEventColor, CalendarGoogleEventCard } from './CalendarGoogleEventCard';
 import { CalendarScheduleEditor } from './CalendarScheduleEditor';
 import { layoutTimedTasks, parseClockMinutes, resizeTaskMinutes, shiftTaskMinutes } from './calendarTimeline';
+import { layoutGoogleEvents } from './googleCalendarOverlay';
 
 const PIXELS_PER_MINUTE = 1.4;
 const HOUR_HEIGHT = PIXELS_PER_MINUTE * 60;
@@ -22,6 +25,9 @@ interface CalendarDayTimelineProps {
   locale: string;
   tasks: readonly ITask[];
   pendingTaskIds: ReadonlySet<string>;
+  googleEvents: readonly IGoogleEvent[];
+  googleCalendars: readonly IGoogleCalendar[];
+  onSelectGoogleEvent: (event: IGoogleEvent) => void;
   onSaveSchedule: (
     task: ITask,
     scheduledFor: string,
@@ -41,6 +47,9 @@ export function CalendarDayTimeline({
   locale,
   tasks,
   pendingTaskIds,
+  googleEvents,
+  googleCalendars,
+  onSelectGoogleEvent,
   onSaveSchedule,
 }: CalendarDayTimelineProps) {
   const { t } = useTranslation('common');
@@ -48,6 +57,11 @@ export function CalendarDayTimeline({
   const [editingTask, setEditingTask] = useState<ITask | null>(null);
   const timedTasks = useMemo(() => layoutTimedTasks(tasks, PIXELS_PER_MINUTE), [tasks]);
   const allDayTasks = useMemo(() => tasks.filter(task => parseClockMinutes(task.scheduledTime) === null), [tasks]);
+  const allDayGoogleEvents = useMemo(() => googleEvents.filter(event => event.allDay), [googleEvents]);
+  const timedGoogleEvents = useMemo(
+    () => layoutGoogleEvents(googleEvents, dayKey, PIXELS_PER_MINUTE),
+    [dayKey, googleEvents]
+  );
 
   const startEditing = (task: ITask): void => {
     setEditingTask(task);
@@ -82,28 +96,52 @@ export function CalendarDayTimeline({
         <Text className="mb-2 text-xs font-semibold uppercase text-muted-foreground dark:text-muted-foreground-dark">
           {t('pages.calendar.allDayTasks')}
         </Text>
-        {allDayTasks.length === 0 ? (
+        {allDayTasks.length === 0 && allDayGoogleEvents.length === 0 ? (
           <Text className="py-1 text-sm text-muted-foreground dark:text-muted-foreground-dark">
             {t('pages.calendar.noAllDayTasks')}
           </Text>
         ) : (
-          <View className="gap-2" testID="calendar-timeline-all-day-list">
-            {allDayTasks.map(task => (
-              <View key={task.id} testID={`calendar-timeline-all-day-${task.id}`}>
-                <CalendarDayTaskCard
-                  task={task}
-                  dayKey={dayKey}
-                  locale={locale}
-                  pending={pendingTaskIds.has(task.id)}
-                  onOpenTask={taskId => router.push(`/task/${taskId}`)}
-                />
+          <View className="gap-2">
+            {allDayTasks.length ? (
+              <View className="gap-2" testID="calendar-timeline-all-day-list">
+                {allDayTasks.map(task => (
+                  <View key={task.id} testID={`calendar-timeline-all-day-${task.id}`}>
+                    <CalendarDayTaskCard
+                      task={task}
+                      dayKey={dayKey}
+                      locale={locale}
+                      pending={pendingTaskIds.has(task.id)}
+                      onOpenTask={taskId => router.push(`/task/${taskId}`)}
+                    />
+                  </View>
+                ))}
               </View>
-            ))}
+            ) : null}
+            {allDayGoogleEvents.length ? (
+              <View
+                className="gap-2 border-t border-border pt-2 dark:border-border-dark"
+                testID="calendar-timeline-google-all-day-list"
+              >
+                <Text className="text-xs font-medium text-muted-foreground dark:text-muted-foreground-dark">
+                  {t('pages.calendar.googleEvents')}
+                </Text>
+                {allDayGoogleEvents.map(event => (
+                  <View key={event.id} testID={`calendar-timeline-google-all-day-${event.id}`}>
+                    <CalendarGoogleEventCard
+                      event={event}
+                      calendars={googleCalendars}
+                      locale={locale}
+                      onSelect={onSelectGoogleEvent}
+                    />
+                  </View>
+                ))}
+              </View>
+            ) : null}
           </View>
         )}
       </View>
 
-      {tasks.length === 0 ? (
+      {tasks.length === 0 && googleEvents.length === 0 ? (
         <View className="mb-2 rounded-lg border border-border dark:border-border-dark p-3">
           <Text className="text-sm text-muted-foreground dark:text-muted-foreground-dark">
             {t('pages.calendar.emptyDayDescription')}
@@ -128,84 +166,135 @@ export function CalendarDayTimeline({
           ))}
           <View
             className="absolute bottom-0 top-0"
-            style={I18nManager.isRTL ? { right: TIME_GUTTER, left: 0 } : { left: TIME_GUTTER, right: 0 }}
+            style={[
+              I18nManager.isRTL ? { right: TIME_GUTTER, left: 0 } : { left: TIME_GUTTER, right: 0 },
+              googleEvents.length > 0 ? { flexDirection: 'row' } : undefined,
+            ]}
             testID="calendar-timeline-block-layer"
           >
-            {timedTasks.map(layout => {
-              const resizeGesture = Gesture.Pan()
-                .activeOffsetY([-4, 4])
-                .failOffsetX([-12, 12])
-                .runOnJS(true)
-                .onEnd((event, success) => {
-                  if (success && !pendingTaskIds.has(layout.task.id)) {
-                    void saveResizedDuration(layout.task, event.translationY);
-                  }
-                });
-              const moveGesture = Gesture.Pan()
-                .activeOffsetY([-8, 8])
-                .failOffsetX([-12, 12])
-                .requireExternalGestureToFail(resizeGesture)
-                .runOnJS(true)
-                .onEnd((event, success) => {
-                  if (success && !pendingTaskIds.has(layout.task.id))
-                    void saveMovedTime(layout.task, event.translationY);
-                });
-              const inlinePercent = `${(layout.column / layout.columns) * 100}%` as `${number}%`;
-              const widthPercent = `${100 / layout.columns}%` as `${number}%`;
-
-              return (
-                <GestureDetector key={layout.task.id} gesture={moveGesture}>
+            {googleEvents.length > 0 ? (
+              <View
+                pointerEvents="box-none"
+                className="absolute bottom-0 top-0"
+                style={I18nManager.isRTL ? { right: '64%', left: 0 } : { left: '64%', right: 0 }}
+                testID="calendar-timeline-google-layer"
+              >
+                {timedGoogleEvents.map(layout => (
                   <View
-                    className="absolute overflow-hidden rounded-md border border-primary/40 bg-primary/10 px-2 py-1"
+                    key={layout.event.id}
+                    className="absolute overflow-hidden rounded-md border bg-card dark:bg-card-dark"
                     style={[
-                      { top: layout.top, height: Math.max(40, layout.height), width: widthPercent },
-                      I18nManager.isRTL ? { right: inlinePercent } : { left: inlinePercent },
+                      {
+                        top: layout.top,
+                        height: Math.max(34, layout.height),
+                        width: `${100 / layout.columns}%`,
+                        borderColor: calendarEventColor(layout.event, googleCalendars),
+                      },
+                      I18nManager.isRTL
+                        ? { right: `${(layout.column / layout.columns) * 100}%` }
+                        : { left: `${(layout.column / layout.columns) * 100}%` },
                     ]}
-                    testID={`calendar-timeline-task-${layout.task.id}`}
+                    testID={`calendar-timeline-google-event-${layout.event.id}`}
                   >
-                    <Pressable
-                      onPress={() => router.push(`/task/${layout.task.id}`)}
-                      accessibilityRole="button"
-                      accessibilityLabel={t('pages.calendar.openTask', { title: layout.task.title })}
-                      accessibilityState={{ busy: pendingTaskIds.has(layout.task.id) }}
-                      className="flex-1 pr-8"
-                    >
-                      <Text
-                        className="text-xs font-semibold text-foreground dark:text-foreground-dark"
-                        numberOfLines={1}
-                      >
-                        {layout.task.title}
-                      </Text>
-                      <Text
-                        className="text-[10px] text-muted-foreground dark:text-muted-foreground-dark"
-                        numberOfLines={1}
-                      >
-                        {layout.task.scheduledTime} · {layout.task.estimatedMinutes ?? 30} min
-                      </Text>
-                    </Pressable>
-                    <Pressable
-                      onPress={() => startEditing(layout.task)}
-                      accessibilityRole="button"
-                      accessibilityLabel={t('pages.calendar.editSchedule', { title: layout.task.title })}
-                      disabled={pendingTaskIds.has(layout.task.id)}
-                      className="absolute right-1 top-1 h-6 min-w-6 items-center justify-center rounded-sm bg-primary/15"
-                    >
-                      <Text className="text-xs font-semibold text-primary">✎</Text>
-                    </Pressable>
-                    <GestureDetector gesture={resizeGesture}>
-                      <View
-                        className="absolute bottom-0 right-0 h-2 w-8 rounded-sm bg-primary/40"
-                        accessible
-                        accessibilityRole="adjustable"
-                        accessibilityLabel={t('pages.calendar.resizeDuration')}
-                        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                        testID={`calendar-timeline-resize-${layout.task.id}`}
-                      />
-                    </GestureDetector>
+                    <CalendarGoogleEventCard
+                      event={layout.event}
+                      calendars={googleCalendars}
+                      locale={locale}
+                      compact
+                      onSelect={onSelectGoogleEvent}
+                    />
                   </View>
-                </GestureDetector>
-              );
-            })}
+                ))}
+              </View>
+            ) : null}
+            <View
+              pointerEvents="box-none"
+              className="absolute bottom-0 top-0"
+              style={
+                googleEvents.length > 0
+                  ? I18nManager.isRTL
+                    ? { right: 0, left: '36%' }
+                    : { left: 0, right: '36%' }
+                  : { left: 0, right: 0 }
+              }
+              testID="calendar-timeline-task-layer"
+            >
+              {timedTasks.map(layout => {
+                const resizeGesture = Gesture.Pan()
+                  .activeOffsetY([-4, 4])
+                  .failOffsetX([-12, 12])
+                  .runOnJS(true)
+                  .onEnd((event, success) => {
+                    if (success && !pendingTaskIds.has(layout.task.id)) {
+                      void saveResizedDuration(layout.task, event.translationY);
+                    }
+                  });
+                const moveGesture = Gesture.Pan()
+                  .activeOffsetY([-8, 8])
+                  .failOffsetX([-12, 12])
+                  .requireExternalGestureToFail(resizeGesture)
+                  .runOnJS(true)
+                  .onEnd((event, success) => {
+                    if (success && !pendingTaskIds.has(layout.task.id))
+                      void saveMovedTime(layout.task, event.translationY);
+                  });
+                const inlinePercent = `${(layout.column / layout.columns) * 100}%` as `${number}%`;
+                const widthPercent = `${100 / layout.columns}%` as `${number}%`;
+
+                return (
+                  <GestureDetector key={layout.task.id} gesture={moveGesture}>
+                    <View
+                      className="absolute overflow-hidden rounded-md border border-primary/40 bg-primary/10 px-2 py-1"
+                      style={[
+                        { top: layout.top, height: Math.max(40, layout.height), width: widthPercent },
+                        I18nManager.isRTL ? { right: inlinePercent } : { left: inlinePercent },
+                      ]}
+                      testID={`calendar-timeline-task-${layout.task.id}`}
+                    >
+                      <Pressable
+                        onPress={() => router.push(`/task/${layout.task.id}`)}
+                        accessibilityRole="button"
+                        accessibilityLabel={t('pages.calendar.openTask', { title: layout.task.title })}
+                        accessibilityState={{ busy: pendingTaskIds.has(layout.task.id) }}
+                        className="flex-1 pr-8"
+                      >
+                        <Text
+                          className="text-xs font-semibold text-foreground dark:text-foreground-dark"
+                          numberOfLines={1}
+                        >
+                          {layout.task.title}
+                        </Text>
+                        <Text
+                          className="text-[10px] text-muted-foreground dark:text-muted-foreground-dark"
+                          numberOfLines={1}
+                        >
+                          {layout.task.scheduledTime} · {layout.task.estimatedMinutes ?? 30} min
+                        </Text>
+                      </Pressable>
+                      <Pressable
+                        onPress={() => startEditing(layout.task)}
+                        accessibilityRole="button"
+                        accessibilityLabel={t('pages.calendar.editSchedule', { title: layout.task.title })}
+                        disabled={pendingTaskIds.has(layout.task.id)}
+                        className="absolute right-1 top-1 h-6 min-w-6 items-center justify-center rounded-sm bg-primary/15"
+                      >
+                        <Text className="text-xs font-semibold text-primary">✎</Text>
+                      </Pressable>
+                      <GestureDetector gesture={resizeGesture}>
+                        <View
+                          className="absolute bottom-0 right-0 h-2 w-8 rounded-sm bg-primary/40"
+                          accessible
+                          accessibilityRole="adjustable"
+                          accessibilityLabel={t('pages.calendar.resizeDuration')}
+                          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                          testID={`calendar-timeline-resize-${layout.task.id}`}
+                        />
+                      </GestureDetector>
+                    </View>
+                  </GestureDetector>
+                );
+              })}
+            </View>
           </View>
         </View>
       </ScrollView>
