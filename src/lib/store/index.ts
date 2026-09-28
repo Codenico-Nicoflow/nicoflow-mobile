@@ -4,6 +4,7 @@ import {
   attachmentApi,
   authApi,
   bucketApi,
+  googleCalendarApi,
   noteApi,
   notificationApi,
   projectApi,
@@ -23,6 +24,7 @@ export {
   attachmentApi,
   authApi,
   bucketApi,
+  googleCalendarApi,
   mobileTokenStorage,
   mobileWSLifecycleAdapter,
   noteApi,
@@ -35,6 +37,7 @@ export {
   subtaskApi,
   taskApi,
 } from './store';
+export type { GoogleEventsResponse, GoogleStatus, IGoogleCalendar, IGoogleEvent } from '@nicoflow/shared/api';
 
 // Hooks exports
 export { useAppDispatch, useAppSelector, useAppUser } from './hooks';
@@ -72,6 +75,15 @@ export const {
   useUpdateTaskMutation,
   useUpdateTaskStatusMutation,
 } = taskApi;
+
+export const {
+  useDisconnectGoogleMutation,
+  useGetGoogleCalendarsQuery,
+  useGetGoogleConnectionQuery,
+  useGetGoogleEventsQuery,
+  useLazyGetGoogleAuthUrlQuery,
+  useUpdateGoogleCalendarSelectionMutation,
+} = googleCalendarApi;
 
 // Area exports — hooks are generated on the instance constructed in store.ts
 export const {

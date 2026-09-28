@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 
+import type { IGoogleEvent } from '@nicoflow/shared/api';
 import type { ITask } from '@nicoflow/shared/types';
 import { ChevronLeft, ChevronRight } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
@@ -9,7 +10,14 @@ import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { toast } from '@/components/ui/toast';
 import { Radius, Shadows } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import { mobileWSLifecycleAdapter, useAppUser, useGetCalendarTasksQuery, useUpdateTaskMutation } from '@/lib/store';
+import {
+  mobileWSLifecycleAdapter,
+  useAppUser,
+  useGetCalendarTasksQuery,
+  useGetGoogleCalendarsQuery,
+  useGetGoogleEventsQuery,
+  useUpdateTaskMutation,
+} from '@/lib/store';
 import { resolveApiErrorMessage } from '@/lib/utils/apiError';
 
 import {
@@ -26,10 +34,15 @@ import {
   todayKeyIn,
 } from './calendarDate';
 import { CalendarDaySheet, type CalendarDaySheetRef } from './CalendarDaySheet';
+import { CalendarDayTimeline } from './CalendarDayTimeline';
+import { CalendarGoogleEventCard } from './CalendarGoogleEventCard';
 import { calendarMoveRequest, calendarScheduleRequest, isLiveRecurringOccurrence } from './calendarMove';
 import { canRetryCalendarFailure, isCalendarOfflineFailure } from './calendarRecovery';
 import { CalendarTaskAgendaCard } from './CalendarTaskAgendaCard';
 import { CalendarTaskChip } from './CalendarTaskChip';
+import { eventsOnDay, usableGoogleEvents } from './googleCalendarOverlay';
+import { GoogleCalendarStatusNotice } from './GoogleCalendarStatusNotice';
+import { GoogleEventDetailsSheet, type GoogleEventDetailsSheetRef } from './GoogleEventDetailsSheet';
 
 const SWIPE_THRESHOLD = 48;
 type CalendarView = 'month' | 'week' | 'day';
@@ -43,6 +56,7 @@ export function CalendarProSurface() {
   const [view, setView] = useState<CalendarView>('month');
   const [selectedKey, setSelectedKey] = useState(todayKey);
   const daySheetRef = useRef<CalendarDaySheetRef>(null);
+  const googleEventSheetRef = useRef<GoogleEventDetailsSheetRef>(null);
   const pendingTaskIdsRef = useRef(new Set<string>());
   const [pendingTaskIds, setPendingTaskIds] = useState<ReadonlySet<string>>(() => new Set());
   const [dragTargetKey, setDragTargetKey] = useState<string | null>(null);
@@ -52,16 +66,64 @@ export function CalendarProSurface() {
   const monthDays = useMemo(() => buildMonthDays(anchor, weekStart), [anchor, weekStart]);
   const weekDays = useMemo(() => buildWeekDays(fromDayKey(selectedKey), weekStart), [selectedKey, weekStart]);
   const selectedDay = weekDays.find(day => day.key === selectedKey) ?? weekDays[0]!;
-  const days = view === 'month' ? monthDays : view === 'week' ? weekDays : [selectedDay];
+  const days = useMemo(
+    () => (view === 'month' ? monthDays : view === 'week' ? weekDays : [selectedDay]),
+    [monthDays, selectedDay, view, weekDays]
+  );
   const range = useMemo(
     () => (view === 'month' ? rangeForMonth(monthDays) : rangeForDays(view === 'week' ? weekDays : [selectedDay])),
     [monthDays, selectedDay, view, weekDays]
   );
   const { currentData: tasks = [], error, isLoading, isError, refetch } = useGetCalendarTasksQuery(range);
+  const googleRange = { from: range.scheduledFrom, to: range.scheduledTo };
+  const {
+    currentData: googleData,
+    isError: isGoogleQueryError,
+    isFetching: isGoogleFetching,
+    isLoading: isGoogleLoading,
+    refetch: refetchGoogleEvents,
+  } = useGetGoogleEventsQuery(googleRange, { refetchOnMountOrArgChange: true });
+  const { currentData: googleCalendars = [], refetch: refetchGoogleCalendars } = useGetGoogleCalendarsQuery(undefined, {
+    refetchOnMountOrArgChange: true,
+  });
+  const showGoogleEvents = usableGoogleEvents(
+    googleData?.googleStatus ?? 'error',
+    isGoogleQueryError || isGoogleFetching
+  );
+  const googleEvents = useMemo(
+    () => (showGoogleEvents ? (googleData?.events ?? []) : []),
+    [googleData?.events, showGoogleEvents]
+  );
+  const googleEventsByDay = useMemo(
+    () => new Map(days.map(day => [day.key, eventsOnDay(googleEvents, day.key)] as const)),
+    [days, googleEvents]
+  );
+  const googleNoticeStatus =
+    isGoogleLoading || (!googleData && isGoogleFetching)
+      ? 'loading'
+      : isGoogleFetching && googleData?.googleStatus === 'ok'
+        ? 'updating'
+        : isGoogleQueryError || googleData?.googleStatus === 'error'
+          ? 'error'
+          : googleData?.googleStatus === 'disconnected'
+            ? 'disconnected'
+            : googleData?.googleStatus === 'ok' && googleEvents.length === 0
+              ? 'empty'
+              : null;
   const tasksByDay = useMemo(() => groupTasksByDay(tasks), [tasks]);
   const isOffline = isCalendarOfflineFailure(error);
 
-  useEffect(() => mobileWSLifecycleAdapter.onForeground(() => void refetch()), [refetch]);
+  useEffect(
+    () =>
+      mobileWSLifecycleAdapter.onForeground(() => {
+        void refetch();
+        void refetchGoogleEvents();
+        void refetchGoogleCalendars();
+      }),
+    [refetch, refetchGoogleCalendars, refetchGoogleEvents]
+  );
+
+  const selectGoogleEvent = (event: IGoogleEvent): void => googleEventSheetRef.current?.present(event);
 
   const recoverFailedWrite = async (mutationError: unknown, retry: () => void): Promise<void> => {
     await refetch();
@@ -223,9 +285,17 @@ export function CalendarProSurface() {
           </Pressable>
         ))}
       </View>
+      {googleNoticeStatus ? (
+        <GoogleCalendarStatusNotice
+          status={googleNoticeStatus}
+          onRetry={googleNoticeStatus === 'error' ? () => void refetchGoogleEvents() : undefined}
+        />
+      ) : null}
       <GestureDetector gesture={swipe}>
         <View
-          className="overflow-hidden border border-border dark:border-border-dark bg-card dark:bg-card-dark"
+          className={`overflow-hidden border border-border dark:border-border-dark bg-card dark:bg-card-dark ${
+            view === 'day' ? 'flex-1' : ''
+          }`}
           style={[{ borderRadius: Radius.lg }, Shadows.sm]}
           testID={view === 'month' ? 'calendar-month-grid' : 'calendar-agenda'}
           onLayout={event => setGridSize(event.nativeEvent.layout)}
@@ -267,7 +337,10 @@ export function CalendarProSurface() {
               <View key={row} className="flex-row border-b border-border dark:border-border-dark">
                 {monthDays.slice(row * 7, row * 7 + 7).map((day, column) => {
                   const dayTasks = tasksByDay.get(day.key) ?? [];
+                  const dayGoogleEvents = googleEventsByDay.get(day.key) ?? [];
+                  const googleVisibleEvents = dayGoogleEvents.slice(0, 1);
                   const overflow = Math.max(0, dayTasks.length - MAX_VISIBLE_CHIPS);
+                  const googleOverflow = Math.max(0, dayGoogleEvents.length - googleVisibleEvents.length);
                   const isToday = day.key === todayKey;
                   const isSelected = day.key === selectedKey;
                   const isDragTarget = day.key === dragTargetKey;
@@ -325,14 +398,47 @@ export function CalendarProSurface() {
                           </Text>
                         </Pressable>
                       )}
+                      {googleVisibleEvents.map(event => (
+                        <CalendarGoogleEventCard
+                          key={event.id}
+                          event={event}
+                          calendars={googleCalendars}
+                          locale={i18n.language}
+                          compact
+                          onSelect={selectGoogleEvent}
+                        />
+                      ))}
+                      {googleOverflow > 0 ? (
+                        <Pressable
+                          onPress={() => daySheetRef.current?.present(day.key)}
+                          accessibilityRole="button"
+                          accessibilityLabel={t('pages.calendar.more', { count: googleOverflow })}
+                        >
+                          <Text className="text-[9px] font-semibold text-muted-foreground dark:text-muted-foreground-dark">
+                            {t('pages.calendar.more', { count: googleOverflow })}
+                          </Text>
+                        </Pressable>
+                      ) : null}
                     </View>
                   );
                 })}
               </View>
             ))
+          ) : view === 'day' ? (
+            <CalendarDayTimeline
+              dayKey={selectedDay.key}
+              locale={i18n.language}
+              tasks={tasksByDay.get(selectedDay.key) ?? []}
+              googleEvents={googleEventsByDay.get(selectedDay.key) ?? []}
+              googleCalendars={googleCalendars}
+              onSelectGoogleEvent={selectGoogleEvent}
+              pendingTaskIds={pendingTaskIds}
+              onSaveSchedule={saveSchedule}
+            />
           ) : (
             days.map(day => {
               const dayTasks = tasksByDay.get(day.key) ?? [];
+              const dayGoogleEvents = googleEventsByDay.get(day.key) ?? [];
               const label = new Intl.DateTimeFormat(i18n.language, {
                 weekday: 'long',
                 month: 'long',
@@ -358,21 +464,31 @@ export function CalendarProSurface() {
                       {t('pages.calendar.dayTaskCount', { count: dayTasks.length })}
                     </Text>
                   </Pressable>
-                  {dayTasks.length === 0 ? (
+                  {dayTasks.length === 0 && dayGoogleEvents.length === 0 ? (
                     <Text className="py-3 text-sm text-muted-foreground dark:text-muted-foreground-dark">
                       {t('pages.calendar.emptyDayDescription')}
                     </Text>
-                  ) : (
-                    dayTasks.map(task => (
-                      <CalendarTaskAgendaCard
-                        key={task.id}
-                        task={task}
-                        pending={pendingTaskIds.has(task.id)}
-                        onSaveSchedule={saveSchedule}
-                        onSaveDuration={saveDuration}
-                      />
-                    ))
-                  )}
+                  ) : null}
+                  {dayTasks.length
+                    ? dayTasks.map(task => (
+                        <CalendarTaskAgendaCard
+                          key={task.id}
+                          task={task}
+                          pending={pendingTaskIds.has(task.id)}
+                          onSaveSchedule={saveSchedule}
+                          onSaveDuration={saveDuration}
+                        />
+                      ))
+                    : null}
+                  {dayGoogleEvents.map(event => (
+                    <CalendarGoogleEventCard
+                      key={event.id}
+                      event={event}
+                      calendars={googleCalendars}
+                      locale={i18n.language}
+                      onSelect={selectGoogleEvent}
+                    />
+                  ))}
                 </View>
               );
             })
@@ -403,7 +519,11 @@ export function CalendarProSurface() {
         locale={i18n.language}
         onSelectedDayChange={setSelectedKey}
         pendingTaskIds={pendingTaskIds}
+        googleEventsByDay={googleEventsByDay}
+        googleCalendars={googleCalendars}
+        onSelectGoogleEvent={selectGoogleEvent}
       />
+      <GoogleEventDetailsSheet ref={googleEventSheetRef} calendars={googleCalendars} locale={i18n.language} />
     </View>
   );
 }
