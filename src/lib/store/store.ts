@@ -6,6 +6,7 @@ import {
   createAttachmentApi,
   createAuthApi,
   createBucketApi,
+  createGoogleCalendarApi,
   createNoteApi,
   createNotificationApi,
   createProjectApi,
@@ -48,6 +49,7 @@ const baseQueryWithReauth = createBaseQueryWithReauth(mobileTokenStorage, () => 
 
 export const authApi = createAuthApi(baseQueryWithReauth, { clearAuth, setToken, setUser }, resolveTimeZone);
 export const taskApi = createTaskApi(baseQueryWithReauth);
+export const googleCalendarApi = createGoogleCalendarApi(baseQueryWithReauth);
 
 // skipTaskOccurrence is not yet in @nicoflow/shared — injected locally until
 // the next shared package release includes it (mirrors PR #226 on web).
@@ -100,6 +102,7 @@ export const { useSubscribeExpoPushMutation, useUnsubscribeExpoPushMutation } = 
 const apiReducerPaths = [
   authApi.reducerPath,
   taskApi.reducerPath,
+  googleCalendarApi.reducerPath,
   areaApi.reducerPath,
   projectApi.reducerPath,
   recurrenceApi.reducerPath,
@@ -116,6 +119,7 @@ const combinedReducer = combineReducers({
   auth: authReducer,
   [authApi.reducerPath]: authApi.reducer,
   [taskApi.reducerPath]: taskApi.reducer,
+  [googleCalendarApi.reducerPath]: googleCalendarApi.reducer,
   [areaApi.reducerPath]: areaApi.reducer,
   [projectApi.reducerPath]: projectApi.reducer,
   [recurrenceApi.reducerPath]: recurrenceApi.reducer,
@@ -165,6 +169,7 @@ export const store = configureStore({
     }).concat(
       authApi.middleware,
       taskApi.middleware,
+      googleCalendarApi.middleware,
       areaApi.middleware,
       projectApi.middleware,
       recurrenceApi.middleware,

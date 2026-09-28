@@ -3,6 +3,7 @@ import { Text, View } from 'react-native';
 
 import { router } from 'expo-router';
 
+import type { IGoogleCalendar, IGoogleEvent } from '@nicoflow/shared/api';
 import type { ITask } from '@nicoflow/shared/types';
 import { CalendarX } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
@@ -11,6 +12,7 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { Sheet, SheetHeader, type SheetRef, SheetTitle } from '@/components/ui/sheet';
 
 import { CalendarDayTaskCard } from './CalendarDayTaskCard';
+import { CalendarGoogleEventCard } from './CalendarGoogleEventCard';
 
 export interface CalendarDaySheetRef {
   present: (dayKey: string) => void;
@@ -22,21 +24,25 @@ interface CalendarDaySheetProps {
   locale: string;
   onSelectedDayChange: (dayKey: string) => void;
   pendingTaskIds: ReadonlySet<string>;
+  googleEventsByDay: ReadonlyMap<string, readonly IGoogleEvent[]>;
+  googleCalendars: readonly IGoogleCalendar[];
+  onSelectGoogleEvent: (event: IGoogleEvent) => void;
 }
 
 export const CalendarDaySheet = forwardRef<CalendarDaySheetRef, CalendarDaySheetProps>(function CalendarDaySheet(
-  { tasksByDay, locale, onSelectedDayChange, pendingTaskIds },
+  { tasksByDay, locale, onSelectedDayChange, pendingTaskIds, googleEventsByDay, googleCalendars, onSelectGoogleEvent },
   ref
 ) {
   const { t } = useTranslation('common');
   const sheetRef = useRef<SheetRef>(null);
   const [dayKey, setDayKey] = useState('');
   const tasks = tasksByDay.get(dayKey) ?? [];
+  const googleEvents = googleEventsByDay.get(dayKey) ?? [];
   const dateLabel = dayKey
     ? new Intl.DateTimeFormat(locale, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }).format(
         new Date(`${dayKey}T12:00:00`)
       )
-      : '';
+    : '';
 
   const openTask = (taskId: string): void => {
     sheetRef.current?.dismiss();
@@ -61,14 +67,14 @@ export const CalendarDaySheet = forwardRef<CalendarDaySheetRef, CalendarDaySheet
         </Text>
       </SheetHeader>
 
-      {tasks.length === 0 ? (
+      {tasks.length === 0 && googleEvents.length === 0 ? (
         <EmptyState
           icon={CalendarX}
           title={t('pages.calendar.emptyDayTitle')}
           description={t('pages.calendar.emptyDayDescription')}
           testID="calendar-day-empty"
         />
-      ) : (
+      ) : tasks.length > 0 ? (
         <View className="gap-2" testID="calendar-day-task-list">
           {tasks.map(task => (
             <CalendarDayTaskCard
@@ -81,7 +87,28 @@ export const CalendarDaySheet = forwardRef<CalendarDaySheetRef, CalendarDaySheet
             />
           ))}
         </View>
+      ) : (
+        <Text className="mb-3 text-sm text-muted-foreground dark:text-muted-foreground-dark">
+          {t('pages.calendar.emptyNicoflowTasks')}
+        </Text>
       )}
+      {googleEvents.length > 0 ? (
+        <View className="mt-3 gap-2" testID="calendar-day-google-events">
+          <Text className="text-xs font-semibold uppercase text-muted-foreground dark:text-muted-foreground-dark">
+            {t('pages.calendar.googleEvents')}
+          </Text>
+          {googleEvents.map(event => (
+            <CalendarGoogleEventCard
+              key={event.id}
+              event={event}
+              calendars={googleCalendars}
+              locale={locale}
+              compact
+              onSelect={onSelectGoogleEvent}
+            />
+          ))}
+        </View>
+      ) : null}
     </Sheet>
   );
 });
