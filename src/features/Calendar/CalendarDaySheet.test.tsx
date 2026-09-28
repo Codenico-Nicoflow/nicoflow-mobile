@@ -2,6 +2,7 @@ import { createRef, type ReactNode } from 'react';
 
 import { router } from 'expo-router';
 
+import type { IGoogleEvent } from '@nicoflow/shared/api';
 import type { ITask } from '@nicoflow/shared/types';
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
 
@@ -21,6 +22,15 @@ jest.mock('@/components/ui/sheet', () => {
 });
 
 const task = (id: string, title: string): ITask => ({ id, title, scheduledFor: '2026-09-23' }) as ITask;
+const googleEvent: IGoogleEvent = {
+  id: 'meeting',
+  title: 'Planning',
+  start: '2026-09-23T09:00:00Z',
+  end: '2026-09-23T10:00:00Z',
+  allDay: false,
+  calendarId: 'work',
+  htmlLink: 'https://calendar.google.com/event',
+};
 
 describe('CalendarDaySheet', () => {
   it('shows every task in server order and opens the existing string-id route', async () => {
@@ -32,9 +42,10 @@ describe('CalendarDaySheet', () => {
         tasksByDay={tasks}
         locale="en"
         onSelectedDayChange={jest.fn()}
-        onMoveTask={jest.fn()}
         pendingTaskIds={new Set()}
-        onSaveDuration={jest.fn()}
+        googleEventsByDay={new Map()}
+        googleCalendars={[]}
+        onSelectGoogleEvent={jest.fn()}
       />
     );
 
@@ -48,28 +59,29 @@ describe('CalendarDaySheet', () => {
     expect(router.push).toHaveBeenCalledWith('/task/task-b');
   });
 
-  it('uses the same date-only move callback for the accessible action', async () => {
+  it('shows full schedule context in each selected-day card without separate move or duration actions', async () => {
     const ref = createRef<CalendarDaySheetRef>();
-    const moving = task('task-a', 'First');
-    const onMoveTask = jest.fn(() => Promise.resolve());
+    const timedTask = { ...task('task-a', 'First'), scheduledTime: '09:30', estimatedMinutes: 45 } as ITask;
+    const allDayTask = { ...task('task-b', 'All day'), scheduledTime: null, estimatedMinutes: null } as ITask;
     await render(
       <CalendarDaySheet
         ref={ref}
-        tasksByDay={new Map([['2026-09-23', [moving]]])}
+        tasksByDay={new Map([['2026-09-23', [timedTask, allDayTask]]])}
         locale="en"
         onSelectedDayChange={jest.fn()}
-        onMoveTask={onMoveTask}
         pendingTaskIds={new Set()}
-        onSaveDuration={jest.fn()}
+        googleEventsByDay={new Map()}
+        googleCalendars={[]}
+        onSelectGoogleEvent={jest.fn()}
       />
     );
     await act(() => ref.current?.present('2026-09-23'));
 
-    await fireEvent.press(screen.getByLabelText('Move First to a date'));
-    await fireEvent.changeText(screen.getByTestId('calendar-move-date-input'), '2026-09-25');
-    await fireEvent.press(screen.getByTestId('calendar-move-save'));
-
-    expect(onMoveTask).toHaveBeenCalledWith(moving, '2026-09-25');
+    expect(screen.getAllByText('Scheduled Sep 23, 2026')).toHaveLength(2);
+    expect(screen.getByText('09:30 · 45 min')).toBeTruthy();
+    expect(screen.getByText('All day · No duration')).toBeTruthy();
+    expect(screen.queryByLabelText('Move First to a date')).toBeNull();
+    expect(screen.queryByLabelText('Edit duration for First')).toBeNull();
   });
 
   it('shows an explicit empty state for a selectable empty day', async () => {
@@ -80,12 +92,35 @@ describe('CalendarDaySheet', () => {
         tasksByDay={new Map()}
         locale="en"
         onSelectedDayChange={jest.fn()}
-        onMoveTask={jest.fn()}
         pendingTaskIds={new Set()}
-        onSaveDuration={jest.fn()}
+        googleEventsByDay={new Map()}
+        googleCalendars={[]}
+        onSelectGoogleEvent={jest.fn()}
       />
     );
     await act(() => ref.current?.present('2026-09-24'));
     expect(screen.getByTestId('calendar-day-empty')).toBeTruthy();
+  });
+
+  it('shows read-only Google events for the selected date and opens their details', async () => {
+    const ref = createRef<CalendarDaySheetRef>();
+    const onSelectGoogleEvent = jest.fn();
+    await render(
+      <CalendarDaySheet
+        ref={ref}
+        tasksByDay={new Map()}
+        locale="en"
+        onSelectedDayChange={jest.fn()}
+        pendingTaskIds={new Set()}
+        googleEventsByDay={new Map([['2026-09-23', [googleEvent]]])}
+        googleCalendars={[]}
+        onSelectGoogleEvent={onSelectGoogleEvent}
+      />
+    );
+    await act(() => ref.current?.present('2026-09-23'));
+
+    expect(screen.getByTestId('calendar-day-google-events')).toBeTruthy();
+    await fireEvent.press(screen.getByLabelText('Google Calendar event: Planning, Sep 23 · 09:00 – 10:00'));
+    expect(onSelectGoogleEvent).toHaveBeenCalledWith(googleEvent);
   });
 });
