@@ -28,16 +28,73 @@ export const aiExtensionsRu = {
 export const settingsExtensionsEn = {
   planSection: 'Plan',
   planUpgradeHint: 'Pro unlocks unlimited areas, projects and AI. Upgrade on the web at nicoflow.app.',
+  google: {
+    title: 'Google Calendar',
+    connect: 'Connect Google Calendar',
+    disconnect: 'Disconnect',
+    disconnectTitle: 'Disconnect Google Calendar?',
+    disconnectConfirm: 'Your Google events will no longer appear in Calendar.',
+    connected: 'Google Calendar connected.',
+    denied: 'Google Calendar access was denied.',
+    oauthFailed: 'Google Calendar could not be connected. Try again.',
+    cancelled: 'Connection cancelled.',
+    notConnected: 'No Google Calendar connection found.',
+    retry: 'Retry',
+    primary: 'Primary',
+    maxSelected: 'Choose up to five calendars.',
+    saveFailed: 'Calendar selection could not be saved. Try again.',
+    loadFailed: 'Calendars could not be loaded.',
+    noCalendars: 'No calendars are available for this account.',
+    error: 'Something went wrong. Try again.',
+  },
 };
 
 export const settingsExtensionsHe = {
   planSection: 'תוכנית',
   planUpgradeHint: 'Pro פותח אזורים, פרויקטים ו-AI ללא הגבלה. שדרגו באתר nicoflow.app.',
+  google: {
+    title: 'יומן Google',
+    connect: 'חיבור ליומן Google',
+    disconnect: 'ניתוק',
+    disconnectTitle: 'לנתק את יומן Google?',
+    disconnectConfirm: 'אירועי Google לא יופיעו עוד ביומן.',
+    connected: 'יומן Google חובר.',
+    denied: 'הגישה ליומן Google נדחתה.',
+    oauthFailed: 'לא ניתן לחבר את יומן Google. נסו שוב.',
+    cancelled: 'החיבור בוטל.',
+    notConnected: 'לא נמצא חיבור ליומן Google.',
+    retry: 'ניסיון חוזר',
+    primary: 'ראשי',
+    maxSelected: 'אפשר לבחור עד חמישה יומנים.',
+    saveFailed: 'לא ניתן לשמור את בחירת היומנים. נסו שוב.',
+    loadFailed: 'לא ניתן לטעון יומנים.',
+    noCalendars: 'אין יומנים זמינים בחשבון הזה.',
+    error: 'אירעה שגיאה. נסו שוב.',
+  },
 };
 
 export const settingsExtensionsRu = {
   planSection: 'Тариф',
   planUpgradeHint: 'Pro открывает неограниченные области, проекты и AI. Оформите на сайте nicoflow.app.',
+  google: {
+    title: 'Google Calendar',
+    connect: 'Подключить Google Calendar',
+    disconnect: 'Отключить',
+    disconnectTitle: 'Отключить Google Calendar?',
+    disconnectConfirm: 'События Google больше не будут отображаться в календаре.',
+    connected: 'Google Calendar подключён.',
+    denied: 'Доступ к Google Calendar отклонён.',
+    oauthFailed: 'Не удалось подключить Google Calendar. Попробуйте ещё раз.',
+    cancelled: 'Подключение отменено.',
+    notConnected: 'Подключение Google Calendar не найдено.',
+    retry: 'Повторить',
+    primary: 'Основной',
+    maxSelected: 'Можно выбрать не более пяти календарей.',
+    saveFailed: 'Не удалось сохранить выбор календарей. Попробуйте ещё раз.',
+    loadFailed: 'Не удалось загрузить календари.',
+    noCalendars: 'Для этого аккаунта нет доступных календарей.',
+    error: 'Что-то пошло не так. Попробуйте ещё раз.',
+  },
 };
 
 export const calendarExtensionsEn = {
