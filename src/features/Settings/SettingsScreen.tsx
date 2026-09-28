@@ -1,6 +1,7 @@
 import { ScrollView, View } from 'react-native';
 
 import { AccountCard } from './AccountCard';
+import { GoogleConnectionCard } from './GoogleConnectionCard';
 import { NotificationsCard } from './NotificationsCard';
 import { PlanCard } from './PlanCard';
 import { SecurityCard } from './SecurityCard';
@@ -20,6 +21,7 @@ export function SettingsScreen() {
       <View className="gap-3">
         <AccountCard />
         <PlanCard />
+        <GoogleConnectionCard />
         <ThemeCard />
         <NotificationsCard />
         <SecurityCard />

@@ -76,7 +76,14 @@ export const {
   useUpdateTaskStatusMutation,
 } = taskApi;
 
-export const { useGetGoogleCalendarsQuery, useGetGoogleEventsQuery } = googleCalendarApi;
+export const {
+  useDisconnectGoogleMutation,
+  useGetGoogleCalendarsQuery,
+  useGetGoogleConnectionQuery,
+  useGetGoogleEventsQuery,
+  useLazyGetGoogleAuthUrlQuery,
+  useUpdateGoogleCalendarSelectionMutation,
+} = googleCalendarApi;
 
 // Area exports — hooks are generated on the instance constructed in store.ts
 export const {
